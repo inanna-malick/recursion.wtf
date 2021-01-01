@@ -47,6 +47,6 @@ In practice, it's usually not that hard to write up a list of workspace crates t
             
 ## Implementation Details
 
-I used [cargo-script](https://github.com/DanielKeep/cargo-script) to build a single-file tool, [structopt](https://crates.io/crates/structopt) to parse arguments and flags, and [serde](https://crates.io/crates/serde) to serialize the output as JSON or TOML.
+I used [`cargo-script`](https://github.com/DanielKeep/cargo-script) to build a single-file tool, [`structopt`](https://crates.io/crates/structopt) to parse arguments and flags, and [`serde`](https://crates.io/crates/serde) to serialize the output as JSON or TOML.
 
 The full `transitive_frontier.rs` gist can be found [here](https://gist.github.com/inanna-malick/2c828815eda194c652e2eb0fea74b3d5).
