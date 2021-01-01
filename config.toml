@@ -5,7 +5,7 @@ paginate = 5
 
 [params]
   contentTypeName = "posts"
-  themeColor = "cyan"
+  themeColor = "blue"
 
   # if you set this to 0, only submenu trigger will be visible
   showMenuItems = 4
