@@ -1,0 +1,22 @@
+name: Push to GitHub Pages on push to main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v1
+
+      - name: Deploy the site
+        uses: inanna-malick/recursion.wtf@main
+        env:
+          HUGO_VERSION: 0.80.0
+          TARGET_REPO: inanna-malick/inanna-malick.github.io
+          TARGET_BRANCH: master
+          TOKEN: ${{ secrets.TOKEN }}
+          CNAME: recursion.wtf
