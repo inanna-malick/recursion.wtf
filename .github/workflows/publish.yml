@@ -11,9 +11,11 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v1
+        with:
+          submodules: true
 
       - name: Deploy the site
-        uses: inanna-malick/recursion.wtf@main
+        uses: benmatselby/hugo-deploy-gh-pages@master
         env:
           HUGO_VERSION: 0.80.0
           TARGET_REPO: inanna-malick/inanna-malick.github.io
