@@ -1,0 +1,46 @@
+digraph G {
+  graph [fontname = "helvetica", fontsize = 18, ranksep="1.0", bgcolor=lightcyan];
+  graph [outputorder=edgesfirst];
+  node [style=filled fillcolor=white];
+
+
+  subgraph cluster_0 {
+    graph [fontcolor = "white"];
+    style="rounded,filled";
+    color=lightskyblue;
+    node [style=filled];
+    server -> capabilities_old;
+    server -> capabilities_new;
+    label="WORKSPACE";
+    labeljust="l";
+  }
+  
+  capabilities_old [pos="1,1!"];
+  capabilities_new [pos="1,-1!"];
+  server [pos="0,0!"];
+  
+  
+  library_old [pos="3,2!"];
+  futures01 [pos="4,1!", fillcolor = plum1];
+  
+  
+  library_new [pos="3,-2!"];
+  futures03 [pos="4,-1!", fillcolor = plum1];
+  futures_util [pos="5,0!"];
+
+
+  capabilities_new -> library_new;
+  capabilities_new -> futures03;
+  server -> futures03;
+  library_new -> futures03;
+  // no idea why but len=9 makes this render really nice
+  capabilities_old -> library_old [len="9"];
+  capabilities_old -> futures01;
+  server -> futures01;
+  library_old -> futures01;
+  
+
+  futures03 -> futures_util [style="bold",color="violet"];
+  futures_util -> futures01 [style="bold",color="violet"];
+  futures_util [fillcolor = plum1];
+}
