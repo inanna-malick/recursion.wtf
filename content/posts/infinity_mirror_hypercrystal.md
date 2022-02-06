@@ -4,7 +4,7 @@ date = "2022-02-05"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["infinity", "mirrors", "meatspace"]
-keywords = ["infinity", "mirrors", "meatspace"]
+keywords = ["art", "infinity", "mirrors", "meatspace", "laser cut"]
 showFullContent = false
 +++
 
