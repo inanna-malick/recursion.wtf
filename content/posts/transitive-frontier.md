@@ -12,7 +12,7 @@ showFullContent = false
 
 ## Querying Cargo Dependency DAGs with Guppy
 
-{{< image src="/img/project_with_compat_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project_with_compat_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 [`guppy`](https://crates.io/crates/guppy) is a rust crate that provides tools for working with cargo dependency graphs using the [`petgraph`](https://crates.io/crates/petgraph) graph data structure crate. It's used by Facebook to audit a high-security subset of the cargo dependency graph for some of their more high-visibility projects. Treating the dependency graph resulting from a cargo build operation as a DAG lets us draw on the well-studied field of graph algorithms to answer complex questions about our build without resorting to ad-hoc traversals or re-implementation of common graph primitives.
 
@@ -30,7 +30,7 @@ I've called this tool `transitive-frontier`, because it finds the intersection o
 
 Before describing the `transitive_frontier` tool, I'm going to go over how I use `guppy`: these examples are run against some simple strawman workspaces, which you can find in the `example_workspaces` directory in the `transitive_frontier` repo. Here's a simplified representation of the dependency graph for the first workspace:
 
-{{< image src="/img/project.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 The main entry point into `guppy` is the `PackageGraph`, which holds information about the dependency graph resulting from a cargo build operation (as generated via `cargo metadata`). Here's how to construct a `PackageGraph` instance for your workspace:
 
@@ -63,12 +63,12 @@ After we've constructed the query, we need to resolve it - this step is where we
 Here's a visualization of the package set this query produces, with the reverse transitive dependencies of `futures 0.1` highlighted:
 
 
-{{< image src="/img/project_with_transitive_deps.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project_with_transitive_deps.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 However, we don't want a package set - we want the frontier via which dependencies `futures 0.1` are introduced into our workspace, shown further highlighted here:
 
 
-{{< image src="/img/project_with_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project_with_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 For this step, we need to traverse the set of edges included in the `PackageSet`. Since it's a _package_ set, it only tracks packages, so what we're actually doing is iterating over every edge in the package graph for where `to` and `from` are members of the package set.
 
@@ -114,7 +114,7 @@ capabilities-new = ["library_new 0.1.0", "futures 0.3.8"]
 
 Unfortunately, the `compat` dependency in `futures_util` makes `futures 0.1` a transitive dependency of `futures 0.3`, which causes every edge that introduces a dependency on `futures 0.3` to be included in the report. This is not the desired behavior. Here's a visualization of the problem, showing the path via which `futures 0.3` depends on `futures 0.1`:
 
-{{< image src="/img/project_futures_util_compat.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project_futures_util_compat.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 To solve this issue, we're going to have to skip some edges:
 
@@ -135,7 +135,7 @@ server = ["futures 0.1.30"]
 
 That fixes the problem by skipping `futures-util`, as you can see in this visualization:
 
-{{< image src="/img/project_with_compat_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
+{{< image src="/img/transitive_frontier/project_with_compat_transitive_frontier.svg" alt="dependency graph" position="center" style="border-radius: 8px;" >}}
 
 Now we have the ability to generate machine-readable reports on where transitive dependencies on `futures 0.1` enter the workspace. For this workspace, that doesn't mean that much, but for larger workspaces with tens or even hundreds of crates automating processes like this can be critical.
 
