@@ -36,7 +36,7 @@ The infinity effect was achieved, but it was insufficiently eldritch. The white 
 
 {{< image src="/img/infinity_mirror_hypercrystal/powered_white_light_only.jpg" alt="hypercrystal powered on but with white LEDs only" position="center" style="border-radius: 8px;" >}}
 
-I used partially transparent dichroic tape to obtain a lovely glitch rainbow effect.
+I used partially transparent dichroic tape to obtain a lovely glitch rainbow effect. The color of dichroic materials shifts based on the angle of view, which means that they look really cool when light is filtered through them.
 
 {{< image src="/img/infinity_mirror_hypercrystal/interior_shot_dichroic_detail.jpg" alt="interior shot with detail of dichroic tape" position="center" style="border-radius: 8px;" >}}
 
@@ -84,6 +84,10 @@ Here's what these pieces look like after laser cutting, and before assembly:
 First, I assembled the edge components using wood glue to hold them together. The resulting structure is surprisingly resilient due to the way it's put together.
 
 {{< image src="/img/infinity_mirror_hypercrystal/initial_edge_assembly.jpg" alt="putting the edge pieces together" position="center" style="border-radius: 8px;" >}}
+
+I used dark wood stain to give them an aged, charred effect.
+
+{{< image src="/img/infinity_mirror_hypercrystal/wood_stain.jpg" alt="wood stain" position="center" style="border-radius: 8px;" >}}
 
 Then I did a quick test fitting, with the blue protective film still present:
 
