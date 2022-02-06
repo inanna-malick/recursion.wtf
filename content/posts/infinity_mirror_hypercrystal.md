@@ -12,7 +12,7 @@ showFullContent = false
 
 {{< image src="/img/infinity_mirror_hypercrystal/powered_on_front_header.jpg" alt="hypercrystal powered on" position="center" style="border-radius: 8px;" >}}
 
-This object is the result of a series of algorithmic/generative art techniques I've been developing on, on and off, for the last decade. It's been really rewarding to work on, and I was really excited to see my latest build get a lot of attention on [twitter](https://twitter.com/inanna_malick/status/1488927590207275010). As promised, I've written up a build log going into much more detail on how I generated and constructed this object:
+This object is the result of a series of algorithmic/generative art techniques I've been working on, on and off, for the last decade. I was really excited to see my latest build get a lot of attention on [twitter](https://twitter.com/inanna_malick/status/1488927590207275010). I've written up a build log with details on how I generated and constructed this object:
 
 <!--more--> 
 
@@ -28,7 +28,7 @@ I used a generative algorithm of my own making to generate this geometry: plywoo
 
 {{< image src="/img/infinity_mirror_hypercrystal/components.jpg" alt="hypercrystal components" position="center" style="border-radius: 8px;" >}}
 
-I combined these pieces with a cardboard cigar box gifted to me by my sister Sean (she's an amazing artist, check out her [portfolio](https://www.seankinsky.com/) here). This box holds the electronics and the base of the LED lightbulbs that illuminate the piece, which allows me to maintain the illusion of a crystal sitting on top of a box, with each perceived as a standalone object.
+I combined these pieces with a cardboard cigar box gifted to me by my sister (an amazing artist, check out her [portfolio](https://www.seankinsky.com/)). This box holds the electronics and the base of the LED lightbulbs that illuminate the piece, which allows me to maintain the illusion of a crystal sitting on top of a box, with each perceived as a standalone object.
 
 {{< image src="/img/infinity_mirror_hypercrystal/under_construction.jpg" alt="hypercrystal under construction" position="center" style="border-radius: 8px;" >}}
 
@@ -48,11 +48,7 @@ I start by creating a very low poly 3D model. In this case, a crystal:
 
 {{< image src="/img/infinity_mirror_hypercrystal/3D_model.png" alt="3D model of hypercrystal" position="center" style="border-radius: 8px;" >}}
 
-Then, I use a command line tool I've built using rust to generate a series of 2D vector files (it's still very much a work in progress). The tool uses a bunch of parameters stored in a config.toml file to support different materials.
-
-{{< image src="/img/infinity_mirror_hypercrystal/rust_interface.png" alt="rust interface" position="center" style="border-radius: 8px;" >}}
-
-That results in a series of components.
+Then, I use a tool I've built using rustlang to generate a series of 2D vector drawings of the various physical components that make up the object. These 2D drawings are cut out of sheets of plywood and acrylic using a laser cutter.
 
 ### 2D Geometry
 
