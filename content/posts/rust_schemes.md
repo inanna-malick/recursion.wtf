@@ -1,6 +1,6 @@
 +++
-title = "Elegant and performant recursion in Rust"
-date = "2022-07-12"
+title = "Elegant and performant recursion in Rust (Draft)"
+date = "2002-07-12"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["recursion schemes", "rust", "code"]
@@ -18,6 +18,9 @@ We're going to start with a simplified non-generic version of this algorithm to 
 We're not going to start with that, though.
 
 <!--more--> 
+
+# Evaluating an expression language
+
 
 We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. 
 
@@ -55,7 +58,7 @@ You've probably seen something like this before, but if not, it's just a way to 
 ```
 
 
-Evaluating expressions is pretty simple - it's just addition, subtraction, and multiplication. This recursive eval function provides an fairly elegant and readable representation of a recursive algorithm:
+Evaluating expressions is pretty simple - it's just addition, subtraction, and multiplication. This recursive eval function provides a fairly elegant and readable example of a recursive algorithm:
 
 ```rust
 impl ExprBoxed {
@@ -70,10 +73,12 @@ impl ExprBoxed {
 }
 ```
 
-It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures, like file trees or version control repository state. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory.
+It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory.
 
 
-We're going to sketch out a more idiomatic and performant expression language, using a Vec of values (guaranteeing memory locality) with boxed pointers replaced with usize indices pointing into our vector.
+## Optimizing for performance
+
+We can fix that by writing an expression language using a Vec of values (guaranteeing memory locality), with boxed pointers replaced with usize indices pointing into our vector.
 
 ```rust
 pub enum Expr<A> {
@@ -109,7 +114,7 @@ The problem here is that this is harder to read - we don't want to construct the
 
 ```rust
 impl RecursiveExpr {
-    fn from_ast(a: &ExprBoxed) -> Self {
+    fn from_boxed(a: &ExprBoxed) -> Self {
         let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([a]);
         let mut elems = vec![];
 
@@ -163,9 +168,10 @@ impl RecursiveExpr {
 }
 ```
 
-Here we fold up the expression tree from the leaves to the root, evaluating it one layer at a time and storing the results in a hash map until they are used. Since everything we're folding over is stored in a vec, in one contiguous region of memory, we don't need to worry about the overhead of traversing a bunch of pointers (I have benchmarks over a more optimized version that shows a consistient 20-30% improvement over evaluating boxed `ExprAST` nodes).
 
-Unfortunately, it's not elegant. Once again, the logic of _how_ we fold layers of recursive structure (`Expr<i64>`) into a single value (`i64`) is interleaved with a bunch of boilerplate that handles the actual mechanics of recursion. 
+Here we fold up the expression tree from the leaves to the root, evaluating it one layer at a time and storing the results in a hash map until they are used. Since everything we're folding over is stored in a vec, in one contiguous region of memory, we don't need to worry about the overhead of traversing a bunch of pointers (I have benchmarks over a more optimized version that shows a consistient 20-30% improvement over evaluating boxed `ExprBoxed` nodes).
+
+Unfortunately, it's not elegant. Once again, the logic of _how_ we fold layers of recursive structure (`Expr<i64>`) into a single value (`i64`) is combined with a bunch of boilerplate that handles the actual mechanics of recursion. 
 
 Let's fix that.
 
@@ -190,7 +196,7 @@ impl RecursiveExpr {
 }
 ```
 
-First, we have a generic representation of folding some structure into a single value - instead of folding an `Expr<i64>` into a single `i64`, we fold some `Expr<A>` into an `A`. The code looks pretty much the same as eval_inline, but it lets us factor out the mechanism of recursion.
+First, we have a generic representation of folding some structure into a single value - instead of folding an `Expr<i64>` into a single `i64`, we fold some `Expr<A>` into an `A`. The code looks pretty much the same as `eval`, but it lets us factor out the mechanism of recursion.
 
 Here's what `eval` looks like using this idiom:
 
@@ -208,6 +214,8 @@ impl RecursiveExpr {
 ```
 
 It's pretty much the same logic as the previous `eval` functions, without any of the boilerplate. Since there's less boilerplate, it's easier to review and there's less room for bugs. In fact, it actually contains slightly less boilerplate than the eval function we wrote for `ExprBoxed::eval` because it doesn't have to handle recursively calling itself. Also, it retains all the performance benefits of the previous `eval` implementation - it's both more elegant and more performant than the traditional representation of recursive expression trees in rust. I think that's neat.
+
+
 
 ```rust
 impl RecursiveExpr {
@@ -233,13 +241,13 @@ impl RecursiveExpr {
 }
 ```
 
-Here we have a generic representation of unfolding some structure from a single value - instead of unfolding a single layer of `Expr<&ExprBoxed>` structure from an `&ExprBoxed` seed value, we unfold some `A` into an `Expr<A>`. As with `fold`, the code looks pretty much the same as `from_ast`, just with the specific unfold logic factored out.
+Here we have a generic representation of unfolding some structure from a single value - instead of unfolding a single layer of `Expr<&ExprBoxed>` structure from an `&ExprBoxed` seed value, we unfold some `A` into an `Expr<A>`. As with `fold`, the code looks pretty much the same as `from_boxed`, just with the specific unfold logic factored out.
 
 
 ```rust
 impl RecursiveExpr {
-    pub fn from_ast(ast: &ExprBoxed) -> Self {
-        Self::unfold(ast, |seed| match seed {
+    pub fn from_boxed(e: &ExprBoxed) -> Self {
+        Self::unfold(e, |seed| match seed {
             ExprBoxed::Add { a, b } => Expr::Add { a, b },
             ExprBoxed::Sub { a, b } => Expr::Sub { a, b },
             ExprBoxed::Mul { a, b } => Expr::Mul { a, b },
@@ -249,8 +257,10 @@ impl RecursiveExpr {
 }
 ```
 
-Here's what `RecursiveExpr::from_ast` looks like as written using `unfold`. Just as before, there's almost no boilerplate, the body of the function is almost entirely taken up by the logic of unfolding.
+Here's what `RecursiveExpr::from_boxed` looks like as written using `unfold`. Just as before, there's almost no boilerplate, the body of the function is almost entirely taken up by the logic of unfolding.
 
+
+# Testing for Correctness
 
 I used proptest to test this code for correctness. It generates many expression trees, each of which is evaluated via both `eval` methods. I then assert that they have the same result. (todo: describe this technique in more detail, credit Rain)
 
@@ -263,9 +273,9 @@ proptest! {
     #[test]
     fn expr_eval(boxed_expr in arb_expr()) {
         let eval_boxed = boxed_expr.eval();
-        let eval_via_fold = RecursiveExpr::from_ast(&boxed_expr).eval();
+        let eval_via_fold = RecursiveExpr::from_boxed(&boxed_expr).eval();
 
-        assert_eq!(eval_boxed, eval_inlined);
+        assert_eq!(eval_boxed, eval_via_fold);
     }
 }
 
@@ -295,3 +305,45 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
     )
 }
 ```
+
+
+# Testing for performance
+
+For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times.
+
+```rust
+fn bench_eval(criterion: &mut Criterion) {
+    let big_expr = RecursiveExpr::unfold(17, |x| {
+        if x > 0 {
+            Expr::Add(x - 1, x - 1)
+        } else {
+            Expr::LiteralInt(0)
+        }
+    });
+
+    let boxed_big_expr = big_expr.as_ref().fold(|n| match n {
+        Expr::Add(a, b) => Box::new(ExprBoxed::Add(a, b)),
+        Expr::LiteralInt(x) => Box::new(ExprBoxed::LiteralInt(x)),
+        _ => unreachable!(),
+    });
+
+    let h = HashMap::new();
+
+    criterion.bench_function("eval boxed", |b| {
+        b.iter(|| naive_eval(&h, black_box(&boxed_big_expr)))
+    });
+    criterion.bench_function("eval fold", |b| b.iter(|| eval(&h, black_box(&big_expr))));
+}
+
+criterion_group!(benches, bench_eval);
+criterion_main!(benches);
+```
+
+Here's the result, after a few optimization passes:
+
+{{< image src="/img/rust_schemes/expr_criterion_metrics.png" alt="command line output for a simple grep-type tool" position="center" style="border-radius: 8px;" >}}
+
+Evaluating a boxed expression takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results.
+
+
+
