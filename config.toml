@@ -1,4 +1,4 @@
-baseurl = "/"
+baseURL = "https://recursion.wtf/"
 languageCode = "en-us"
 theme = "terminal"
 paginate = 5

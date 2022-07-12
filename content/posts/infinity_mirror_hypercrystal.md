@@ -6,7 +6,11 @@ authorTwitter = "inanna_malick"
 tags = ["infinity", "mirrors", "meatspace"]
 keywords = ["art", "infinity", "mirrors", "meatspace", "laser cut"]
 showFullContent = false
+images = ["/img/infinity_mirror_hypercrystal/powered_on_front.jpg"]
+feature = "/img/infinity_mirror_hypercrystal/powered_on_front.jpg"
+thumbnail = "/img/infinity_mirror_hypercrystal/powered_on_front.jpg"
 +++
+
 
 ## Infinity Mirror HYPERCRYSTAL
 
@@ -118,3 +122,7 @@ I'm really happy with how it turned out - here's a picture showing what it looks
 That's pretty much it. I'll be making more art like this. Probably less abstract, more representative. Here's a sneak peek:
 
 {{< image src="/img/infinity_mirror_hypercrystal/next_project.jpg" alt="next project" position="center" style="border-radius: 8px;" >}}
+
+
+Thanks to [Fiona Weatherwax](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), and [Matt Olson](https://twitter.com/arachnocapital2) for reviewing drafts of this post.
+
