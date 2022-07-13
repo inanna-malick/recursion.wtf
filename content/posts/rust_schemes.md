@@ -15,14 +15,14 @@ We're going to start with a simplified non-generic version of this algorithm to 
 
 {{< image src="/img/rust_schemes/rust_schemes_grep.png" alt="command line output for a simple grep-type tool" position="center" style="border-radius: 8px;" >}}
 
-We're not going to start with that, though.
+We're not going to start with that, though. That will be the subject of a future blog post building on this one.
 
 <!--more--> 
 
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. 
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the rust way of storing a pointer to some value of type `A` - literally a box with a value of type `A` inside it.
 
 ```rust
 #[derive(Debug, Clone)]
@@ -346,4 +346,5 @@ Here's the result, after a few optimization passes:
 Evaluating a boxed expression takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results.
 
 
+# To be continued
 
