@@ -25,7 +25,7 @@ I think that's neat.
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it.
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html).
 
 ```rust
 #[derive(Debug, Clone)]
@@ -76,7 +76,7 @@ impl ExprBoxed {
 }
 ```
 
-It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory.
+It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory. If you're not sure what I mean by cache locality, or you want much more information on it than I can provide, there's a great rust performance optimization resource [here](https://gist.github.com/kvark/f067ba974446f7c5ce5bd544fe370186#keep-as-much-as-possible-in-cache).
 
 
 ## Optimizing for performance
@@ -96,7 +96,9 @@ pub struct RecursiveExpr {
 }
 ```
 
-We're also going to define a function to map from one type of Expr to another, for convenience - nothing complex, it just applies a function to each 'A', sort of like mapping over an Option or an Iterator. If you're familiar with functional languages, this is basically just `fmap`.
+We're also going to define a function to map from one type of Expr to another, for convenience - nothing complex, it just applies a function to each 'A', sort of like mapping over an Option or an Iterator. In this case, `map` lets us turn any `Expr<A>` into an `Expr<B>` via some function `A -> B`. If you're familiar with functional languages, this is basically just `fmap`. If you're _really_ familiar with functional languages, you might point out that it's not _quite_ `fmap`, but that's fine for our limited use case.
+
+If you're not familiar with functional languages and are now wondering what `fmap` is, it's a method provided by a trait called `Functor`. It represents the ability to map a function `A -> B` over _some arbitrary structure_ - if we have a `Functor` instance for `F`, then we can map a function over `F<A>`, for _any_ `A`.  `F` could be an option, or a list, or a tree - any structure parameterized over some value. `map` provides an implementation of `fmap` (as in _f_unction map) that's specialized to `Expr`. If you're curious, [read more here](http://learnyouahaskell.com/making-our-own-types-and-typeclasses#the-functor-typeclass).
 
 ```rust
 impl<A> Expr<A> {
@@ -172,7 +174,7 @@ impl RecursiveExpr {
 ```
 
 
-Here we fold up the expression tree from the leaves to the root, evaluating it one layer at a time and storing the results in a hash map until they are used. Since everything we're folding over is stored in a vec, in one contiguous region of memory, we don't need to worry about the overhead of traversing a bunch of pointers (I have benchmarks over a more optimized version that shows a consistient 20-30% improvement over evaluating boxed `ExprBoxed` nodes).
+Here we fold up the expression tree from the leaves to the root, evaluating it one layer at a time and storing the results in a hash map until they are used. Since everything we're folding over is stored in a vec, in one contiguous region of memory, we don't need to worry about the overhead of traversing a bunch of pointers (I have benchmarks over a [more optimized version](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/src/recursive.rs#L138-L167) that shows a consistient 20-30% improvement over evaluating boxed `ExprBoxed` nodes).
 
 Unfortunately, it's not elegant. Once again, the logic of _how_ we fold layers of recursive structure (`Expr<i64>`) into a single value (`i64`) is combined with a bunch of boilerplate that handles the actual mechanics of recursion. 
 
@@ -180,7 +182,9 @@ Let's fix that.
 
 # RECURSION SCHEMES
 
-The key idea here, which is taken entirely from recursion schemes, is to _separate_ the mechanism of recursion from the logic of recursion. Let's see what that looks like:
+The key idea here is taken from the recursion schemes idiom.  Like I said in the beginning, you don't need to know anything about that, but there's an [excellent blog post series here](https://blog.sumtypeofway.com/posts/introduction-to-recursion-schemes.html) if you're curious. All you really need to know is that in the recursion schemes idiom we factor things out so the programmer only has to provide a function that handles a single recursive step and various library internals handle performing the actual recursion by repeatedly applying it. That's what we're going to do here.
+
+Let's see what this looks like in practice:
 
 ```rust
 impl RecursiveExpr {
@@ -265,7 +269,7 @@ Here's what `RecursiveExpr::from_boxed` looks like as written using `unfold`. Ju
 
 # Testing for Correctness
 
-I used proptest to test this code for correctness. It generates many expression trees, each of which is evaluated via both `eval` methods. I then assert that they have the same result. (todo: describe this technique in more detail, credit Rain)
+I used proptest to test this code for correctness. It generates many expression trees, each of which is evaluated via both `eval` methods. I then assert that they have the same result. (todo: describe this technique in more detail, mention that I learned it from Rain)
 
 This actually helped me find a bug! In my first implementation of `unfold`, I used a stack instead of a queue for the frontier, which ended up mangling the order of the expression tree. Since proptest is awesome, it not only found this bug but reduced the failing test case to `Add (0, Sub(0, 1))`.
 
@@ -312,37 +316,8 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 # Testing for performance
 
-For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times.
+For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recusive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
 
-```rust
-fn bench_eval(criterion: &mut Criterion) {
-    let big_expr = RecursiveExpr::unfold(17, |x| {
-        if x > 0 {
-            Expr::Add(x - 1, x - 1)
-        } else {
-            Expr::LiteralInt(0)
-        }
-    });
-
-    let boxed_big_expr = big_expr.as_ref().fold(|n| match n {
-        Expr::Add(a, b) => Box::new(ExprBoxed::Add(a, b)),
-        Expr::LiteralInt(x) => Box::new(ExprBoxed::LiteralInt(x)),
-        _ => unreachable!(),
-    });
-
-    let h = HashMap::new();
-
-    criterion.bench_function("eval boxed", |b| {
-        b.iter(|| naive_eval(&h, black_box(&boxed_big_expr)))
-    });
-    criterion.bench_function("eval fold", |b| b.iter(|| eval(&h, black_box(&big_expr))));
-}
-
-criterion_group!(benches, bench_eval);
-criterion_main!(benches);
-```
-
-Here's the result, after a few optimization passes:
 
 
 <pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard boxed method</font>                                                                            
@@ -352,9 +327,13 @@ Here's the result, after a few optimization passes:
                         time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
 </pre>
 
-Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results.
 
+Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results. The standard boxed method is slightly more efficient for expression trees of size 256 or less. That said, this test provides pretty much optimal conditions with regard to pointer locality, because there are no other heap allocations to fragment things and force the boxed pointers to use different regions of memory.
 
 # To be continued
 
 We started with a simplified non-generic version of this algorithm to build understanding. In future blog posts, I plan on showing how I made it generic, how I optimized it for performance (`MaybeUninit` absolutely slaps), and how I used it to implement an async file tree search tool using `tokio::fs`.
+
+# Thank you
+
+Thank you to everyone that helped me write this blog post and the code that it describes (todo: ask if ppl want to be credited, and by what name/handle)
