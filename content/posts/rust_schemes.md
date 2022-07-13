@@ -9,20 +9,23 @@ showFullContent = false
 +++
 
 
-This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that.
+This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that. It's just an implementation detail. Instead, as motivation to read the rest of this posts, check out these sick nasty criterion benchmark results showing a 20-30% improvement over the usual method of working with recursive data structures in Rust.
 
-We're going to start with a simplified non-generic version of this algorithm to build understanding. As motivation, I've used it to implement a nontrivial proof of concept: a small but functional command line tool for searching the text of files (grep, basically). This tool uses async IO, handles failure cases with early termination, and has various other bells and whistles that I think are neat.
+<pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard boxed method</font>                                                                            
+                        time:   [722.18 µs <font color="#77A8D9"><b>733.00 µs</b></font> 746.43 µs]
 
-{{< image src="/img/rust_schemes/rust_schemes_grep.png" alt="command line output for a simple grep-type tool" position="center" style="border-radius: 8px;" >}}
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+                        time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
+</pre>
 
-We're not going to start with that, though. That will be the subject of a future blog post building on this one.
+I think that's neat.
 
 <!--more--> 
 
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the rust way of storing a pointer to some value of type `A` - literally a box with a value of type `A` inside it.
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it.
 
 ```rust
 #[derive(Debug, Clone)]
@@ -309,7 +312,7 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 # Testing for performance
 
-For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times.
+For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times.
 
 ```rust
 fn bench_eval(criterion: &mut Criterion) {
@@ -341,10 +344,17 @@ criterion_main!(benches);
 
 Here's the result, after a few optimization passes:
 
-{{< image src="/img/rust_schemes/expr_criterion_metrics.png" alt="command line output for a simple grep-type tool" position="center" style="border-radius: 8px;" >}}
 
-Evaluating a boxed expression takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results.
+<pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard boxed method</font>                                                                            
+                        time:   [722.18 µs <font color="#77A8D9"><b>733.00 µs</b></font> 746.43 µs]
+
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+                        time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
+</pre>
+
+Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results.
 
 
 # To be continued
 
+We started with a simplified non-generic version of this algorithm to build understanding. In future blog posts, I plan on showing how I made it generic, how I optimized it for performance (`MaybeUninit` absolutely slaps), and how I used it to implement an async file tree search tool using `tokio::fs`.
