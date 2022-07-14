@@ -25,7 +25,7 @@ I think that's neat.
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar to boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html).
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar with boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html).
 
 ```rust
 #[derive(Debug, Clone)]
@@ -79,165 +79,321 @@ impl ExprBoxed {
 It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory. If you're not sure what I mean by cache locality, or you want much more information on it than I can provide, there's a great rust performance optimization resource [here](https://gist.github.com/kvark/f067ba974446f7c5ce5bd544fe370186#keep-as-much-as-possible-in-cache).
 
 
-## Optimizing for performance
+## A more cache local structure
 
-We can fix that by writing an expression language using a Vec of values (guaranteeing memory locality), with boxed pointers replaced with usize indices pointing into our vector.
+We can fix that by writing an expression language using a Vec of values (guaranteeing memory locality), with boxed pointers replaced with newtype-wrapped vector indices.
 
 ```rust
-pub enum Expr<A> {
+#[derive(Debug, Clone, Copy)]
+pub enum ExprLayer<A> {
     Add { a: A, b: A },
     Sub { a: A, b: A },
     Mul { a: A, b: A },
     LiteralInt { literal: i64 },
 }
-pub struct RecursiveExpr {
-    /// nonempty, in topological-sorted order. for every node `n`, all of `n`'s child nodes have vec indices greater than that of n
-    elems: Vec<Expr<usize>>,
+
+#[derive(Eq, Hash, PartialEq)]
+pub struct ExprIdx(usize);
+impl ExprIdx {
+    fn head() -> Self {
+        ExprIdx(0)
+    }
 }
+
+pub struct Expr {
+    // nonempty, in topological-sorted order. guaranteed via construction.
+    elems: Vec<ExprLayer<ExprIdx>>,
+}
+
 ```
 
-We're also going to define a function to map from one type of Expr to another, for convenience - nothing complex, it just applies a function to each 'A', sort of like mapping over an Option or an Iterator. In this case, `map` lets us turn any `Expr<A>` into an `Expr<B>` via some function `A -> B`. If you're familiar with functional languages, this is basically just `fmap`. If you're _really_ familiar with functional languages, you might point out that it's not _quite_ `fmap`, but that's fine for our limited use case.
 
-If you're not familiar with functional languages and are now wondering what `fmap` is, it's a method provided by a trait called `Functor`. It represents the ability to map a function `A -> B` over _some arbitrary structure_ - if we have a `Functor` instance for `F`, then we can map a function over `F<A>`, for _any_ `A`.  `F` could be an option, or a list, or a tree - any structure parameterized over some value. `map` provides an implementation of `fmap` (as in _f_unction map) that's specialized to `Expr`. If you're curious, [read more here](http://learnyouahaskell.com/making-our-own-types-and-typeclasses#the-functor-typeclass).
+Here's a sketch showing what the `1 * 2 - 3` expression looks like using this.
+```
+[
+idx_0:    Mul(1_idx, 2_idx)
+idx_1:    LiteralInt(1)
+idx_2:    Sub(idx_3, idx_4)
+idx_3:    LiteralInt(2)
+idx_4:    LitearlInt(3)
+]
+```
+
+We're going to show how to generate these later, for now let's focus on evaluating expression trees stored in this format
+
+## Optimizing for performance
+
+Ok, so all our expressions are now guaranteed to be stored in local memory. Let's see what evaluating this structure looks like. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
 
 ```rust
-impl<A> Expr<A> {
-    fn map<B, F: FnMut(A) -> B>(self, mut f: F) -> Expr<B> {
-        match self {
-            Expr::Add { a, b } => Expr::Add { a: f(a), b: f(b) },
-            Expr::Sub { a, b } => Expr::Sub { a: f(a), b: f(b) },
-            Expr::Mul { a, b } => Expr::Mul { a: f(a), b: f(b) },
-            Expr::LiteralInt { literal } => Expr::LiteralInt { literal },
+impl Expr {
+    fn eval(self) -> i64 {
+        use std::mem::MaybeUninit;
+
+        let mut results = std::iter::repeat_with(|| MaybeUninit::<i64>::uninit())
+            .take(self.elems.len())
+            .collect::<Vec<_>>();
+
+        fn get_result_unsafe(results: &mut Vec<MaybeUninit<i64>>, idx: ExprIdx) -> i64 {
+            unsafe {
+                let maybe_uninit =
+                    std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
+                maybe_uninit.assume_init()
+            }
+        }
+
+        for (idx, node) in self.elems.into_iter().enumerate().rev() {
+            let alg_res = {
+                // each node is only referenced once so just remove it, also we know it's there so unsafe is fine
+                match node {
+                    ExprLayer::Add { a, b } => {
+                        let a = get_result_unsafe(&mut results, a);
+                        let b = get_result_unsafe(&mut results, b);
+                        a + b
+                    }
+                    ExprLayer::Sub { a, b } => {
+                        let a = get_result_unsafe(&mut results, a);
+                        let b = get_result_unsafe(&mut results, b);
+                        a - b
+                    }
+                    ExprLayer::Mul { a, b } => {
+                        let a = get_result_unsafe(&mut results, a);
+                        let b = get_result_unsafe(&mut results, b);
+                        a * b
+                    }
+                    ExprLayer::LiteralInt { literal } => literal,
+                }
+            };
+            results[idx].write(alg_res);
+        }
+
+        unsafe {
+            let maybe_uninit =
+                std::mem::replace(results.get_unchecked_mut(0), MaybeUninit::uninit());
+            maybe_uninit.assume_init()
         }
     }
 }
 ```
 
+The problem here is that this is harder to read - imagine having to write one of these by hand, for each recursive function. It would be tedious and extremely error prone and even worse, it would require adding a bunch of `unsafe` blocks to what should be safe code.
 
 
-The problem here is that this is harder to read - we don't want to construct these by hand, because it would be tedious and error prone. Instead, we'll just create them from boxed expressions. Here's how: start with a boxed expression, unfold a single layer of structure from it, then just repeatedly unfold layers until there aren't any more layers to unfold. Feel free to skim this function, it's  only here is to demonstrate what non-elegant recursive code looks like.
+## Factoring out duplicated code
+
+Note that every arm of the above match statement (except for `LiteralInt`) calls `get_result_unsafe` in pretty much the same way. We can start by factoring that out. Less lines of code means less space for bugs. What we need here is the ability to map over `ExprLayer`'s. By map, we mean that for any `ExprLayer<A>` we want to be able to use some function `A -> B` to turn it into an `ExprLayer<B>`. This is very similar to `Option::map`, from the standard library.
+
 
 ```rust
-impl RecursiveExpr {
-    fn from_boxed(a: &ExprBoxed) -> Self {
-        let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([a]);
-        let mut elems = vec![];
+impl<A> ExprLayer<A> {
+    #[inline(always)]
+    fn map<B, F: FnMut(A) -> B>(self, mut f: F) -> ExprLayer<B> {
+        match self {
+            ExprLayer::Add { a, b } => ExprLayer::Add { a: f(a), b: f(b) },
+            ExprLayer::Sub { a, b } => ExprLayer::Sub { a: f(a), b: f(b) },
+            ExprLayer::Mul { a, b } => ExprLayer::Mul { a: f(a), b: f(b) },
+            ExprLayer::LiteralInt { literal } => ExprLayer::LiteralInt { literal },
+        }
+    }
+}
+```
 
-        // unfold to build a vec of elems while preserving topo order
-        while let Some(seed) = frontier.pop_front() {
-            let node = match seed {
-                ExprBoxed::Add { a, b } => Expr::Add { a, b },
-                ExprBoxed::Sub { a, b } => Expr::Sub { a, b },
-                ExprBoxed::Mul { a, b } => Expr::Mul { a, b },
-                ExprBoxed::LiteralInt { literal } => Expr::LiteralInt { literal: *literal },
-            };
+ If you're familiar with functional languages, this is basically just `fmap`.[^1] 
+ 
+ 
+ [^1]: If you're _really_ familiar with functional languages, you might point out that it's not _quite_ `fmap`, but that's fine for our limited use case. [^bignote]
 
-            let node = node.map(|aa| {
-                frontier.push_back(aa);
-                // idx of pointed-to element determined from frontier + elems size
-                elems.len() + frontier.len()
+
+[^bignote]: If you're not familiar with functional languages and are now wondering what `fmap` is, it's a method provided by a trait called `Functor`. It represents the ability to map a function `A -> B` over _some arbitrary structure_ - if we have a `Functor` instance for `F`, then we can map a function over `F<A>`, for _any_ `A`.  `F` could be an option, or a list, or a tree - any structure parameterized over some value. `map` provides an implementation of `fmap` (as in _f_unction map) that's specialized to `ExprLayer`. If you're curious, [read more here](http://learnyouahaskell.com/making-our-own-types-and-typeclasses#the-functor-typeclass).
+
+
+Now, we can write something like this:
+
+```rust
+impl Expr {
+    fn eval(self) -> i64 {
+        use std::mem::MaybeUninit;
+
+        let mut results = std::iter::repeat_with(|| MaybeUninit::<i64>::uninit())
+            .take(self.elems.len())
+            .collect::<Vec<_>>();
+
+        fn get_result_unsafe(results: &mut Vec<MaybeUninit<i64>>, idx: ExprIdx) -> i64 {
+            unsafe {
+                let maybe_uninit =
+                    std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
+                maybe_uninit.assume_init()
+            }
+        }
+
+        for (idx, node) in self.elems.into_iter().enumerate().rev() {
+            let node = node.map(|idx| unsafe {
+                let maybe_uninit =
+                    std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
+                maybe_uninit.assume_init()
             });
 
-            elems.push(node);
-        }
-
-        Self { elems }
-    }
-}
-```
-
-It's not exactly elegant, right? The `let node = match {...}` block defines a single recursive step, which builds a single layer of `Expr<&ExprBoxed>` structure from an `&ExprBoxed` seed value, but it's surrounded with a bunch of bookkeeping boilerplate that handles combining the layers to build a vec of `Expr<usize>`.
-
-
-Don't worry, we have a fix for this. Before we can get to that, let's look at what evaluating a a `RecursiveExpr` looks like:
-
-```rust
-impl RecursiveExpr {
-    fn eval(self) -> i64 {
-        let mut results: HashMap<usize, i64> = HashMap::with_capacity(self.elems.len());
-
-        for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            // each node is only referenced once so just remove it
-            let node = node.map(|x| results.remove(&x).expect("node not in result map"));
             let alg_res = match node {
-                Expr::Add { a, b } => a + b,
-                Expr::Sub { a, b } => a - b,
-                Expr::Mul { a, b } => a * b,
-                Expr::LiteralInt { literal } => literal,
+                ExprLayer::Add { a, b } => a + b,
+                ExprLayer::Sub { a, b } => a - b,
+                ExprLayer::Mul { a, b } => a * b,
+                ExprLayer::LiteralInt { literal } => literal,
             };
-            results.insert(idx, alg_res);
+            results[idx].write(alg_res);
         }
 
-        results.remove(&0).unwrap()
+        unsafe {
+            let maybe_uninit =
+                std::mem::replace(results.get_unchecked_mut(0), MaybeUninit::uninit());
+            maybe_uninit.assume_init()
+        }
     }
 }
 ```
 
-
-Here we fold up the expression tree from the leaves to the root, evaluating it one layer at a time and storing the results in a hash map until they are used. Since everything we're folding over is stored in a vec, in one contiguous region of memory, we don't need to worry about the overhead of traversing a bunch of pointers (I have benchmarks over a [more optimized version](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/src/recursive.rs#L138-L167) that shows a consistient 20-30% improvement over evaluating boxed `ExprBoxed` nodes).
-
-Unfortunately, it's not elegant. Once again, the logic of _how_ we fold layers of recursive structure (`Expr<i64>`) into a single value (`i64`) is combined with a bunch of boilerplate that handles the actual mechanics of recursion. 
-
-Let's fix that.
-
-# RECURSION SCHEMES
-
-The key idea here is taken from the recursion schemes idiom.  Like I said in the beginning, you don't need to know anything about that, but there's an [excellent blog post series here](https://blog.sumtypeofway.com/posts/introduction-to-recursion-schemes.html) if you're curious. All you really need to know is that in the recursion schemes idiom we factor things out so the programmer only has to provide a function that handles a single recursive step and various library internals handle performing the actual recursion by repeatedly applying it. That's what we're going to do here.
-
-Let's see what this looks like in practice:
+Ok, that's a start. Unfortunately, we still have to write all this boilerplate for _every recursive function_, even though the only part that really matters is this block:
 
 ```rust
-impl RecursiveExpr {
-    fn fold<A, F: FnMut(Expr<A>) -> A>(self, mut fold_layer: F) -> A {
-        let mut results: HashMap<usize, A> = HashMap::with_capacity(self.elems.len());
+            match node {
+                ExprLayer::Add { a, b } => a + b
+                ExprLayer::Sub { a, b } => a - b
+                ExprLayer::Mul { a, b } => a * b
+                ExprLayer::LiteralInt { literal } => literal,
+            }
+```
+
+This still results in a bunch of unsafe code scattered around. We can do better:
+
+
+## Making it generic
+
+```rust
+impl Expr {
+    fn fold<A: std::fmt::Debug, F: FnMut(ExprLayer<A>) -> A>(self, mut alg: F) -> A {
+        use std::mem::MaybeUninit;
+
+        let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
+            .take(self.elems.len())
+            .collect::<Vec<_>>();
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            // each node is only referenced once so just remove it
-            let node = node.map(|x| results.remove(&x).expect("node not in result map"));
-            let alg_res = fold_layer(node);
-            results.insert(idx, alg_res);
+            let alg_res = {
+                // each node is only referenced once so just remove it, also we know it's there so unsafe is fine
+                let node = node.map(|x| unsafe {
+                    let maybe_uninit =
+                        std::mem::replace(results.get_unchecked_mut(x.-1), MaybeUninit::uninit());
+                    maybe_uninit.assume_init()
+                });
+                alg(node)
+            };
+            results[idx].write(alg_res);
         }
 
-        results.remove(&0).unwrap()
+        unsafe {
+            let maybe_uninit =
+                std::mem::replace(results.get_unchecked_mut(ExprIdx::head().-1), MaybeUninit::uninit());
+            maybe_uninit.assume_init()
+        }
     }
 }
 ```
 
-First, we have a generic representation of folding some structure into a single value - instead of folding an `Expr<i64>` into a single `i64`, we fold some `Expr<A>` into an `A`. The code looks pretty much the same as `eval`, but it lets us factor out the mechanism of recursion.
 
-Here's what `eval` looks like using this idiom:
+Nice. Now we can write:
 
 ```rust
-impl RecursiveExpr {
+impl Expr {
     pub fn eval(self) -> i64 {
         self.fold(|expr| match expr {
-            Expr::Add { a, b } => a + b,
-            Expr::Sub { a, b } => a - b,
-            Expr::Mul { a, b } => a * b,
-            Expr::LiteralInt { literal } => literal,
+            ExprLayer::Add { a, b } => a + b,
+            ExprLayer::Sub { a, b } => a - b,
+            ExprLayer::Mul { a, b } => a * b,
+            ExprLayer::LiteralInt { literal } => literal,
         })
     }
 }
 ```
 
-It's pretty much the same logic as the previous `eval` functions, without any of the boilerplate. Since there's less boilerplate, it's easier to review and there's less room for bugs. In fact, it actually contains slightly less boilerplate than the eval function we wrote for `ExprBoxed::eval` because it doesn't have to handle recursively calling itself. Also, it retains all the performance benefits of the previous `eval` implementation - it's both more elegant and more performant than the traditional representation of recursive expression trees in rust. I think that's neat.
+It's pretty much the same logic as the original `eval` functions, without any of the boilerplate. Since there's less boilerplate, it's easier to review and there's less room for bugs. In fact, it actually contains slightly less boilerplate than the eval function we wrote for `ExprBoxed::eval` because it doesn't have to handle recursively calling itself. Also, it retains all the performance benefits of the previous `eval` implementation - it's both more elegant and more performant than the traditional representation of recursive expression trees in rust. I think that's neat.
 
 
+# Constructing Exprs
+
+I promised I'd show you how to generate expression trees before, and here's how:
+Just as before, we _could_ write a function that generates expression trees with the logic of _how_ we generate some structure interleaved with the machinery that handles generating layers. Let's do that, as a starting point. Here's what it looks like without `map`:
 
 ```rust
-impl RecursiveExpr {
-    fn unfold<A, F: Fn(A) -> Expr<A>>(a: A, unfold_layer: F) -> Self {
-        let mut frontier = VecDeque::from([a]);
+impl Expr {
+    fn generate_from_boxed(seed: &ExprBoxed) -> Self {
+        let mut frontier: VecDeque<&ExprBoxed> = VecDeque::new();
         let mut elems = vec![];
 
-        // unfold to build a vec of elems while preserving topo order
-        while let Some(seed) = frontier.pop_front() {
-            let node = unfold_layer(seed);
+        fn push_to_frontier<'a>(
+            elems: &Vec<ExprLayer<ExprIdx>>,
+            frontier: &mut VecDeque<&'a ExprBoxed>,
+            a: &'a ExprBoxed,
+        ) -> ExprIdx {
+            frontier.push_back(a);
+            // idx of pointed-to element determined from frontier + elems size
+            ExprIdx(elems.len() + frontier.len())
+        }
 
-            let node = node.map(|aa| {
-                frontier.push_back(aa);
+        push_to_frontier(&elems, &mut frontier, seed);
+
+        // generate to build a vec of elems while preserving topo order
+        while let Some(seed) = { frontier.pop_front() } {
+            let node = match seed {
+                ExprBoxed::Add { a, b } => {
+                    let a = push_to_frontier(&elems, &mut frontier, a);
+                    let b = push_to_frontier(&elems, &mut frontier, b);
+                    ExprLayer::Add { a, b }
+                }
+                ExprBoxed::Sub { a, b } => {
+                    let a = push_to_frontier(&elems, &mut frontier, a);
+                    let b = push_to_frontier(&elems, &mut frontier, b);
+                    ExprLayer::Sub { a, b }
+                }
+                ExprBoxed::Mul { a, b } => {
+                    let a = push_to_frontier(&elems, &mut frontier, a);
+                    let b = push_to_frontier(&elems, &mut frontier, b);
+                    ExprLayer::Mul { a, b }
+                }
+                ExprBoxed::LiteralInt { literal } => {
+                    // no more nodes to explore
+                    ExprLayer::LiteralInt { literal: *literal }
+                }
+            };
+
+            elems.push(node);
+        }
+
+        Self { elems }
+    }
+}
+```
+
+## Factoring out duplicated code
+
+Just as before, we can clean it up a bit if we use `map`:
+
+```rust
+impl Expr {
+    fn generate_from_boxed(seed: &ExprBoxed) -> Self {
+        let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([seed]);
+        let mut elems = vec![];
+
+        // generate to build a vec of elems while preserving topo order
+        while let Some(seed) = { frontier.pop_front() } {
+            let node = match seed {
+                ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
+                ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
+                ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
+                ExprBoxed::LiteralInt { literal } => ExprLayer::LiteralInt { literal: *literal },
+            };
+            let node = node.map(|seed| {
+                frontier.push_back(seed);
                 // idx of pointed-to element determined from frontier + elems size
-                elems.len() + frontier.len()
+                ExprIdx(elems.len() + frontier.len())
             });
 
             elems.push(node);
@@ -248,24 +404,62 @@ impl RecursiveExpr {
 }
 ```
 
-Here we have a generic representation of unfolding some structure from a single value - instead of unfolding a single layer of `Expr<&ExprBoxed>` structure from an `&ExprBoxed` seed value, we unfold some `A` into an `Expr<A>`. As with `fold`, the code looks pretty much the same as `from_boxed`, just with the specific unfold logic factored out.
+## Making it generic
+
+That's better, but just as with `fold`, we only really care about the `match` expression here:
+
+```rust
+            let node = match seed {
+                ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
+                ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
+                ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
+                ExprBoxed::LiteralInt { literal } => ExprLayer::LiteralInt { literal: *literal },
+            };
+```
+
+Fortunately, just as with `fold`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
 
 
 ```rust
 impl RecursiveExpr {
-    pub fn from_boxed(e: &ExprBoxed) -> Self {
-        Self::unfold(e, |seed| match seed {
-            ExprBoxed::Add { a, b } => Expr::Add { a, b },
-            ExprBoxed::Sub { a, b } => Expr::Sub { a, b },
-            ExprBoxed::Mul { a, b } => Expr::Mul { a, b },
-            ExprBoxed::LiteralInt { literal } => Expr::LiteralInt { literal: *literal },
+    fn generate<A, F: Fn(A) -> Expr<A>>(seed: A, generate_layer: F) -> Self {
+        let mut frontier = VecDeque::from([seed]);
+        let mut elems = vec![];
+
+        // repeatedly generate nodes to build a vec of elems while preserving topo order
+        while let Some(seed) = frontier.pop_front() {
+            let node = generate_layer(seed);
+
+            let node = node.map(|seed| {
+                frontier.push_back(seed);
+                // idx of pointed-to element determined from frontier + elems size
+                ExprIdx(elems.len() + frontier.len())
+            });
+
+            elems.push(node);
+        }
+
+        Self { elems }
+    }
+}
+```
+
+This lets us write `generate_from_boxed` as:
+
+```rust
+impl Expr {
+    pub fn generate_from_boxed(ast: &ExprBoxed) -> Self {
+        Self::generate(ast, |seed| match seed {
+            ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
+            ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
+            ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
+            ExprBoxed::LiteralInt { literal } => ExprLayer::LiteralInt { literal: *literal },
         })
     }
 }
 ```
 
-Here's what `RecursiveExpr::from_boxed` looks like as written using `unfold`. Just as before, there's almost no boilerplate, the body of the function is almost entirely taken up by the logic of unfolding.
-
+Nice and, as promised, elegant.
 
 # Testing for Correctness
 
@@ -274,13 +468,13 @@ I used proptest to test this code for correctness. It generates many expression 
 This actually helped me find a bug! In my first implementation of `unfold`, I used a stack instead of a queue for the frontier, which ended up mangling the order of the expression tree. Since proptest is awesome, it not only found this bug but reduced the failing test case to `Add (0, Sub(0, 1))`.
 
 ```rust
-// generate a bunch of expression trees and evaluate them via each method
+// generate a bunch of expression trees and evaluate them via each method (TODO: added new methods, test those too)
 #[cfg(test)]
 proptest! {
     #[test]
     fn expr_eval(boxed_expr in arb_expr()) {
         let eval_boxed = boxed_expr.eval();
-        let eval_via_fold = RecursiveExpr::from_boxed(&boxed_expr).eval();
+        let eval_via_fold = RecursiveExpr::generate_from_boxed(&boxed_expr).eval();
 
         assert_eq!(eval_boxed, eval_via_fold);
     }
@@ -316,6 +510,8 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 # Testing for performance
 
+TODO: get numbers from rain's box I guess, laptop is a bit shite for this
+
 For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recusive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
 
 
@@ -332,7 +528,7 @@ Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating a
 
 # To be continued
 
-We started with a simplified non-generic version of this algorithm to build understanding. In future blog posts, I plan on showing how I made it generic, how I optimized it for performance (`MaybeUninit` absolutely slaps), and how I used it to implement an async file tree search tool using `tokio::fs`.
+We started with a simplified non-generic version of this algorithm to build understanding. In future blog posts, I plan on showing how I made it generic, going into more detail on how I optimized it for performance (`MaybeUninit` absolutely slaps, as do stack machines), and how I used it to implement an async file tree search tool using `tokio::fs`.
 
 # Thank you
 
