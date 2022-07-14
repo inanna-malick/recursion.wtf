@@ -115,7 +115,7 @@ idx_0:    Mul(1_idx, 2_idx)
 idx_1:    LiteralInt(1)
 idx_2:    Sub(idx_3, idx_4)
 idx_3:    LiteralInt(2)
-idx_4:    LitearlInt(3)
+idx_4:    LiteralInt(3)
 ]
 ```
 
@@ -218,13 +218,6 @@ impl Expr {
             .take(self.elems.len())
             .collect::<Vec<_>>();
 
-        fn get_result_unsafe(results: &mut Vec<MaybeUninit<i64>>, idx: ExprIdx) -> i64 {
-            unsafe {
-                let maybe_uninit =
-                    std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
-                maybe_uninit.assume_init()
-            }
-        }
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
             let node = node.map(|idx| unsafe {
@@ -244,7 +237,7 @@ impl Expr {
 
         unsafe {
             let maybe_uninit =
-                std::mem::replace(results.get_unchecked_mut(0), MaybeUninit::uninit());
+                std::mem::replace(results.get_unchecked_mut(ExprIdx::head().0), MaybeUninit::uninit());
             maybe_uninit.assume_init()
         }
     }
