@@ -108,8 +108,7 @@ pub struct Expr {
 
 ```
 
-
-Here's a sketch showing what the `Mul(1, Sub(2, 3))` expression would look like using this data structure.
+Ok, so all our expressions are now guaranteed to be stored in local memory. Here's a sketch showing what the `Mul(1, Sub(2, 3))` expression would look like using this data structure.
 
 ```
 [
@@ -121,7 +120,11 @@ idx_4:    LiteralInt(3)
 ]
 ```
 
-Ok, so all our expressions are now guaranteed to be stored in local memory. Let's see what evaluating this structure looks like. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures as compared to recursing over boxed expressions. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
+It's stored in topographical-sorted order, which means that for each node, all of that node's child nodes are stored at indices higher than it is. This means that, by traversing it in reverse order, we can perform bottom-up recursion - folding leaf values into their parents, one `ExprLayer` at a time, until the entire `Expr` is folded into a single value. Since it's in topo order, we're guaranteed to never encounter a node before processing all of its children.
+
+
+
+ Let's see what evaluating this structure looks like in practice. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures as compared to recursing over boxed expressions. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
 
 ```rust
 impl Expr {
