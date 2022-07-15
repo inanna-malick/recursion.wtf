@@ -25,7 +25,7 @@ I think that's neat.
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. You've probably seen something like this before, but if not, it's just a way to represent simple arithmetic as a tree of expressions. For example, an expression like `1 * 2 - 3` would be written as (pseudocode) `Mul(1, Sub(2, 3))`.
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. You've probably seen something like this before, but if not, it's just a way to represent simple arithmetic as a tree of expressions. For example, an expression like `1 * (2 - 3)` would be written as (pseudocode) `Mul(1, Sub(2, 3))`.
 
 ```rust
 #[derive(Debug, Clone)]
@@ -48,7 +48,9 @@ pub enum ExprBoxed {
 }
 ```
 
-This is a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar with boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html). Using this data structure, we can write `Mul(1, Sub(2, 3))` as:
+This is a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar with boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. (If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html))
+
+Using this data structure, we can write `Mul(1, Sub(2, 3))` as:
 
 
 ```rust
@@ -77,7 +79,11 @@ impl ExprBoxed {
 }
 ```
 
-It has some issues: if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures. Also, each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory. If you're not sure what I mean by cache locality, or you want much more information on it than I can provide, there's a great rust performance optimization resource [here](https://gist.github.com/kvark/f067ba974446f7c5ce5bd544fe370186#keep-as-much-as-possible-in-cache).
+It has some issues: 
+- if we try to evaluate a sufficiently large expression it will fail with a stack overflow - we're not likely to hit that case here, but this is a real problem when working with larger recursive data structures.
+- Each recursive `eval` call requires us to traverse a boxed pointer. This means we can't take advantage of cache locality - there's no guarantee that all these boxed pointers live in the same region of memory. [^bignote_cache]
+
+[^bignote_cache]: If you're not sure what I mean by cache locality, or you want much more information on it than I can provide, there's a great rust performance optimization resource [here](https://gist.github.com/kvark/f067ba974446f7c5ce5bd544fe370186#keep-as-much-as-possible-in-cache).
 
 
 ## A more cache local structure
@@ -101,7 +107,7 @@ impl ExprIdx {
     }
 }
 
-pub struct Expr {
+pub struct ExprTopo {
     // nonempty, in topological-sorted order. guaranteed via construction.
     elems: Vec<ExprLayer<ExprIdx>>,
 }
@@ -120,14 +126,13 @@ idx_4:    LiteralInt(3)
 ]
 ```
 
-It's stored in topographical-sorted order, which means that for each node, all of that node's child nodes are stored at indices higher than it is. This means that, by traversing it in reverse order, we can perform bottom-up recursion - folding leaf values into their parents, one `ExprLayer` at a time, until the entire `Expr` is folded into a single value. Since it's in topo order, we're guaranteed to never encounter a node before processing all of its children.
+The nodes are stored in [topological order](https://en.wikipedia.org/wiki/Topological_sorting), which means that for each node, all of its child nodes are stored at larger indices. Since we have a topo order, we can perform bottom-up recursion - folding leaf values into their parents, one `ExprLayer` at a time, until the entire `ExprTopo` is folded into a single value, just by iterating over the element vector in reverse order.
 
 
-
- Let's see what evaluating this structure looks like in practice. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures as compared to recursing over boxed expressions. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
+ Let's see what evaluating this structure looks like in practice. It's not elegant. There's a bunch of `unsafe` code, but it _does_ have better performance in criterion benchmarks. Feel free to skim; in the next section we'll introduce an elegant API that removes the need to write `unsafe` code.
 
 ```rust
-impl Expr {
+impl ExprTopo {
     fn eval(self) -> i64 {
         use std::mem::MaybeUninit;
 
@@ -144,7 +149,7 @@ impl Expr {
         }
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            let alg_res = {
+            let result = {
                 // each node is only referenced once so just remove it, also we know it's there so unsafe is fine
                 match node {
                     ExprLayer::Add { a, b } => {
@@ -165,7 +170,7 @@ impl Expr {
                     ExprLayer::LiteralInt { literal } => literal,
                 }
             };
-            results[idx].write(alg_res);
+            results[idx].write(result);
         }
 
         unsafe {
@@ -177,12 +182,17 @@ impl Expr {
 }
 ```
 
-The problem here is that this is harder to read - imagine having to write one of these by hand, for each recursive function. It would be tedious and extremely error prone and even worse, it would require adding a bunch of `unsafe` blocks to what should be safe code.
+The problem here is that this is harder to read - imagine having to write all of this by hand, for each recursive function. It would be tedious at best and error prone at worse.
 
 
 ## Factoring out duplicated code
 
-Note that every arm of the above match statement (except for `LiteralInt`) calls `get_result_unsafe` in pretty much the same way. We can start by factoring that out. Less lines of code means less space for bugs. What we need here is the ability to map over `ExprLayer`'s. By map, we mean that for any `ExprLayer<A>` we want to be able to use some function `A -> B` to turn it into an `ExprLayer<B>`. This is very similar to `Option::map`, from the standard library.
+Every arm of the above match statement (except for `LiteralInt`) calls `get_result_unsafe` in pretty much the same way. We can start by factoring that out.
+
+// NOTE: phrasing is 'too haskell', rain says, rewrite following paragraph:
+
+
+What we need here is the ability to map over `ExprLayer`'s. By map, we mean that for any `ExprLayer<A>` we want to be able to use some function `A -> B` to turn it into an `ExprLayer<B>` (this is very similar to `Option::map`, in the standard library).
 
 
 ```rust
@@ -211,7 +221,7 @@ impl<A> ExprLayer<A> {
 Now, we can write something like this:
 
 ```rust
-impl Expr {
+impl ExprTopo {
     fn eval(self) -> i64 {
         use std::mem::MaybeUninit;
 
@@ -221,19 +231,19 @@ impl Expr {
 
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            let node: Expr<i64> = node.map(|idx| unsafe {
+            let node: ExprLayer<i64> = node.map(|idx| unsafe {
                 let maybe_uninit =
                     std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
                 maybe_uninit.assume_init()
             });
 
-            let alg_res = match node {
+            let result = match node {
                 ExprLayer::Add { a, b } => a + b,
                 ExprLayer::Sub { a, b } => a - b,
                 ExprLayer::Mul { a, b } => a * b,
                 ExprLayer::LiteralInt { literal } => literal,
             };
-            results[idx].write(alg_res);
+            results[idx].write(result);
         }
 
         unsafe {
@@ -251,7 +261,7 @@ impl Expr {
 Ok, that's a start. Unfortunately, we still have to write all this boilerplate for _every recursive function_, even though the only part that really matters is this block:
 
 ```rust
-let alg_res = match node {
+let result = match node {
     ExprLayer::Add { a, b } => a + b
     ExprLayer::Sub { a, b } => a - b
     ExprLayer::Mul { a, b } => a * b
@@ -259,11 +269,11 @@ let alg_res = match node {
 }
 ```
 
-The above block of code takes  `node`, a value of type `ExprLayer<i64>`, and consumes it to create `alg_res`, a value of type `i64`. What if, instead of `ExprLayer<i64> -> i64`, we use a function of type `ExprLayer<A> -> A`? 
+This code takes  `node`, a value of type `ExprLayer<i64>`, and consumes it to create `result`, a value of type `i64`. What if, instead of `ExprLayer<i64> -> i64`, we use a function of type `ExprLayer<A> -> A`? 
 
 ```rust
-impl Expr {
-    fn fold<A: std::fmt::Debug, F: FnMut(ExprLayer<A>) -> A>(self, mut alg: F) -> A {
+impl ExprTopo {
+    fn fold<A: std::fmt::Debug, F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
         use std::mem::MaybeUninit;
 
         let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
@@ -271,16 +281,16 @@ impl Expr {
             .collect::<Vec<_>>();
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            let alg_res = {
+            let result = {
                 // each node is only referenced once so just remove it, also we know it's there so unsafe is fine
                 let node = node.map(|x| unsafe {
                     let maybe_uninit =
                         std::mem::replace(results.get_unchecked_mut(x.-1), MaybeUninit::uninit());
                     maybe_uninit.assume_init()
                 });
-                alg(node)
+                fold_layer(node)
             };
-            results[idx].write(alg_res);
+            results[idx].write(result);
         }
 
         unsafe {
@@ -295,7 +305,7 @@ impl Expr {
 Nice. Now we can write:
 
 ```rust
-impl Expr {
+impl ExprTopo {
     pub fn eval(self) -> i64 {
         self.fold(|expr| match expr {
             ExprLayer::Add { a, b } => a + b,
@@ -307,71 +317,15 @@ impl Expr {
 }
 ```
 
-It's pretty much the same logic as the original `eval` functions, without any of the boilerplate. Since there's less boilerplate, it's easier to review and there's less room for bugs. In fact, it actually contains slightly less boilerplate than the eval function we wrote for `ExprBoxed::eval` because it doesn't have to handle recursively calling itself. Also, it retains all the performance benefits of the previous `eval` implementation - it's both more elegant and more performant than the traditional representation of recursive expression trees in rust. I think that's neat.
+It's pretty much the same logic as the original `eval` functions, without any of the boilerplate. Since there's less boilerplate, it's easier to review and there's less room for bugs. Also, it retains all the performance benefits of the previous `eval` implementation - it's both more elegant and more performant than the traditional representation of recursive expression trees in rust. I think that's neat.
 
 
 # Constructing Exprs
 
-// TODO rewrite this
-
-Just as before, we _could_ write a function that generates expression trees with the logic of _how_ we generate some structure interleaved with the machinery that handles generating layers. Let's do that, as a starting point. As before, feel free to skim:
+Let's write a function to generate `ExprTopo` values from the `ExprBoxed` representation:
 
 ```rust
-impl Expr {
-    fn generate_from_boxed(seed: &ExprBoxed) -> Self {
-        let mut frontier: VecDeque<&ExprBoxed> = VecDeque::new();
-        let mut elems = vec![];
-
-        fn push_to_frontier<'a>(
-            elems: &Vec<ExprLayer<ExprIdx>>,
-            frontier: &mut VecDeque<&'a ExprBoxed>,
-            a: &'a ExprBoxed,
-        ) -> ExprIdx {
-            frontier.push_back(a);
-            // idx of pointed-to element determined from frontier + elems size
-            ExprIdx(elems.len() + frontier.len())
-        }
-
-        push_to_frontier(&elems, &mut frontier, seed);
-
-        // generate to build a vec of elems while preserving topo order
-        while let Some(seed) = { frontier.pop_front() } {
-            let node = match seed {
-                ExprBoxed::Add { a, b } => {
-                    let a = push_to_frontier(&elems, &mut frontier, a);
-                    let b = push_to_frontier(&elems, &mut frontier, b);
-                    ExprLayer::Add { a, b }
-                }
-                ExprBoxed::Sub { a, b } => {
-                    let a = push_to_frontier(&elems, &mut frontier, a);
-                    let b = push_to_frontier(&elems, &mut frontier, b);
-                    ExprLayer::Sub { a, b }
-                }
-                ExprBoxed::Mul { a, b } => {
-                    let a = push_to_frontier(&elems, &mut frontier, a);
-                    let b = push_to_frontier(&elems, &mut frontier, b);
-                    ExprLayer::Mul { a, b }
-                }
-                ExprBoxed::LiteralInt { literal } => {
-                    // no more nodes to explore
-                    ExprLayer::LiteralInt { literal: *literal }
-                }
-            };
-
-            elems.push(node);
-        }
-
-        Self { elems }
-    }
-}
-```
-
-## Factoring out duplicated code
-
-We can clean things up a bit if we use `map`:
-
-```rust
-impl Expr {
+impl ExprTopo {
     fn generate_from_boxed(seed: &ExprBoxed) -> Self {
         let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([seed]);
         let mut elems = vec![];
@@ -400,7 +354,7 @@ impl Expr {
 
 ## Making it generic
 
-That's better, but just as with `fold`, we only really care about the `match` expression here:
+Just as with `fold`, we only really care about the `match` expression here:
 
 ```rust
 let node = match seed {
@@ -411,7 +365,7 @@ let node = match seed {
 };
 ```
 
-The above block of code takes  `seed`, a value of type `i64`, and consumes it to create `node`, a value of type `ExprLayer<i64>`. What if, instead of `i64 -> ExprLayer<i64>`, we use a function of type `A -> ExprLayer<A>`? 
+This `seed`, a value of type `i64`, and consumes it to create `node`, a value of type `ExprLayer<i64>`. What if, instead of `i64 -> ExprLayer<i64>`, we use a function of type `A -> ExprLayer<A>`? 
 
 
 Fortunately, just as with `fold`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
@@ -444,7 +398,7 @@ impl RecursiveExpr {
 This lets us write `generate_from_boxed` as:
 
 ```rust
-impl Expr {
+impl ExprTopo {
     pub fn generate_from_boxed(ast: &ExprBoxed) -> Self {
         Self::generate(ast, |seed| match seed {
             ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
