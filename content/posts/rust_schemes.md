@@ -322,7 +322,7 @@ It's pretty much the same logic as the original `eval` functions, without any of
 
 # Constructing Exprs
 
-Let's write a function to generate `ExprTopo` values from the `ExprBoxed` representation:
+Let's write a function to generate `ExprTopo` values from the `ExprBoxed` representation. Just as before, `map` helps us keep it concise:
 
 ```rust
 impl ExprTopo {
@@ -365,14 +365,14 @@ let node = match seed {
 };
 ```
 
-This `seed`, a value of type `i64`, and consumes it to create `node`, a value of type `ExprLayer<i64>`. What if, instead of `i64 -> ExprLayer<i64>`, we use a function of type `A -> ExprLayer<A>`? 
+This matches on `seed`, a value of type `i64`, and consumes it to create `node`, a value of type `ExprLayer<i64>`. What if, instead of `i64 -> ExprLayer<i64>`, we use a function of type `A -> ExprLayer<A>`? 
 
 
 Fortunately, just as with `fold`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
 
 
 ```rust
-impl RecursiveExpr {
+impl ExprTopo {
     fn generate<A, F: Fn(A) -> Expr<A>>(seed: A, generate_layer: F) -> Self {
         let mut frontier = VecDeque::from([seed]);
         let mut elems = vec![];
@@ -425,7 +425,7 @@ proptest! {
     #[test]
     fn expr_eval(boxed_expr in arb_expr()) {
         let eval_boxed = boxed_expr.eval();
-        let eval_via_fold = RecursiveExpr::generate_from_boxed(&boxed_expr).eval();
+        let eval_via_fold = ExprTopo::generate_from_boxed(&boxed_expr).eval();
 
         assert_eq!(eval_boxed, eval_via_fold);
     }
@@ -463,7 +463,7 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 TODO: get numbers from rain's box I guess, laptop is a bit shite for this
 
-For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recursive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
+For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs `ExprTopo::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recursive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
 
 
 
@@ -475,7 +475,7 @@ For performance testing, we used criterion to benchmark the simple `ExprBoxed::e
 </pre>
 
 
-Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating an expression stored in our `RecursiveExpr` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results. The standard boxed method is slightly more efficient for expression trees of size 256 or less. That said, this test provides pretty much optimal conditions with regard to pointer locality, because there are no other heap allocations to fragment things and force the boxed pointers to use different regions of memory.
+Evaluating a boxed expression of size  takes an average 785.41 µs. Evaluating an expression stored in our `ExprTopo` takes an average of 559.22 µs. That's a 28% improvement. Running these tests with expression trees of different depths generated via the above method yields similar results. The standard boxed method is slightly more efficient for expression trees of size 256 or less. That said, this test provides pretty much optimal conditions with regard to pointer locality, because there are no other heap allocations to fragment things and force the boxed pointers to use different regions of memory.
 
 # To be continued
 
