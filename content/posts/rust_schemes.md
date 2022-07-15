@@ -25,7 +25,7 @@ I think that's neat.
 # Evaluating an expression language
 
 
-We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. This is a naive representation of a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar with boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html).
+We're going to start with a simple expression language: addition, subtraction, multiplication, just enough to illustrate some concepts. You've probably seen something like this before, but if not, it's just a way to represent simple arithmetic as a tree of expressions. For example, an expression like `1 * 2 - 3` would be written as (pseudocode) `Mul(1, Sub(2, 3))`.
 
 ```rust
 #[derive(Debug, Clone)]
@@ -48,16 +48,17 @@ pub enum ExprBoxed {
 }
 ```
 
-You've probably seen something like this before, but if not, it's just a way to represent simple arithmetic. For example, an expression like `1 * 2 - 3` would be written as (pseudocode) `Mul(1, Sub(2, 3))` or (actual code) this:
+This is a recursive expression language that uses boxed pointers to handle the recursive case. If you're not familiar with boxed pointers, a `Box<A>` is just the Rust way of storing a pointer to some value of type `A` - think of it as a box with a value of type `A` inside it. If you're curious, there's [more documentation here](https://doc.rust-lang.org/std/boxed/index.html). Using this data structure, we can write `Mul(1, Sub(2, 3))` as:
+
 
 ```rust
-    ExprBoxed::Mul {
-        a: Box::new(ExprBoxed::LiteralInt { literal: 1 }),
-        b: Box::new(ExprBoxed::Sub {
-            a: Box::new(ExprBoxed::LiteralInt { literal: 2 }),
-            b: Box::new(ExprBoxed::LiteralInt { literal: 3 }),
-        }),
-    }
+ExprBoxed::Mul {
+    a: Box::new(ExprBoxed::LiteralInt { literal: 1 }),
+    b: Box::new(ExprBoxed::Sub {
+        a: Box::new(ExprBoxed::LiteralInt { literal: 2 }),
+        b: Box::new(ExprBoxed::LiteralInt { literal: 3 }),
+    }),
+}
 ```
 
 
@@ -108,7 +109,8 @@ pub struct Expr {
 ```
 
 
-Here's a sketch showing what the `1 * 2 - 3` expression looks like using this.
+Here's a sketch showing what the `Mul(1, Sub(2, 3))` expression would look like using this data structure.
+
 ```
 [
 idx_0:    Mul(1_idx, 2_idx)
@@ -119,11 +121,7 @@ idx_4:    LiteralInt(3)
 ]
 ```
 
-We're going to show how to generate these later, for now let's focus on evaluating expression trees stored in this format
-
-## Optimizing for performance
-
-Ok, so all our expressions are now guaranteed to be stored in local memory. Let's see what evaluating this structure looks like. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
+Ok, so all our expressions are now guaranteed to be stored in local memory. Let's see what evaluating this structure looks like. A warning, in advance. It's not elegant. There's a bunch of `unsafe` code. But it _does_ have better performance in criterion benchmarks over large recursive structures as compared to recursing over boxed expressions. Feel free to skim this without fully examining it, in the next section we'll introduce a nice clean elegant API that removes the need to write `unsafe` code just to evaluate an expression tree.
 
 ```rust
 impl Expr {
@@ -220,7 +218,7 @@ impl Expr {
 
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
-            let node = node.map(|idx| unsafe {
+            let node: Expr<i64> = node.map(|idx| unsafe {
                 let maybe_uninit =
                     std::mem::replace(results.get_unchecked_mut(idx.0), MaybeUninit::uninit());
                 maybe_uninit.assume_init()
@@ -244,21 +242,21 @@ impl Expr {
 }
 ```
 
+
+## Making it generic
+
 Ok, that's a start. Unfortunately, we still have to write all this boilerplate for _every recursive function_, even though the only part that really matters is this block:
 
 ```rust
-            match node {
-                ExprLayer::Add { a, b } => a + b
-                ExprLayer::Sub { a, b } => a - b
-                ExprLayer::Mul { a, b } => a * b
-                ExprLayer::LiteralInt { literal } => literal,
-            }
+let alg_res = match node {
+    ExprLayer::Add { a, b } => a + b
+    ExprLayer::Sub { a, b } => a - b
+    ExprLayer::Mul { a, b } => a * b
+    ExprLayer::LiteralInt { literal } => literal,
+}
 ```
 
-This still results in a bunch of unsafe code scattered around. We can do better:
-
-
-## Making it generic
+The above block of code takes  `node`, a value of type `ExprLayer<i64>`, and consumes it to create `alg_res`, a value of type `i64`. What if, instead of `ExprLayer<i64> -> i64`, we use a function of type `ExprLayer<A> -> A`? 
 
 ```rust
 impl Expr {
@@ -291,7 +289,6 @@ impl Expr {
 }
 ```
 
-
 Nice. Now we can write:
 
 ```rust
@@ -312,8 +309,9 @@ It's pretty much the same logic as the original `eval` functions, without any of
 
 # Constructing Exprs
 
-I promised I'd show you how to generate expression trees before, and here's how:
-Just as before, we _could_ write a function that generates expression trees with the logic of _how_ we generate some structure interleaved with the machinery that handles generating layers. Let's do that, as a starting point. Here's what it looks like without `map`:
+// TODO rewrite this
+
+Just as before, we _could_ write a function that generates expression trees with the logic of _how_ we generate some structure interleaved with the machinery that handles generating layers. Let's do that, as a starting point. As before, feel free to skim:
 
 ```rust
 impl Expr {
@@ -367,7 +365,7 @@ impl Expr {
 
 ## Factoring out duplicated code
 
-Just as before, we can clean it up a bit if we use `map`:
+We can clean things up a bit if we use `map`:
 
 ```rust
 impl Expr {
@@ -402,13 +400,16 @@ impl Expr {
 That's better, but just as with `fold`, we only really care about the `match` expression here:
 
 ```rust
-            let node = match seed {
-                ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
-                ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
-                ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
-                ExprBoxed::LiteralInt { literal } => ExprLayer::LiteralInt { literal: *literal },
-            };
+let node = match seed {
+    ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
+    ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
+    ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
+    ExprBoxed::LiteralInt { literal } => ExprLayer::LiteralInt { literal: *literal },
+};
 ```
+
+The above block of code takes  `seed`, a value of type `i64`, and consumes it to create `node`, a value of type `ExprLayer<i64>`. What if, instead of `i64 -> ExprLayer<i64>`, we use a function of type `A -> ExprLayer<A>`? 
+
 
 Fortunately, just as with `fold`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
 
@@ -505,7 +506,7 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 TODO: get numbers from rain's box I guess, laptop is a bit shite for this
 
-For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recusive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
+For performance testing, we used criterion to benchmark the simple `ExprBoxed::eval` vs our `RecursiveExpr::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recursive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
 
 
 
