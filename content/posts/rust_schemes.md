@@ -9,13 +9,26 @@ showFullContent = false
 +++
 
 
-This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that. It's just an implementation detail. Instead, as motivation to read the rest of this posts, check out these sick nasty criterion benchmark results showing a 20-30% improvement over the usual method of working with recursive data structures in Rust.
+This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that. It's just an implementation detail. Instead, as motivation to read the rest of this posts, I have criterion benchmark results showing a 14-30% improvement over the usual boxed pointer traversal method of working with recursive data structures in Rust.
 
-<pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard boxed method</font>                                                                            
+# Performance test results
+
+These test results show a performance improvement of 34% for evaluating a very large expression tree (131072 elements, recursive depth 17). They were run on a 6th generation X1 carbon laptop with an intel i7-8550U with 8MB CPU cache:
+
+<pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard method</font>                                                                            
                         time:   [722.18 µs <font color="#77A8D9"><b>733.00 µs</b></font> 746.43 µs]
 
 <font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
                         time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
+</pre>
+
+The same tests, when run on an AMD Ryzen™ 9 3950X CPU with more than 64MB total cache (L1/L2/L3), still show a 14% speed improvement over the usual method.
+
+<pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard method</font>                                                                            
+                        time:   [295.76 µs <font color="#77A8D9"><b>295.89 µs</b></font> 296.03 µs]
+
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+                        time:   [250.96 µs <font color="#77A8D9"><b>251.12 µs</b></font> 251.31 µs]
 </pre>
 
 I think that's neat.
