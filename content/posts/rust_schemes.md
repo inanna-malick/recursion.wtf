@@ -11,6 +11,9 @@ showFullContent = false
 
 This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that; it's just an implementation detail. Instead, as motivation, here are some criterion benchmark results showing a 14-34% improvement over the typical boxed pointer representation of recursive data structures in Rust.
 
+
+<!--more--> 
+
 # Performance test results
 
 
@@ -33,7 +36,6 @@ The same tests, when run on an AMD Ryzen 9 3900X CPU with more than 64MB total c
 </pre>
 
 
-<!--more--> 
 
 # Evaluating an expression language
 
