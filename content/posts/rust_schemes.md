@@ -206,7 +206,7 @@ The problem here is that this is very difficult to read and write. Imagine havin
 Every arm of the above match statement (except for `LiteralInt`) calls `get_result_unsafe` in pretty much the same way. We can start by factoring that out.
 
 
-Now you can see why we made `ExprLayer<A>` parameterized over some `A`. Since it is parameterized over some `A`, we can apply a function to each `A` inside it, turning it into an `ExprLayer`<B>`. We're going to write some code that's very similar to `Option::map` in the standard library.
+Now you can see why we made `ExprLayer<A>` parameterized over some `A`. Since it is parameterized over some `A`, we can apply a function to each `A` inside it, turning it into an `ExprLayer<B>`. We're going to write some code that's very similar to `Option::map` in the standard library.
 
 
 ```rust
