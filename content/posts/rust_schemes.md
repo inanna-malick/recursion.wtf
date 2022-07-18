@@ -1,5 +1,5 @@
 +++
-title = "Elegant and performant recursion in Rust (Draft)"
+title = "Elegant and performant recursion in Rust"
 date = "2002-07-12"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
@@ -498,4 +498,4 @@ We started with a simplified non-generic version of this algorithm to build unde
 
 # Thank you
 
-Thank you to everyone that helped me write this blog post and the code that it describes (todo: ask if ppl want to be credited, and by what name/handle)
+Thank you to [Fiona Weatherwax](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), [Eliza](https://twitter.com/mycoliza) and [Gankra](https://gist.github.com/Gankra), among others, for reviewing drafts of this post.
