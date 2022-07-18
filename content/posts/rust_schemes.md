@@ -500,4 +500,4 @@ We started with a simplified non-generic version of this algorithm to build unde
 
 # Thank you
 
-Thank you to [Fiona Weatherwax](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), [Eliza](https://twitter.com/mycoliza) and [Gankra](https://gist.github.com/Gankra), among others, for reviewing drafts of this post.
+Thank you to [Fiona](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), [Eliza](https://twitter.com/mycoliza) and [Gankra](https://gist.github.com/Gankra), among others, for reviewing drafts of this post.
