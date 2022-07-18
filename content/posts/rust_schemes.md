@@ -1,11 +1,14 @@
 +++
 title = "Elegant and performant recursion in Rust"
-date = "2002-07-12"
+date = "2022-07-18"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["recursion schemes", "rust", "code"]
 keywords = ["recursion schemes", "rust", "code"]
 showFullContent = false
+images = ["/img/rust_schemes/criterion_screenshot_preview.png"]
+feature = "/img/rust_schemes/criterion_screenshot_preview.png"
+thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
 
