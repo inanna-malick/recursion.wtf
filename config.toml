@@ -32,6 +32,9 @@ paginate = 5
   # it's set to `true` by default
   # oneHeadingSize = false
 
+[markup.goldmark.extensions]
+  typographer = false
+
 [markup.goldmark.renderer]
   unsafe= true
 
@@ -70,3 +73,7 @@ paginate = 5
         identifier = "twitter"
         name = "Twitter"
         url = "https://twitter.com/inanna_malick"
+
+
+[blackfriday]
+ smartypants = false
