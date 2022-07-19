@@ -12,7 +12,7 @@ thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
 
-This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that; it's just an implementation detail. Instead, as motivation, here are some criterion benchmark results showing a 14-34% improvement over the typical boxed pointer representation of recursive data structures in Rust.
+This is a post about writing elegant and performant recursive algorithms in Rust. It makes heavy use of a pattern from Haskell called recursion schemes, but you don't need to know anything about that; it's just an implementation detail. Instead, as motivation, I have benchmarks showing a 14-34% improvement over the typical boxed pointer representation of recursive data structures in Rust.
 
 
 <!--more--> 
