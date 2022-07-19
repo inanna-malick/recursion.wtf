@@ -304,7 +304,7 @@ impl ExprTopo {
             let result = {
                 let layer = layer.map(|x| unsafe {
                     let maybe_uninit =
-                        std::mem::replace(results.get_unchecked_mut(x.-1), MaybeUninit::uninit());
+                        std::mem::replace(results.get_unchecked_mut(x.0), MaybeUninit::uninit());
                     maybe_uninit.assume_init()
                 });
                 fold_layer(layer)
@@ -314,7 +314,7 @@ impl ExprTopo {
 
         unsafe {
             let maybe_uninit =
-                std::mem::replace(results.get_unchecked_mut(ExprIdx::head().-1), MaybeUninit::uninit());
+                std::mem::replace(results.get_unchecked_mut(ExprIdx::head().0), MaybeUninit::uninit());
             maybe_uninit.assume_init()
         }
     }
