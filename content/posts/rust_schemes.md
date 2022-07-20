@@ -137,7 +137,7 @@ All our expressions are now guaranteed to be stored in local memory. Here's a sk
 
 ```
 [
-idx_0:    Mul(1_idx, 2_idx)
+idx_0:    Mul(idx_1, idx_2)
 idx_1:    LiteralInt(1)
 idx_2:    Sub(idx_3, idx_4)
 idx_3:    LiteralInt(2)
