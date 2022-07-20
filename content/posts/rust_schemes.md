@@ -392,7 +392,7 @@ Fortunately, just as with `fold`, we can separate the machinery of recursion fro
 
 ```rust
 impl ExprTopo {
-    fn generate<A, F: Fn(A) -> Expr<A>>(seed: A, generate_layer: F) -> Self {
+    fn generate<A, F: Fn(A) -> ExprLayer<A>>(seed: A, generate_layer: F) -> Self {
         let mut frontier = VecDeque::from([seed]);
         let mut elems = vec![];
 
