@@ -433,7 +433,7 @@ Nice and, as promised, elegant.
 
 # Testing for Correctness
 
-I used [proptest]() to test this code for correctness. It generates many expression trees, each of which is evaluated via both `eval` methods. I then assert that they have the same result. [^rain_is_awesome]
+I used [proptest](https://lib.rs/crates/proptest) to test this code for correctness. It generates many expression trees, each of which is evaluated via both `eval` methods. I then assert that they have the same result. [^rain_is_awesome]
 
 
 [^rain_is_awesome]: I learned this technique from my partner [Rain](https://sunshowers.io/)
