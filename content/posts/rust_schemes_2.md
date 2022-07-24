@@ -33,7 +33,10 @@ It's generic in one way - it can take any function `ExprLayer<A> -> A` and use i
 
 # A more Generic collapse 
 
-We're going to start by renaming `fold` to `collapse`, because the function name `fold` is already used by the core `core::std::Iterator` trait, which results in confusing type errors. Here's what we're: 
+We're going to start by renaming `fold` to `collapse`[^why_rename_collapse] and defining a trait `Collapse`:
+
+
+[^why_rename_collapse]: because the function name `fold` is already used by the core `core::std::Iterator` trait, which results in confusing type errors. Thi looks like: 
 
 ```rust
 /// Support for collapsing a structure into a single value, one layer at a time
@@ -42,9 +45,13 @@ pub trait Collapse<A, Wrapped> {
 }
 ```
 
-In a perfect word, we could parameterize this over a single type (such as `ExprLayer`), but in Rust all types need to be fully applied. Still, it's best understood as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`. `A` is just the type we're collapsing the structure down into. Here's a link to this trait in the crate documentation.
+This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the structure down into. Here's a link to this trait in the crate documentation.
 
-While we're at it, let's put together a trait for expanding a recursive structure from some seed - this corresponds to `generate` from the last post.
+[^wrapped_excuse]: In a perfect word, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
+
+While we're at it, let's put together a trait for expanding a recursive structure from some seed - this corresponds to `generate` from the last post, but `collapse` and `expand` work really well together so we'll use `Expand` for our trait name and `expand_layers` for our function[^cata_ana]:
+
+[^cata_ana]: If you're a recursion schemes nerd like me, you might notice that these correspond to catamorphism (a collapsing change) and anamorphism (an expanding change), but with less greek. They don't sound as cool, but I think they're more readable representations of the same concept.
 
 ```rust
 /// Support for expanding a structure from a seed value, one layer at a time
@@ -53,10 +60,8 @@ pub trait Expand<A, Wrapped> {
 }
 ```
 
-Here it is - this trait represents the ability to expand a recursive data structure out from some seed. [^cata_ana]
+Here it is - this trait represents the ability to expand a recursive data structure out from some seed.
 
-[^cata_ana]:
-If you're a recursion schemes nerd like me, you might notice that these correspond to catamorphism (a collapsing change) and anamorphism (an expanding change), but with less greek. They don't sound as cool, but I think they're more readable representations of the same concept.
 
 # But how?
 
@@ -74,7 +79,7 @@ pub trait Functor<B> {
 And here it is [^functor_disclaimer]
 
 
-[^functor_disclaimer]: Rust's type system isn't ￼￼quite￼￼ up to expressing all the required ￼￼Functor￼￼ restraints but it's enough for our purposes)
+[^functor_disclaimer]: Rust's type system isn't _quite_ up to expressing all the required `Functor` constraints but it's enough for our purpose
 
 Here's what it looks like as implemented for `ExprLayer`
 
@@ -97,14 +102,14 @@ impl<A, B> Functor<B> for ExprLayer<A> {
 
 Nothing too complex, but by making it generic we've unlocked an _incredible power_, power _to rival the gods_.
 
-# Fully generic recursive Collapse
+# Implementing the Expand and Collapse traits
 
 ## Recursive Tree
 
 We'll be implementing `Expand` and `Collapse` for this structure: 
 
 ```rust
-/// Recursive tree of some Layer structure
+/// Recursive tree of some structure of type 'Layer'
 pub struct RecursiveTree<Wrapped, Index> {
     /// nonempty, in topological-sorted order
     elems: Vec<Wrapped>, // Layer<Index>
@@ -174,7 +179,7 @@ Nice.
 
 ## Collapse
 
-Here's what collapse looks like. Just as before, it's fully generic, all it needs is a `Functor` to handle the internal bookkeeping. Feel free to skim the impl, since it's fully generic you can just use the crate, there's no need to impl it yourself.
+Here's what collapse looks like. Just as before, it's fully generic: all it needs is a `Functor` to handle the internal bookkeeping. Feel free to skim the impl, since it's fully generic you can just use the crate, there's no need to ever impl it yourself.
 
 ```rust
 impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
@@ -223,13 +228,15 @@ pub fn eval(expr: ExprTopo) -> i64 {
 }
 ```
 
-These pass all the same tests as the `Expr`-specialized `fold` function, but we only have to write the machinery of recursion once! Not once per recursive data structure, just once! (lightning strikes in the background, very dramatic)
+These pass all the same tests as the `Expr`-specialized `fold` function, but we only have to write the machinery of recursion once! Not once per recursive data structure, just once! [^drama]
+
+[^drama]: a bolt of lightning strikes behind me. I am momentarily shown silhouetted by the actinic blue light. It is very dramatic
 
 Just as before, I want to emphasize that this is fully generic over _any layer type_:
 
 # A minimal example
 
-Here's what an N-tree looks like using this idiom - a tree where each node can have any number of branches, and where each node stores some value `V`.
+Here's what an N-tree looks like using this idiom (an N-tree is a tree where each node can have any number of child nodes, and where some value `V` is stored at each node of the tree. Nodes with no child nodes are leaf nodes)
 
 ```rust
 pub struct NTreeLayer<Val, A> {
@@ -268,16 +275,33 @@ pub fn max<V: Ord>(r: RecursiveNTree<V>) -> Option<V> {
 
 Cool, right? No need to mess about with the visitor pattern, just directly expressing recursive algorithms. Neat.
 
-# More fully-featured examples
+# More examples
 
 ## Async IO
 
 There's a small but fully functional filetree reader/file contents search tool here, in the top-level example directory. It's fully async, with all the bells and whistles one might expect. [^grep_thingy_note] 
 
-[^grep_thingy_note]: ok, so it just uses `tokio::fs` (which just calls std lib blocking functions to work with the file system) instead of something hand crafted with manual file handle management, but there's a good reason I didn't implement that: I didn't really want to
+[^grep_thingy_note]: ok, so it just uses `tokio::fs` (which just calls std lib blocking functions to work with the file system) instead of something hand crafted with manual file handle management, but there's a good reason I didn't implement that: I didn't want to
 
-grep screenshot goes here
+<pre><font color="#A6CC70"><b>➜ </b></font>./my_grep -- --regex &quot;Expr.*Sub&quot; --paths-to-ignore .git -p target
+<font color="#95E6CB">sparse filetree depth:</font> 4
+<font color="#95E6CB">file:</font> &quot;/home/inanna/dev/rust-schemes/src/examples/expr.rs&quot;
+<font color="#95E6CB">permissions</font> Permissions(FilePermissions { mode: 33204 })
+<font color="#95E6CB">modified</font> Ok(SystemTime { tv_sec: 1658530322, tv_nsec: 155879740 })
+<font color="#B48EAD">29::</font>	            Expr::Sub(a, b) =&gt; Expr::Sub(f(a), f(b)),
+<font color="#B48EAD">45::</font>	            Expr::Sub(a, b) =&gt; Expr::Sub(f(*a), f(*b)),
 
+
+<font color="#95E6CB">file:</font> &quot;/home/inanna/dev/rust-schemes/src/examples/expr/eval.rs&quot;
+<font color="#95E6CB">permissions</font> Permissions(FilePermissions { mode: 33204 })
+<font color="#95E6CB">modified</font> Ok(SystemTime { tv_sec: 1658527781, tv_nsec: 256109881 })
+<font color="#B48EAD">54::</font>	        Expr::Sub(a, b) =&gt; Ok(CompiledExpr::Sub(a, b)),
+<font color="#B48EAD">70::</font>	        CompiledExpr::Sub(a, b) =&gt; a - b,
+<font color="#B48EAD">80::</font>	        Expr::Sub(a, b) =&gt; a - b,
+<font color="#B48EAD">89::</font>	        ExprAST::Sub(a, b) =&gt; naive_eval(a) - naive_eval(b),
+</pre>
+
+If you're curious how it's implemented, the source code is here (link).
 
 # To be continued
 
