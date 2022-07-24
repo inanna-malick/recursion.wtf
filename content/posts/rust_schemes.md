@@ -17,8 +17,8 @@ This is a post about writing elegant and performant recursive algorithms in Rust
 
 <!--more--> 
 
-# Performance test results
 
+# Performance test results
 
 These test results show a performance improvement of 34% for evaluating a very large expression tree (131072 elements, recursive depth 17). They were run on a 6th generation X1 carbon laptop with an Intel i7-8550U with 8MB CPU cache:
 
@@ -37,7 +37,6 @@ The same tests, when run on an AMD Ryzen 9 3900X CPU with more than 64MB total c
 <font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
                         time:   [250.96 µs <font color="#77A8D9"><b>251.12 µs</b></font> 251.31 µs]
 </pre>
-
 
 
 # Evaluating an expression language
@@ -293,7 +292,7 @@ This function lets us provide an arbitrary function of type `ExprLayer<A> -> A` 
 
 ```rust
 impl ExprTopo {
-    fn fold<A: std::fmt::Debug, F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
+    fn fold<F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
         use std::mem::MaybeUninit;
 
         let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
