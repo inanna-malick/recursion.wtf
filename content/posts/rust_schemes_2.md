@@ -22,6 +22,13 @@ This is the second in a series of blog posts on recursion in rust. The previous 
 ​We're going to start by looking at our `ExprTopo::fold` function from the last post. Note that it's specialized for use with `ExprLayer`. We explored the impl in detail last time, so we're going to elide that, and just look at the types:
 
 ```rust
+pub struct ExprIdx(usize);
+
+pub struct ExprTopo {
+    // nonempty, in topological-sorted order. guaranteed via construction.
+    elems: Vec<ExprLayer<ExprIdx>>,
+}
+
 impl ExprTopo {
     fn fold<F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
         /* see previous post for full impl */
@@ -35,26 +42,26 @@ It's generic in one way - it can take any function `ExprLayer<A> -> A` and use i
 
 We're going to start by renaming `fold` to `collapse`[^why_rename_collapse] and defining a trait `Collapse`:
 
+[^why_rename_collapse]: because the function name `fold` is already used by the core `core::std::Iterator` trait, which results in confusing type errors.
 
-[^why_rename_collapse]: because the function name `fold` is already used by the core `core::std::Iterator` trait, which results in confusing type errors. Thi looks like: 
 
 ```rust
-/// Support for collapsing a structure into a single value, one layer at a time
+/// Support for collapsing a data structure into a single value, one layer at a time
 pub trait Collapse<A, Wrapped> {
     fn collapse_layers<F: FnMut(Wrapped) -> A>(self, collapse_layer: F) -> A;
 }
 ```
 
-This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the structure down into. Here's a link to this trait in the crate documentation.
+This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the data structure down into. Here's a link to this trait in the crate documentation.
 
 [^wrapped_excuse]: In a perfect word, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
 
-While we're at it, let's put together a trait for expanding a recursive structure from some seed - this corresponds to `generate` from the last post, but `collapse` and `expand` work really well together so we'll use `Expand` for our trait name and `expand_layers` for our function[^cata_ana]:
+While we're at it, let's put together a trait for expanding a recursive data structure from some seed - this corresponds to `generate` from the last post, but `collapse` and `expand` work really well together so we'll use `Expand` for our trait name and `expand_layers` for our function[^cata_ana]:
 
 [^cata_ana]: If you're a recursion schemes nerd like me, you might notice that these correspond to catamorphism (a collapsing change) and anamorphism (an expanding change), but with less greek. They don't sound as cool, but I think they're more readable representations of the same concept.
 
 ```rust
-/// Support for expanding a structure from a seed value, one layer at a time
+/// Support for expanding a data structure from a seed value, one layer at a time
 pub trait Expand<A, Wrapped> {
     fn expand_layers<F: Fn(A) -> Wrapped>(a: A, expand_layer: F) -> Self;
 }
@@ -67,7 +74,7 @@ Here it is - this trait represents the ability to expand a recursive data struct
 
 Here's why I kept talking about `Functor` in the last post: we can write `Collapse` and `Expand` implementations over some `Layer` type given only a `Functor` instance for that type. This makes sense, given that the `ExprLayer`-specific `expand` and `collapse` implementations both use `fmap` as a core component.
 ```rust
-/// The ability to map over some structure
+/// The ability to map over some a single layer of some structure
 pub trait Functor<B> {
     type Unwrapped;
     type To;
@@ -106,7 +113,7 @@ Nothing too complex, but by making it generic we've unlocked an _incredible powe
 
 ## Recursive Tree
 
-We'll be implementing `Expand` and `Collapse` for this structure: 
+We'll be implementing `Expand` and `Collapse` for this data structure: 
 
 ```rust
 /// Recursive tree of some structure of type 'Layer'
@@ -129,7 +136,7 @@ type ExprTopo = RecursiveTree<ExprLayer, ArenaIndex>
 
 ## Expand
 
-Here's what expanding this structure looks like. It's the same as the `ExprLayer`-specific implementation, but we're using a _generic_ `fmap` instead of a `map` function specific to `ExprLayer`:
+Here's what expanding this data structure from a seed value looks like. It's the same as the `ExprLayer`-specific implementation, but we're using a _generic_ `fmap` instead of a `map` function specific to `ExprLayer`:
 
 
 ```rust
