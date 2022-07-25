@@ -13,9 +13,11 @@ thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
 
-This is the second in a series of blog posts. Previously, we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can handle collapsing or expanding any user-defined recursive data structure. This single recursion backend has been implemented in a crate called [recursion](https://crates.io/crates/recursion). Docs are [here](https://docs.rs/recursion/0.0.1-BETA/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
+This is the second in a series of blog posts. Previously, we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can handle collapsing or expanding any user-defined recursive data structure.
 
 <!--more--> 
+
+This generic recursion backend is implemented in my new [recursion](https://crates.io/crates/recursion) crate. Docs are [here](https://docs.rs/recursion/0.0.1-BETA/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
 
 # A Recap
 
