@@ -19,7 +19,11 @@ This is the second in a series of blog posts on recursion in rust. The previous 
 
 # A Recap
 
-​We're going to start by looking at our `ExprTopo::fold` function from the last post. Note that it's specialized for use with `ExprLayer`. We explored the impl in detail last time, so we're going to elide that, and just look at the types:
+Last time, we implemented `collapse_layers` and `expand_layers` functions, specialized to `ExprTopo`.[^cata_ana]
+
+[^cata_ana]: If you're a recursion schemes nerd like me, you might notice that these correspond to catamorphism (a collapsing change) and anamorphism (an expanding change), but with less greek. They don't sound as cool, but I think they're a more readable representation of the same concept.
+
+​We're going to start by looking at our `ExprTopo::collapse_layers` function from the last post. Note that it's specialized for use with `ExprLayer`. We explored the impl in detail last time, so we're going to elide that, and just look at the types:
 
 ```rust
 pub struct ExprIdx(usize);
@@ -30,7 +34,7 @@ pub struct ExprTopo {
 }
 
 impl ExprTopo {
-    fn fold<F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
+    fn collapse_layers<F: FnMut(ExprLayer<A>) -> A>(self, mut collapse_layer: F) -> A {
         /* see previous post for full impl */
     }
 }
@@ -40,10 +44,7 @@ It's generic in one way - it can take any function `ExprLayer<A> -> A` and use i
 
 # A more Generic collapse 
 
-We're going to start by renaming `fold` to `collapse`[^why_rename_collapse] and defining a trait `Collapse`:
-
-[^why_rename_collapse]: because the function name `fold` is already used by the core `core::std::Iterator` trait, which results in confusing type errors.
-
+Here's what a generic `collapse_layers` looks like:
 
 ```rust
 /// Support for collapsing a data structure into a single value, one layer at a time
@@ -56,9 +57,8 @@ This should be read as being parameterized over some type `Layer`, with `Wrapped
 
 [^wrapped_excuse]: In a perfect word, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
 
-While we're at it, let's put together a trait for expanding a recursive data structure from some seed - this corresponds to `generate` from the last post, but `collapse` and `expand` work really well together so we'll use `Expand` for our trait name and `expand_layers` for our function[^cata_ana]:
+While we're at it, let's put together a trait for expanding a recursive data structure from some seed
 
-[^cata_ana]: If you're a recursion schemes nerd like me, you might notice that these correspond to catamorphism (a collapsing change) and anamorphism (an expanding change), but with less greek. They don't sound as cool, but I think they're more readable representations of the same concept.
 
 ```rust
 /// Support for expanding a data structure from a seed value, one layer at a time
@@ -148,7 +148,7 @@ where
         let mut frontier = VecDeque::from([a]);
         let mut elems = vec![];
 
-        // unfold to build a vec of elems while preserving topo order
+        // expand to build a vec of elems while preserving topo order
         while let Some(seed) = frontier.pop_front() {
             let layer = expand_layer(seed);
 
@@ -169,10 +169,10 @@ where
 }
 ```
 
-Very similar to the `generate` function in the previous post (link), but over _some generic structure_. Just to verify, let's write a function to expand out an `ExprTopo` from a boxed expression, just as we did in the last post. But this time, it's generic:
+Very similar to the `ExprTopo::expand_layers` function in the previous post (link), but over _some generic structure_. Just to verify, let's write a function to expand out an `ExprTopo` from a boxed expression, just as we did in the last post. But this time, it's generic:
 
 ```rust
-pub fn expand_from_boxed(ast: &ExprBoxed) -> ExprTopo {
+pub fn from_boxed(ast: &ExprBoxed) -> ExprTopo {
     ExprTopo::expand(ast, |seed| match seed {
         ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
         ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
@@ -186,7 +186,7 @@ Nice.
 
 ## Collapse
 
-Here's what collapse looks like. Just as before, it's fully generic: all it needs is a `Functor` to handle the internal bookkeeping. Feel free to skim the impl, since it's fully generic you can just use the crate, there's no need to ever impl it yourself.
+Here's what the impl for `Collapse` looks like. Just as before, it's fully generic: all it needs is a `Functor` to handle the internal bookkeeping. Feel free to skim the impl, since it's fully generic you can just use the crate, there's no need to ever impl it yourself.
 
 ```rust
 impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
@@ -194,7 +194,7 @@ impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
     where
             Underlying: Functor<A, To = Wrapped, Unwrapped = Index>
 {
-    fn collapse_layers<F: FnMut(Wrapped) -> A>(self, mut fold_layer: F) -> A {
+    fn collapse_layers<F: FnMut(Wrapped) -> A>(self, mut collapse_layer: F) -> A {
         let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
             .take(self.elems.len())
             .collect::<Vec<_>>();
@@ -206,7 +206,7 @@ impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
                         std::mem::replace(results.get_unchecked_mut(x), MaybeUninit::uninit());
                     maybe_uninit.assume_init()
                 });
-                fold_layer(node)
+                collapse_layer(node)
             };
             results[idx].write(alg_res);
         }
@@ -226,7 +226,7 @@ Here's what it looks like in use:
 
 ```rust
 pub fn eval(expr: ExprTopo) -> i64 {
-    self.collapse(|expr| match expr {
+    self.collapse_layers(|expr| match expr {
         ExprLayer::Add { a, b } => a + b,
         ExprLayer::Sub { a, b } => a - b,
         ExprLayer::Mul { a, b } => a * b,
@@ -235,7 +235,7 @@ pub fn eval(expr: ExprTopo) -> i64 {
 }
 ```
 
-These pass all the same tests as the `Expr`-specialized `fold` function, but we only have to write the machinery of recursion once! Not once per recursive data structure, just once! [^drama]
+These pass all the same tests as the `Expr`-specialized `collapse_layers` function, but we only have to write the machinery of recursion once! Not once per recursive data structure, just once! [^drama]
 
 [^drama]: a bolt of lightning strikes behind me. I am momentarily shown silhouetted by the actinic blue light. It is very dramatic
 
@@ -312,7 +312,7 @@ If you're curious how it's implemented, the source code is here (link).
 
 # To be continued
 
-My next post will show how to implement different recursion backends (yes, this is where we finally get to see stack machines in action), along with some cool stuff with fused `expand` and `collapse` operations such that we can construct a recursive data structure and consume it at the same time, without having to allocate a `RecursiveTree`.
+My next post will show how to implement different recursion backends (yes, this is where we finally get to see stack machines in action), along with some cool stuff with fused `expand_layers` and `collapse_layers` operations such that we can construct a recursive data structure and consume it at the same time, without having to allocate a `RecursiveTree`.
 
 
 # Thank you
