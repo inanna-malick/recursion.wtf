@@ -116,22 +116,22 @@ Nothing too complex, but by making it generic we've unlocked an _incredible powe
 We'll be implementing `Expand` and `Collapse` for this data structure: 
 
 ```rust
-/// Recursive tree of some structure of type 'Layer'
-pub struct RecursiveTree<Wrapped, Index> {
+/// Index into the vector of elements
+struct Index(usize);
+
+/// Recursive tree made up of layers of some type 'Layer<_>'
+pub struct RecursiveTree<Wrapped> {
     /// nonempty, in topological-sorted order
     elems: Vec<Wrapped>, // Layer<Index>
-    /// the index type over which 'Layer' is parameterized
-    _underlying: std::marker::PhantomData<Index>,
 }
 ```
 
-It's pretty much the same as `ExprTopo`, with some extra type parameters for bookkeeping.
+`Index` is a generic version of the `ExprIndex` used in the previous post - it's an internal index used to track links between different layers of the recursive tree.
 
 Here's what `ExprTopo` would look like using `RecursiveTree`:
 
 ```rust
-struct ArenaIndex(usize);
-type ExprTopo = RecursiveTree<ExprLayer, ArenaIndex>
+type ExprTopo = RecursiveTree<ExprLayer>
 ```
 
 ## Expand
@@ -140,9 +140,9 @@ Here's what expanding this data structure from a seed value looks like. It's the
 
 
 ```rust
-impl<A, Underlying, Wrapped> Expand<A, Wrapped> for RecursiveTree<Underlying, ArenaIndex>
+impl<A, Underlying, Wrapped> Expand<A, Wrapped> for RecursiveTree<Underlying>
 where
-    Wrapped: Functor<ArenaIndex, Unwrapped = A, To = Underlying>,
+    Wrapped: Functor<Index, Unwrapped = A, To = Underlying>,
 {
     fn expand_layers<F: Fn(A) -> Wrapped>(a: A, expand_layer: F) -> Self {
         let mut frontier = VecDeque::from([a]);
@@ -155,7 +155,7 @@ where
             let layer = layer.fmap(|aa| {
                 frontier.push_back(aa);
                 // idx of pointed-to element determined from frontier + elems size
-                ArenaIndex(elems.len() + frontier.len())
+                Index(elems.len() + frontier.len())
             });
 
             elems.push(layer);
@@ -190,9 +190,9 @@ Here's what collapse looks like. Just as before, it's fully generic: all it need
 
 ```rust
 impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
-    for RecursiveTree<Underlying, ArenaIndex>
+    for RecursiveTree<Underlying>
     where
-            Underlying: Functor<A, To = Wrapped, Unwrapped = ArenaIndex>
+            Underlying: Functor<A, To = Wrapped, Unwrapped = Index>
 {
     fn collapse_layers<F: FnMut(Wrapped) -> A>(self, mut fold_layer: F) -> A {
         let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
@@ -201,7 +201,7 @@ impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
 
         for (idx, node) in self.elems.into_iter().enumerate().rev() {
             let alg_res = {
-                let node = node.fmap(|ArenaIndex(x)| unsafe {
+                let node = node.fmap(|Index(x)| unsafe {
                     let maybe_uninit =
                         std::mem::replace(results.get_unchecked_mut(x), MaybeUninit::uninit());
                     maybe_uninit.assume_init()
@@ -213,7 +213,7 @@ impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
 
         unsafe {
             let maybe_uninit = std::mem::replace(
-                results.get_unchecked_mut(ArenaIndex::head().0),
+                results.get_unchecked_mut(Index::head().0),
                 MaybeUninit::uninit(),
             );
             maybe_uninit.assume_init()
@@ -251,7 +251,7 @@ pub struct NTreeLayer<Val, A> {
     children: Vec<A>,
 }
 
-pub type RecursiveNTree<V> = RecursiveTree<NTreeLayer<V, ArenaIndex>, ArenaIndex>;
+pub type RecursiveNTree<V> = RecursiveTree<NTreeLayer<V, Index>>;
 
 impl<A, B, V> Functor<B> for NTreeLayer<V, A> {
     type To = NTreeLayer<V, B>;
@@ -280,7 +280,7 @@ pub fn max<V: Ord>(r: RecursiveNTree<V>) -> Option<V> {
 }
 ```
 
-Cool, right? No need to mess about with the visitor pattern, just directly expressing recursive algorithms. Neat.
+Cool, right?
 
 # More examples
 
