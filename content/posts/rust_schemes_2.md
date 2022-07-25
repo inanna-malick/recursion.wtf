@@ -13,7 +13,7 @@ thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
 
-This is the second in a series of blog posts. Previously, we introduced a method for writing performant stack safe recursion in Rust for a recursive data structure. This post shows the core ideas I used to implement a _single_ recursive backend that can handle collapsing or expanding any user-defined recursive data structure. I have a [crate here](https://crates.io/crates/recursion), with the [source code here](https://github.com/inanna-malick/recursion).
+This is the second in a series of blog posts. Previously, we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can handle collapsing or expanding any user-defined recursive data structure. This single recursion backend has been implemented in a crate called [recursion](https://crates.io/crates/recursion). Docs are [here](https://docs.rs/recursion/0.0.1-BETA/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
 
 <!--more--> 
 
@@ -53,7 +53,7 @@ pub trait Collapse<A, Wrapped> {
 }
 ```
 
-This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the data structure down into. Here's a link to this trait in the crate documentation.
+This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the data structure down into.
 
 [^wrapped_excuse]: In a perfect word, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
 
