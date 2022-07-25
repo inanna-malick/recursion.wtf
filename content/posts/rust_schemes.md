@@ -288,11 +288,11 @@ let result = match layer {
 This code takes  `layer`, a value of type `ExprLayer<i64>`, and consumes it to create `result`, a value of type `i64`. What if, instead of `ExprLayer<i64> -> i64`, we use a function of type `ExprLayer<A> -> A`?
 
 
-This function lets us provide an arbitrary function of type `ExprLayer<A> -> A` and uses it to fold a recursive `ExprTopo` structure into a single value:
+This function lets us provide an arbitrary function of type `ExprLayer<A> -> A` and uses it to collapse all the layers in an `ExprTopo` structure into a single value:
 
 ```rust
 impl ExprTopo {
-    fn fold<F: FnMut(ExprLayer<A>) -> A>(self, mut fold_layer: F) -> A {
+    fn collapse_layers<F: FnMut(ExprLayer<A>) -> A>(self, mut collapse_layer: F) -> A {
         use std::mem::MaybeUninit;
 
         let mut results = std::iter::repeat_with(|| MaybeUninit::<A>::uninit())
@@ -306,7 +306,7 @@ impl ExprTopo {
                         std::mem::replace(results.get_unchecked_mut(x.0), MaybeUninit::uninit());
                     maybe_uninit.assume_init()
                 });
-                fold_layer(layer)
+                collapse_layer(layer)
             };
             results[idx].write(result);
         }
@@ -325,7 +325,7 @@ Nice. Now we can write:
 ```rust
 impl ExprTopo {
     pub fn eval(self) -> i64 {
-        self.fold(|expr| match expr {
+        self.collapse_layers(|expr| match expr {
             ExprLayer::Add { a, b } => a + b,
             ExprLayer::Sub { a, b } => a - b,
             ExprLayer::Mul { a, b } => a * b,
@@ -340,11 +340,11 @@ It's pretty much the same logic as the original `eval` functions, without any of
 
 # Constructing Exprs
 
-Let's write a function to generate `ExprTopo` values from the `ExprBoxed` representation. Just as before, `map` helps us keep it concise. Feel free to skim this one too, we'll be abstracting over the specifics just like we did with `fold`:
+Let's write a function to build an `ExprTopo` value from the `ExprBoxed` representation. Just as before, `map` helps us keep it concise. Feel free to skim this one too, we'll be abstracting over the specifics just like we did with `collapse_layers`:
 
 ```rust
 impl ExprTopo {
-    fn generate_from_boxed(seed: &ExprBoxed) -> Self {
+    fn from_boxed(seed: &ExprBoxed) -> Self {
         let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([seed]);
         let mut elems = vec![];
 
@@ -372,7 +372,7 @@ impl ExprTopo {
 
 ## Making it generic
 
-Just as with `fold`, we only really care about the `match` expression here:
+Just as with `collapse_layers`, we only really care about the `match` expression here:
 
 ```rust
 let layer = match seed {
@@ -386,18 +386,18 @@ let layer = match seed {
 This matches on `seed`, a value of type `&ExprBoxed`, and consumes it to create `layer`, a value of type `ExprLayer<i64ExprBoxed>`. What if, instead of `i64ExprBoxed -> ExprLayer<i64ExprBoxed>`, we use a function of type `A -> ExprLayer<A>`? 
 
 
-Fortunately, just as with `fold`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
+Fortunately, just as with `collapse_layers`, we can separate the machinery of recursion from the actual recursive (or, in this case, co-recursive) logic.
 
 
 ```rust
 impl ExprTopo {
-    fn generate<A, F: Fn(A) -> ExprLayer<A>>(seed: A, generate_layer: F) -> Self {
+    fn expand_layers<A, F: Fn(A) -> ExprLayer<A>>(seed: A, expand_layer: F) -> Self {
         let mut frontier = VecDeque::from([seed]);
         let mut elems = vec![];
 
-        // repeatedly generate layers to build a vec of elems while preserving topo order
+        // repeatedly expand layers to build a vec of elems while preserving topo order
         while let Some(seed) = frontier.pop_front() {
-            let layer = generate_layer(seed);
+            let layer = expand_layer(seed);
 
             let layer = layer.map(|seed| {
                 frontier.push_back(seed);
@@ -413,12 +413,12 @@ impl ExprTopo {
 }
 ```
 
-This lets us write `generate_from_boxed` as:
+This lets us write `from_boxed` as:
 
 ```rust
 impl ExprTopo {
-    pub fn generate_from_boxed(ast: &ExprBoxed) -> Self {
-        Self::generate(ast, |seed| match seed {
+    pub fn from_boxed(ast: &ExprBoxed) -> Self {
+        Self::expand_layers(ast, |seed| match seed {
             ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
             ExprBoxed::Sub { a, b } => ExprLayer::Sub { a, b },
             ExprBoxed::Mul { a, b } => ExprLayer::Mul { a, b },
@@ -437,18 +437,18 @@ I used [proptest]() to test this code for correctness. It generates many express
 
 [^rain_is_awesome]: I learned this technique from my partner [Rain](https://sunshowers.io/)
 
-This actually helped me find a bug! In my first implementation of `unfold`, I used a stack instead of a queue for the frontier, which ended up mangling the order of the expression tree. Since proptest is awesome, it not only found this bug but reduced the failing test case to `Add (0, Sub(0, 1))`.
+This actually helped me find a bug! In my first implementation of `expand`, I used a stack instead of a queue for the frontier, which ended up mangling the order of the expression tree. Since proptest is awesome, it not only found this bug but reduced the failing test case to `Add (0, Sub(0, 1))`.
 
 ```rust
-// generate a bunch of expression trees and evaluate them via each method (TODO: added new methods, test those too)
+// generate a bunch of expression trees and evaluate them via each method
 #[cfg(test)]
 proptest! {
     #[test]
     fn expr_eval(boxed_expr in arb_expr()) {
         let eval_boxed = boxed_expr.eval();
-        let eval_via_fold = ExprTopo::generate_from_boxed(&boxed_expr).eval();
+        let eval_via_collapse = ExprTopo::from_boxed(&boxed_expr).eval();
 
-        assert_eq!(eval_boxed, eval_via_fold);
+        assert_eq!(eval_boxed, eval_via_collapse);
     }
 }
 
@@ -482,14 +482,14 @@ pub fn arb_expr() -> impl Strategy<Value = ExprBoxed> {
 
 # Testing for performance
 
-For performance testing, we used [criterion](https://github.com/bheisler/criterion.rs) to benchmark the simple `ExprBoxed::eval` vs `ExprTopo::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using unfold/fold, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recursive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/99620b4f9a0bb742996c0dece342c50c4ab31071/benches/expr.rs).
+For performance testing, we used [criterion](https://github.com/bheisler/criterion.rs) to benchmark the simple `ExprBoxed::eval` vs `ExprTopo::eval`. This code basically just builds up a really big (as in, 131072 nodes) recursive structure (using `expand`/`collapse`, because they're honestly really convenient) and evaluates it a bunch of times. I also ran this test on recursive structures of other sizes, because graphs are cool. You can find the benchmarks [defined here](https://github.com/inanna-malick/rust-schemes/blob/f9fd5cf52f0fd486ead3d140c0fc40c588c4b4e0/benches/expr.rs).
 
 
 
 <pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard boxed method</font>                                                                            
                         time:   [722.18 µs <font color="#77A8D9"><b>733.00 µs</b></font> 746.43 µs]
 
-<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my collapse_layers method</font>                                                                            
                         time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
 </pre>
 
@@ -503,3 +503,9 @@ We started with a simplified non-generic version of this algorithm to build unde
 # Thank you
 
 Thank you to [Fiona](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), [Eliza](https://twitter.com/mycoliza) and [Gankra](https://gist.github.com/Gankra), among others, for reviewing drafts of this post.
+
+
+# Change notes
+
+- 07/24/2022: renamed fold/generate to collapse/expand
+
