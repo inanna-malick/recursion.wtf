@@ -17,7 +17,7 @@ This is the second in a series of blog posts. Previously, we introduced a method
 
 <!--more--> 
 
-This generic recursion backend is implemented in my new [recursion](https://crates.io/crates/recursion) crate. Docs are [here](https://docs.rs/recursion/0.0.1-BETA/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
+This generic recursion backend is implemented in my new [recursion](https://crates.io/crates/recursion) crate. Docs are [here](https://docs.rs/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
 
 # A Recap
 
