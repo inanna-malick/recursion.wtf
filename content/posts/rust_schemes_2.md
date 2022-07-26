@@ -73,37 +73,36 @@ Now that we have these traits, we can represent the generic ability to collapse 
 
 # But how?
 
-[In the last post](https://recursion.wtf/posts/rust_schemes/#factoring-out-duplicated-code), we saw how `ExprLayer::map` could be used to factor out the core logic of `collapse_layers` and `expand_layers`. We're going to abstract over _map_ so we can map over any data structure, instead of just `ExprLayer<_>`.
+[In the last post](https://recursion.wtf/posts/rust_schemes/#factoring-out-duplicated-code), we saw how `ExprLayer::map` could be used to factor out the core logic of `collapse_layers` and `expand_layers`. We're going to abstract over this, such that we can map over a single layer of any recursive data structure, instead of just `ExprLayer<_>`. To do this, we're going to introduce a trait called `MapLayer`.
 
-This is why I kept talking about `Functor` in the last post: we can write `Collapse` and `Expand` implementations over some `Layer<_>` type given only a `Functor` instance for that type. This makes sense, given that the `ExprLayer<_>`-specific expand and collapse functions both use `fmap` as a core component.
-
-You should read this as being implemented for some `Layer<_>` (eg `ExprLayer<_>`) with the (pseudocode) type signature `fn fmap(self: Layer<A>, f: Fn(A) -> B) -> Layer<B>`.
 
 ```rust
 /// The ability to map over some a single layer of some structure
 /// 'Layer<_>', eg 'ExprLayer<_>'.
-pub trait Functor<B> { // where Self is Layer<A>
-    type Unwrapped;
-    type To;
-    /// fn fmap(Self: Layer<A>, f: Fn(A) -> B) -> Layer<B>
-    fn fmap<F: FnMut(Self::Unwrapped) -> B>(self, f: F) -> Self::To;
+pub trait MapLayer<B> { // where Self is Layer<A>
+    type Unwrapped;    // which is A
+    type To;           // which is Layer<B>
+    /// fn map_layer(Self: Layer<A>, f: Fn(A) -> B) -> Layer<B>
+    fn map_layer<F: FnMut(Self::Unwrapped) -> B>(self, f: F) -> Self::To;
 }
 ```
+
+You should read this as being implemented for some `Layer<_>` (eg `ExprLayer<_>`) with the (pseudocode) type signature `fn map_layer(self: Layer<A>, f: Fn(A) -> B) -> Layer<B>`.
 
 And here it is [^functor_disclaimer]
 
 
-[^functor_disclaimer]: Rust's type system isn't _quite_ up to expressing all the required `Functor` constraints but it's enough for our purpose
+[^functor_disclaimer]: If you're a functional programming nerd like me, you might recognize this as 'Functor'
 
 Here's what it looks like as implemented for `ExprLayer<_>`
 
 
 ```rust
-impl<A, B> Functor<B> for ExprLayer<A> {
+impl<A, B> MapLayer<B> for ExprLayer<A> {
     type To = ExprLayer<B>;
     type Unwrapped = A;
 
-    fn fmap<F: FnMut(Self::Unwrapped) -> B>(self, mut f: F) -> Self::To {
+    fn map_layer<F: FnMut(Self::Unwrapped) -> B>(self, mut f: F) -> Self::To {
         match self {
             Expr::Add(a, b) => Expr::Add(f(a), f(b)),
             Expr::Sub(a, b) => Expr::Sub(f(a), f(b)),
@@ -114,7 +113,7 @@ impl<A, B> Functor<B> for ExprLayer<A> {
 }
 ```
 
-Nothing too complex, but by making it generic we've unlocked an _incredible power_, power _to rival the gods_.
+Some boilerplate, nothing too complex.
 
 # Implementing the Collapse and Expand traits
 
@@ -141,7 +140,7 @@ type ExprTopo = RecursiveTree<ExprLayer<Index>>
 
 ## Collapse
 
-Here's what the implementation of `Collapse` looks like. I've elided the internal machinery so we can focus on the types - the full source code is [here](https://github.com/inanna-malick/recursion/blob/41b40a89d5f20fa86990db5d75f588d0e4674317/src/recursive_tree/arena_eval.rs#L96-L127), but since it's fully generic you can just use the crate, there's no need to ever implement it yourself.
+Here's what the implementation of `Collapse` looks like. I've elided the internal machinery so we can focus on the types - the full source code is [here](https://github.com/inanna-malick/recursion/blob/main/src/recursive_tree/arena_eval.rs#L96-L127), but since it's fully generic you can just use the crate, there's no need to ever implement it yourself.
 
 
 
@@ -149,7 +148,7 @@ Here's what the implementation of `Collapse` looks like. I've elided the interna
 impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
     for RecursiveTree<Underlying>
     where
-            Underlying: Functor<A, To = Wrapped, Unwrapped = Index>
+            Underlying: MapLayer<A, To = Wrapped, Unwrapped = Index>
 {
     fn collapse_layers<F: FnMut(Wrapped) -> A>(self, mut collapse_layer: F) -> A {
         /* elided */
@@ -158,7 +157,7 @@ impl<A, Wrapped, Underlying> Collapse<A, Wrapped>
 ```
 
 
-This is very similar to the `ExprTopo::collapse_layers` function [in the previous post](https://recursion.wtf/posts/rust_schemes/#making-it-generic), and all we need is a `Functor`!
+This is very similar to the `ExprTopo::collapse_layers` function [in the previous post](https://recursion.wtf/posts/rust_schemes/#making-it-generic), and all we need is a `MapLayer`!
 
 Here's what it looks like in use:
 
@@ -176,12 +175,12 @@ pub fn eval(expr: ExprTopo) -> i64 {
 
 ## Expand
 
-Here's what expanding this data structure from a seed value looks like. As before, I've elided the implementation. If you're curious, the full source code is [here](https://github.com/inanna-malick/recursion/blob/41b40a89d5f20fa86990db5d75f588d0e4674317/src/recursive_tree/arena_eval.rs#L26-L52).
+Here's what expanding this data structure from a seed value looks like. As before, I've elided the implementation. If you're curious, the full source code is [here](https://github.com/inanna-malick/recursion/blob/main/src/recursive_tree/arena_eval.rs#L26-L52).
 
 ```rust
 impl<A, Underlying, Wrapped> Expand<A, Wrapped> for RecursiveTree<Underlying>
 where
-    Wrapped: Functor<Index, Unwrapped = A, To = Underlying>,
+    Wrapped: MapLayer<Index, Unwrapped = A, To = Underlying>,
 {
     fn expand_layers<F: Fn(A) -> Wrapped>(a: A, expand_layer: F) -> Self {
         /* elided */
@@ -213,7 +212,8 @@ Just as before, I want to emphasize that this is fully generic over _any_ recurs
 
 # A minimal example
 
-Here's what an N-tree looks like using this idiom (an N-tree is a tree where each node can have any number of child nodes, and where some value `V` is stored at each node of the tree. Nodes with no child nodes are leaf nodes)
+
+For the last section of this blog post, we're going to use the machinery we've built up to implement another data structure: an N-tree. An N-tree is a tree where each node can have any number of child nodes, and where some value `V` is stored at each node of the tree. Nodes with no child nodes are leaf nodes.
 
 ```rust
 pub struct NTreeLayer<Val, A> {
@@ -223,11 +223,11 @@ pub struct NTreeLayer<Val, A> {
 
 pub type RecursiveNTree<V> = RecursiveTree<NTreeLayer<V, Index>>;
 
-impl<A, B, V> Functor<B> for NTreeLayer<V, A> {
+impl<A, B, V> MapLayer<B> for NTreeLayer<V, A> {
     type To = NTreeLayer<V, B>;
     type Unwrapped = A;
 
-    fn fmap<F: FnMut(Self::Unwrapped) -> B>(self, f: F) -> Self::To {
+    fn map_layer<F: FnMut(Self::Unwrapped) -> B>(self, f: F) -> Self::To {
         Self::To {
             val: self.val,
             children: self.children.into_iter().map(f).collect(),
@@ -254,7 +254,7 @@ Cool, right?
 
 # Async IO
 
-I've used my crate to implement a small but fully functional filetree reader/file contents search tool example. It's fully async, with all the bells and whistles one might expect. [^grep_thingy_note]. [You can find the source code here.](https://github.com/inanna-malick/recursion/blob/41b40a89d5f20fa86990db5d75f588d0e4674317/examples/grep.rs).
+I've also used my crate to implement a small but fully functional filetree reader/file contents search tool example. It's fully async, with all the bells and whistles one might expect. [^grep_thingy_note]. [You can find the source code here.](https://github.com/inanna-malick/recursion/blob/main/examples/grep.rs).
 
 [^grep_thingy_note]: ok, so it just uses `tokio::fs` (which just calls std lib blocking functions to work with the file system) instead of something hand crafted with manual file handle management, but there's a good reason I didn't implement that: I didn't want to
 
