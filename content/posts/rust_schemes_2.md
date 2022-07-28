@@ -12,7 +12,7 @@ feature = "/img/rust_schemes/criterion_screenshot_preview.png"
 thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
-[Previously](https://recursion.wtf/posts/rust_schemes/), we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can collapse or expand any recursive data structure.
+[Previously](https://recursion.wtf/posts/rust_schemes/), we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post uses the same ideas to implement a _single_ recursion backend that can collapse or expand any recursive data structure.
 
 <!--more--> 
 
@@ -125,7 +125,7 @@ struct Index(usize);
 /// Recursive tree made up of layers of some type 'Layer<_>', eg `ExprLayer<_>`
 pub struct RecursiveTree<Wrapped> {
     /// nonempty, in topological-sorted order
-    elems: Vec<Wrapped>, // Layer<Index> (eg `Layer<_>`)
+    elems: Vec<Wrapped>, // Layer<Index> (eg `ExprLayer<Index>`)
 }
 ```
 
