@@ -1,7 +1,7 @@
 
 +++
 title = "Fully generic recursion in Rust"
-date = "2002-07-24"
+date = "2022-07-28"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["recursion schemes", "rust", "code", "generic"]
