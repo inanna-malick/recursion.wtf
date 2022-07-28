@@ -25,7 +25,7 @@ These test results show a performance improvement of 34% for evaluating a very l
 <pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard method</font>                                                                            
                         time:   [722.18 µs <font color="#77A8D9"><b>733.00 µs</b></font> 746.43 µs]
 
-<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my new collapse_layers method</font>                                                                            
                         time:   [477.87 µs <font color="#77A8D9"><b>482.54 µs</b></font> 488.58 µs]
 </pre>
 
@@ -34,7 +34,7 @@ The same tests, when run on an AMD Ryzen 9 3900X CPU with more than 64MB total c
 <pre><font color="#A6CC70">Evaluate expression tree of depth 17 with standard method</font>                                                                            
                         time:   [295.76 µs <font color="#77A8D9"><b>295.89 µs</b></font> 296.03 µs]
 
-<font color="#A6CC70">Evaluate expression tree of depth 17 with my new fold method</font>                                                                            
+<font color="#A6CC70">Evaluate expression tree of depth 17 with my new collapse_layers method</font>                                                                            
                         time:   [250.96 µs <font color="#77A8D9"><b>251.12 µs</b></font> 251.31 µs]
 </pre>
 
@@ -144,7 +144,7 @@ idx_4:    LiteralInt(3)
 ]
 ```
 
-The nodes are stored in [topological order](https://en.wikipedia.org/wiki/Topological_sorting), which means that for each node, all of its child nodes are stored at larger indices. To evaluate an `ExprTopo`, we can perform bottom up recursion: fold leaf values into their parents, one `ExprLayer` at a time, until the entire `ExprTopo` structure is folded into a single value. Since it's topologically sorted, we can do this by iterating over the element vector in reverse order.
+The nodes are stored in [topological order](https://en.wikipedia.org/wiki/Topological_sorting), which means that for each node, all of its child nodes are stored at larger indices. To evaluate an `ExprTopo`, we can perform bottom up recursion: collapse leaf values into their parents, one `ExprLayer` at a time, until the entire `ExprTopo` structure has been collpased into a single value. Since it's topologically sorted, we can do this by iterating over the element vector in reverse order.
 
 
  Let's see what evaluating this structure looks like in practice. It's not elegant. There's a bunch of `unsafe` code, but it _does_ have better performance in benchmarks. Feel free to skim; in the next section we'll introduce an elegant API that removes the need to write `unsafe` code.
@@ -348,7 +348,7 @@ impl ExprTopo {
         let mut frontier: VecDeque<&ExprBoxed> = VecDeque::from([seed]);
         let mut elems = vec![];
 
-        // generate to build a vec of elems while preserving topo order
+        // expand layers to build a vec of elems while preserving topo order
         while let Some(seed) = { frontier.pop_front() } {
             let layer = match seed {
                 ExprBoxed::Add { a, b } => ExprLayer::Add { a, b },
