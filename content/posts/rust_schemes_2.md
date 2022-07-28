@@ -12,8 +12,7 @@ feature = "/img/rust_schemes/criterion_screenshot_preview.png"
 thumbnail = "/img/rust_schemes/criterion_screenshot_preview.png"
 +++
 
-
-This is the second in a series of blog posts. Previously, we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can handle collapsing or expanding any user-defined recursive data structure.
+[Previously](https://recursion.wtf/posts/rust_schemes/), we introduced a method for writing performant stack safe recursion in Rust for a single recursive data structure. This post covers the core ideas used to implement a _single_ recursion backend that can collapse or expand any recursive data structure.
 
 <!--more--> 
 
