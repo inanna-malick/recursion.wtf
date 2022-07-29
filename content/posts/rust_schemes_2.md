@@ -56,7 +56,7 @@ pub trait Collapse<A, Wrapped> {
 
 This should be read as being parameterized over some type `Layer`, with `Wrapped` being `Layer<A>`[^wrapped_excuse]. `A` is just the type we're collapsing the data structure down into.
 
-[^wrapped_excuse]: In a perfect word, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
+[^wrapped_excuse]: In a perfect world, we could parameterize this over the `Layer` type (such as `ExprLayer`), but in Rust all types need to be fully applied, so we need to use `Wrapped` instead, to represent the fully applied `Layer<A>` type.
 
 While we're at it, let's put together a trait for expanding a recursive data structure from some seed:
 
