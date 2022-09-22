@@ -1,0 +1,138 @@
+{
+  "main": {
+    "id": "85c0bf48410be8b0",
+    "type": "split",
+    "children": [
+      {
+        "id": "f7f9d8a65f4cca8f",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "posts/rust_schemes_3.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f1f911b217e18732",
+    "type": "split",
+    "children": [
+      {
+        "id": "099abfea1649059d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0d92ac561407c388",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "82e8c77795d9b9bb",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "75390db5d9c6fa6b",
+            "type": "leaf",
+            "state": {
+              "type": "starred",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9a76623f3c6d83d1",
+    "type": "split",
+    "children": [
+      {
+        "id": "73dbcf9ad3b01c3c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0150b90184d1ac0d",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "posts/rust_schemes_3.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "6fa1f77db52d09e0",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "posts/rust_schemes_3.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "61b6af7ea173f4d4",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "bc8f3f898d7dd623",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "posts/rust_schemes_3.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "f7f9d8a65f4cca8f",
+  "lastOpenFiles": [
+    "posts/rust_schemes.md",
+    "posts/rust_schemes_2.md",
+    "posts/rust_schemes_3.md",
+    "posts/transitive-frontier.md"
+  ]
+}
