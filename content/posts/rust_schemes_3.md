@@ -1,7 +1,7 @@
 
 +++
 title = "Stack Machines for Free"
-date = "2022-09-2000"
+date = "2000-09-01"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["recursion schemes", "rust", "code", "generic", "stack_machines"]
@@ -247,4 +247,4 @@ This is _fully generic_, and can be used with any recursive structure. In the ne
 
 # Thank you
 
-Thank you to [Fiona](https://twitter.com/munin), [Rain](https://twitter.com/sunshowers6), [Eliza](https://twitter.com/mycoliza), among others, for reviewing drafts of this post.
+Thank you to [Fiona](https://twitter.com/munin) and [Rain](https://twitter.com/sunshowers6), among others, for reviewing drafts of this post.
