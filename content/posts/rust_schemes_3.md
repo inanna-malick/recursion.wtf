@@ -1,6 +1,6 @@
 
 +++
-title = "Fully Generic Recursion in Rust: Part 2"
+title = "Single Pass Recursion in Rust"
 date = "2000-09-01"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
@@ -15,7 +15,7 @@ thumbnail = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 
 This is the third post in a three-post series. In the [first post](https://recursion.wtf/posts/rust_schemes) we developed a stack-safe, ergonomic, and concise method for working with recursive data structures (using a simple expression language as an example). In the [second post](https://recursion.wtf/posts/rust_schemes_2) we made it fully generic, providing a set of generic tools for expanding and collapsing _any_ recursive data structure in Rust.
 
-In this post we will see how to _combine_ these two things - expanding a structure and collapsing it at the same time. In the process, we will gain the ability to write arbitrary recursive functions over traditional boxed-pointer recursive structures (instead of the novel `RecursiveTree` type introduced in my previous post) while retaining stack safety. 
+In this post we will see how to _combine_ these two things - expanding a structure and collapsing it at the same time, performing both operations in a single pass. In the process, we will gain the ability to write arbitrary recursive functions over traditional boxed-pointer recursive structures (instead of the novel `RecursiveTree` type introduced in my previous post) while retaining stack safety. 
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
@@ -148,7 +148,7 @@ impl<A, Underlying, O: MapLayer<StackMarker, Unwrapped = A, To = U>> Expand<A, O
 Let's see what expanding a boxed-pointer expression into a `RecursiveTree` looks like. Since it's already made up of `ExprLayer` layers, we can just dereference the boxed value using the `*` operator.
 
 ```rust
-let expr_tree = RecursiveTree::expand(expr, |ExprBoxed(boxed)| *boxed)
+let expr_tree = RecursiveTree::expand_layers(expr, |ExprBoxed(boxed)| *boxed)
 ```
 
 
@@ -184,7 +184,6 @@ impl<A, O, U: MapLayer<A, To = O, Unwrapped = StackMarker>> Collapse<A, O>
 
 Here's how we can use this to collapse expressions represented in the `RecursiveTree` format. Nothing complex, just some simple arithmatic:
 
-let expr_tree = RecursiveTree::expand(expr, |ExprBoxed(boxed)| *boxed)
 ```rust
 let result = recursive_tree.collapse_layers(|expr| {
     use ExprLayer::*;
@@ -197,7 +196,7 @@ let result = recursive_tree.collapse_layers(|expr| {
 })
 ```
 
-# Combining Expand and Collapse
+# Expand and Collapse in a Single Pass
 
 As a reminder, the `RecursiveTree` representing `(5 - 3) * (3 + 12)` looks like this:
 
@@ -207,7 +206,7 @@ Here's a visualization showing what the full evaluation looks like, if we run `e
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval_sorted.gif" alt="execution graph for expanding and then collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
-But what if we could avoid holding the full tree in memory? This would provide memory usage benefits, and it would also let us avoid introducing a new type of data structure - `RecursiveTree` - into our projects. It should be possible to evaluate the expression like this, one branch at a time, instead of constructing the full tree:
+But what if could run both operations in a single pass? That would remove the need to hold the full tree in memory. It would also let us avoid introducing a new type of data structure - `RecursiveTree` - into our projects. It should be possible to evaluate the expression like this, one branch at a time, instead of constructing the full tree:
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
@@ -292,13 +291,13 @@ fn eval(expr: ExprBoxed) -> i63 {
 }
 ```
 
-This is _fully generic_, and can be used with any recursive structure, not just the simple expression language used in this post. In the next post, I'll show how to use it to build an expression language for matching filesystem entities, with features like short-circuiting to minimize syscalls, arena allocation (as a flex), and, of course, many more execution graphs.
+This is _fully generic_, and can be used with any recursive structure, not just the simple expression language used in this post. In the next post, I'll show how to use `expand_and_collapse` to build an expression language for matching filesystem entities, with features like short-circuiting to minimize syscalls, arena allocation (as a flex), and, of course, many more execution graphs.
 
-# Computer Science Bullshit (feel free to skip)
+# Computer Science Implications
 
-If you have a background in data structures and algorithms, and if you looked closely at the implementation details of the above functions, you might recognize them as implementing a stack machine. 
+If you have a background in data structures and algorithms, and if you looked closely at the implementation details of the above functions, you might recognize them as implementing stack machines.
 
-If you're familiar with Haskell and Recursion schemes, you might recognize this as a hylomorphism. If you don't know what the hell a hylomorphism is and are interested in learning, there's an [excellent blog post here](https://blog.sumtypeofway.com/posts/recursion-schemes-part-5.html):  
+If you're familiar with Haskell and Recursion schemes, you might recognize `expand_and_collapse` as a hylomorphism. If you don't know what the hell a hylomorphism is and are interested in learning, there's an [excellent blog post here](https://blog.sumtypeofway.com/posts/recursion-schemes-part-5.html) that goes into some detail on the concept. 
 
 There does appear to be a fundamental correspondence between stack machines and hylomorphisms. This is interesting, because these ideas arise in different corners of the computer science universe. That said, this isn't _that_ surprising, as both are descriptions of the same thing: recursion.
 
