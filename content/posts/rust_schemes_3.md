@@ -1,13 +1,13 @@
 
 +++
 title = "Single Pass Recursion in Rust"
-date = "2000-09-01"
+date = "2022-10-05"
 author = "Inanna Malick"
 authorTwitter = "inanna_malick"
 tags = ["recursion schemes", "rust", "code", "generic", "stack_machines"]
 keywords = ["recursion schemes", "rust", "code", "stack_machines"]
 showFullContent = false
-images = ["/img/rust_schemes/.png"]
+images = ["/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"]
 feature = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 thumbnail = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 +++
@@ -210,7 +210,7 @@ But what if could run both operations in a single pass? That would remove the ne
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
-The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate.
+The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate. Docs are [here](https://docs.rs/recursion/0.3.1/recursion/stack_machine/fn.expand_and_collapse.html).
 
 ```rust
 /// For some Layer type, Expandable is Layer<Seed> and Collapsable is Layer<Out>
