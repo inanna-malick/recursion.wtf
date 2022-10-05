@@ -15,13 +15,13 @@ thumbnail = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 
 This is the third post in a three-post series. In the [first post](https://recursion.wtf/posts/rust_schemes) we developed a stack-safe, ergonomic, and concise method for working with recursive data structures (using a simple expression language as an example). In the [second post](https://recursion.wtf/posts/rust_schemes_2) we made it fully generic, providing a set of generic tools for expanding and collapsing _any_ recursive data structure in Rust.
 
-In this post we will see how to _combine_ these two things - expanding a structure and collapsing it at the same time. In the process, we will create a fully generic stack machine back end, allowing us to write arbitrary recursive functions in Rust while retaining stack safety.
+In this post we will see how to _combine_ these two things - expanding a structure and collapsing it at the same time. In the process, we will gain the ability to write arbitrary recursive functions over traditional boxed-pointer recursive structures (instead of the novel `RecursiveTree` type introduced in my previous post) while retaining stack safety. 
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
 <!--more--> 
 
-A more full-featured version of the generic recursion machinery discussed in these posts is implemented in my [recursion](https://crates.io/crates/recursion) crate. Docs are [here](https://docs.rs/recursion). Source code, along with examples and benchmarks, [can be found here](https://github.com/inanna-malick/recursion).
+This post covers functionality already implemented in my [recursion](https://crates.io/crates/recursion) crate. For that reason, it will focus on diagrams over code, but the relevant code is provided if you're interested or curious.
 
 ## Our Expression Language
 
@@ -51,18 +51,18 @@ impl ExprBoxed {
 ```
 
 
-In this post we'll be working with the expression `5 - 3 * 3 + 12`. Here's what that looks like as code:
+In this post we'll be working with the expression `(5 - 3) * (3 + 12)`. Here's what that looks like as code:
 
 ```rust
 use ExprBoxed::*;
 let expr = mul(
-	sub(literal_int(4), literal_int(3)),
-	add(literal_int(2), literal_int(12)),
+	sub(literal_int(5), literal_int(3)),
+	add(literal_int(3), literal_int(12)),
 );
 ```
 
-
 ## Expand and Collapse
+
 Previously, we defined two core traits representing the ability to expand a recursive structure out from some seed, and to collapse a recursive structure down into a single value:
 
 ```rust
@@ -77,21 +77,18 @@ pub trait Collapse<A, Wrapped> {
 }
 ```
 
-We'll be using those traits in this post to introduce a new recursion backend.
-
-# Stack Machines
-
-A stack machine is similar to the call stack used by languages like Rust (if you've seen a stack overflow error, it's the call stack that's overflowing). The stack machines we'll be using in this post will be slightly more complex, but the implementation details aren't that important. We'll be using stack machines to provide _purpose-specific implementation of the call stack_  for our recursive functions. We'll implement our stack machines _once_, as `Collapse` and `Expand` instances, such that users of the abstractions described in this post need not worry about the specifics. By using our own stack instead of the Rust call stack, we don't need to worry about stack overflow errors.
-
+We'll be introducing a new recursion backend that implements these traits. This is already implemented in the `recursion` crate, so this post is concerned mostly with communicating the underlying concepts - not the implementation details.
 
 ## Recursive Data Structure
 
-Instead of using a vector of elements linked by vector indices, we'll construct a vector where linkages are defined only by the _position_ of elements. This lets us replace the `usize` vector indices used in the previous posts with zero-size markers that, instead of representing a specific index, just indicate that we should pop one element off the stack.  This results in an extremely compact representation of recursive structures.
+Instead of using a vector of elements linked by vector indices, we'll construct a vector where linkages are defined only by the _relative position_ of elements. This lets us replace the `usize` vector indices used in the previous posts with zero-size markers (`StackMarker`, equivalent to `()` but given its own name for convenience). This results in an extremely compact representation of recursive structures.
 
 
-Here's what the data structure looks like
+Here's what the data structure looks like. It's provided by the `recursion` crate, so you won't need to define it yourself.
 
 ```rust
+pub struct StackMarker;
+
 /// Recursive tree made up of layers of some type 'Layer<_>', eg `ExprLayer<_>`
 pub struct RecursiveTree<Wrapped> {
     /// nonempty, in topological-sorted order
@@ -99,24 +96,24 @@ pub struct RecursiveTree<Wrapped> {
 }
 ```
 
-Here's a visualization of what this data structure looks like for the expression `5 - 3 * 3 + 12`.
+Here's a visualization of what this data structure looks like for the expression `(5 - 3) * (3 + 12)`.
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
 
 # Expand
 
-Let's see what expanding a boxed expression tree for `5 - 3 * 3 + 12` into a `RecursiveTree` looks like. We'll look at the implementation soon, but this visualization shows what the computation looks like.
+Let's see what expanding a boxed expression tree for `(5 - 3) * (3 + 12)` into a `RecursiveTree` looks like. We'll look at the implementation soon, but this visualization shows what the computation looks like.
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_expand_only.gif" alt="execution graph for expansion of a simple expression" position="center" style="border-radius: 8px;" >}}
 
 
-Expanding out the data structure takes the form of a depth-first traversal. Layers are generated and pushed onto a vector of elements, which then forms the `RecursiveTree`. Feel free to skim the implementation of `expand_layers`, if you're curious, but the important thing is _that_ we have an implementation of `Expand`, not _how_ we've implemented.
+You can see the implementation of `expand_layers` for this structure below, if you're curious, but the important thing is _that_ we have an implementation of `Expand` provided by the `recursion` crate, not _how_ its implemented. The whole point of having a crate is not having to examine every implementation detail!
 
 <details>
       <summary>Click to expand code sample</summary>
       
 ```rust
-impl<A, Underlying, O: MapLayer<(), Unwrapped = A, To = U>> Expand<A, O>
+impl<A, Underlying, O: MapLayer<StackMarker, Unwrapped = A, To = U>> Expand<A, O>
     for RecursiveTree<U>
 {
     fn expand_layers<F: Fn(A) -> O>(a: A, generate_layer: F) -> Self {
@@ -130,7 +127,7 @@ impl<A, Underlying, O: MapLayer<(), Unwrapped = A, To = U>> Expand<A, O>
             let mut topush = Vec::new();
             let layer = layer.map_layer(|aa| {
                 topush.push(aa);
-                ()
+                StackMarker
             });
             frontier.extend(topush.into_iter().rev());
 
@@ -148,7 +145,7 @@ impl<A, Underlying, O: MapLayer<(), Unwrapped = A, To = U>> Expand<A, O>
 ```
 </details>
 
-Let's see what this looks like when expanding  `5 - 3 * 3 + 12` into a recursive tree. Since it's already made up of layers, we can just dereference the boxed value.
+Let's see what expanding a boxed-pointer expression into a `RecursiveTree` looks like. Since it's already made up of `ExprLayer` layers, we can just dereference the boxed value using the `*` operator.
 
 ```rust
 let expr_tree = RecursiveTree::expand(expr, |ExprBoxed(boxed)| *boxed)
@@ -157,18 +154,17 @@ let expr_tree = RecursiveTree::expand(expr, |ExprBoxed(boxed)| *boxed)
 
 # Collapse
 
-Let's see what this looks like when collapsing  the `RecursiveTree` for `5 - 3 * 3 + 12` that we constructed in the last section. As in the last section, we'll look at the implementation soon, but this visualization shows what the computation looks like.
+Here's what collapsing the `RecursiveTree` that we just constructed for `(5 - 3) * (3 + 12)` looks like. As in the last section, this visualization shows what the computation looks like.
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_collapse_only.gif" alt="execution graph for collapsing of a simple expression" position="center" style="border-radius: 8px;" >}}
 
 
-We collapse a recursive tree by traversing the stack of layers, applying a `collapse_layers` function, and pushing the results to a results stack. As in the last section, feel free to skim the implementation of `collapse_layers` if you're curious, but the implementation details aren't as important as the fact that we have an implementation of `Collapse` for `RecursiveTree`.
 
 <details>
       <summary>Click to expand code sample</summary>
 
 ```rust
-impl<A, O, U: MapLayer<A, To = O, Unwrapped = ()>> Collapse<A, O>
+impl<A, O, U: MapLayer<A, To = O, Unwrapped = StackMarker>> Collapse<A, O>
     for RecursiveTree<U>
 {
     fn collapse_layers<F: FnMut(O) -> A>(self, mut collapse_layer: F) -> A {
@@ -186,8 +182,9 @@ impl<A, O, U: MapLayer<A, To = O, Unwrapped = ()>> Collapse<A, O>
 ```
 </details>
 
-Here's how we can use this to collapse our expression:
+Here's how we can use this to collapse expressions represented in the `RecursiveTree` format. Nothing complex, just some simple arithmatic:
 
+let expr_tree = RecursiveTree::expand(expr, |ExprBoxed(boxed)| *boxed)
 ```rust
 let result = recursive_tree.collapse_layers(|expr| {
     use ExprLayer::*;
@@ -202,20 +199,19 @@ let result = recursive_tree.collapse_layers(|expr| {
 
 # Combining Expand and Collapse
 
-As a reminder, the `RecursiveTree` representing `5 - 3 * 3 + 12` looks like this:
+As a reminder, the `RecursiveTree` representing `(5 - 3) * (3 + 12)` looks like this:
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
 
-Here's a visualization showing what the full evaluation looks like, if we run expand immediately followed by collapse
+Here's a visualization showing what the full evaluation looks like, if we run `expand_layers` immediately followed by `collapse_layers`: 
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval_sorted.gif" alt="execution graph for expanding and then collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
-But what if we could avoid holding the full tree in memory? It should be possible to evaluate the expression like this, one branch at a time:
+But what if we could avoid holding the full tree in memory? This would provide memory usage benefits, and it would also let us avoid introducing a new type of data structure - `RecursiveTree` - into our projects. It should be possible to evaluate the expression like this, one branch at a time, instead of constructing the full tree:
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
-
-As before, the type signature is the important part - the full implementation is below, if you're curious, but you don't need to understand the internals to use the function.
+The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate.
 
 ```rust
 /// For some Layer type, Expandable is Layer<Seed> and Collapsable is Layer<Out>
@@ -224,7 +220,11 @@ pub fn expand_and_collapse<Seed, Out, Expandable, Collapsable>(
     mut expand_layer: impl FnMut(Seed) -> Expandable,
     mut collapse_layer: impl FnMut(Collapsable) -> Out,
 ) -> Out
+    Expandable: MapLayer<(), Unwrapped = Seed>,
+    <Expandable as MapLayer<()>>::To: MapLayer<Out, Unwrapped = (), To = Collapsable>,
 ```
+
+The full implementation is below, if you're curious.
 
 <details>
       <summary>Click to expand code sample</summary>
@@ -271,11 +271,36 @@ where
 </details>
 
 
+Here's how we can use this function to evaluate a traditional boxed-pointer recursive expression tree, without constructing an intermediate `RecursiveTree` - thus saving on both conceptual overhead and memory-usage overhead:
+
+```rust
+fn eval(expr: ExprBoxed) -> i63 {
+    expand_and_collapse(
+        expr,                      // seed value
+        |ExprBoxed(boxed)| *boxed, // expand layer function
+        |expr| {
+            // collapse layer function
+            use ExprLayer::*;
+            match expr {
+                Add { a, b } => a + b,
+                Sub { a, b } => a - b,
+                Mul { a, b } => a * b,
+                LiteralInt { literal } => literal,
+            }
+        },
+    )
+}
+```
+
 This is _fully generic_, and can be used with any recursive structure, not just the simple expression language used in this post. In the next post, I'll show how to use it to build an expression language for matching filesystem entities, with features like short-circuiting to minimize syscalls, arena allocation (as a flex), and, of course, many more execution graphs.
 
-# Haskell Bullshit (feel free to skip)
+# Computer Science Bullshit (feel free to skip)
+
+If you have a background in data structures and algorithms, and if you looked closely at the implementation details of the above functions, you might recognize them as implementing a stack machine. 
 
 If you're familiar with Haskell and Recursion schemes, you might recognize this as a hylomorphism. If you don't know what the hell a hylomorphism is and are interested in learning, there's an [excellent blog post here](https://blog.sumtypeofway.com/posts/recursion-schemes-part-5.html):  
+
+There does appear to be a fundamental correspondence between stack machines and hylomorphisms. This is interesting, because these ideas arise in different corners of the computer science universe. That said, this isn't _that_ surprising, as both are descriptions of the same thing: recursion.
 
 # Thank you
 
