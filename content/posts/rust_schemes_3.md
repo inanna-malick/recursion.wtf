@@ -107,6 +107,8 @@ Let's see what expanding a boxed expression tree for `(5 - 3) * (3 + 12)` into a
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_expand_only.gif" alt="execution graph for expansion of a simple expression" position="center" style="border-radius: 8px;" >}}
 
 
+## Implementation
+
 You can see the implementation of `expand_layers` for this structure below, if you're curious, but the important thing is _that_ we have an implementation of `Expand` provided by the `recursion` crate, not _how_ its implemented. The whole point of having a crate is not having to examine every implementation detail!
 
 <details>
@@ -158,7 +160,7 @@ Here's what collapsing the `RecursiveTree` that we just constructed for `(5 - 3)
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_collapse_only.gif" alt="execution graph for collapsing of a simple expression" position="center" style="border-radius: 8px;" >}}
 
-
+## Implementation
 
 <details>
       <summary>Click to expand code sample</summary>
@@ -210,7 +212,9 @@ But what if could run both operations in a single pass? That would remove the ne
 
 {{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
-The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate. Docs are [here](https://docs.rs/recursion/0.3.1/recursion/stack_machine/fn.expand_and_collapse.html).
+## Implementation
+
+The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate. Docs are [here](https://docs.rs/recursion/0.3.1/recursion/stack_machine/fn.expand_and_collapse.htm).
 
 ```rust
 /// For some Layer type, Expandable is Layer<Seed> and Collapsable is Layer<Out>
@@ -300,6 +304,11 @@ If you have a background in data structures and algorithms, and if you looked cl
 If you're familiar with Haskell and Recursion schemes, you might recognize `expand_and_collapse` as a hylomorphism. If you don't know what the hell a hylomorphism is and are interested in learning, there's an [excellent blog post here](https://blog.sumtypeofway.com/posts/recursion-schemes-part-5.html) that goes into some detail on the concept. 
 
 There does appear to be a fundamental correspondence between stack machines and hylomorphisms. This is interesting, because these ideas arise in different corners of the computer science universe. That said, this isn't _that_ surprising, as both are descriptions of the same thing: recursion.
+
+# Change Notes
+
+TODO: add project/separate layer and boxed expr tree types
+TODO: that fixed point shit is just too galaxy brain!
 
 # Thank you
 
