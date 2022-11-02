@@ -25,39 +25,31 @@ This post covers functionality already implemented in my [recursion](https://cra
 
 ## Our Expression Language
 
-Earlier in this series we defined a simple expression language for math, using this enum to represent _a single layer_ of an expression tree:
+Earlier in this series we defined a simple expression language for math, using these two enums to represent both a full expression tree and _a single layer_ of an expression tree:
 
 ```rust
+pub enum Expr {
+    Add { a: Box<Expr>, b: Box<Expr> },
+    Sub { a: Box<Expr>, b: Box<Expr> },
+    Mul { a: Box<Expr>, b: Box<Expr> },
+    LiteralInt { literal: i64 },
+}
+
 pub enum ExprLayer<A> {
     Add { a: A, b: A },
     Sub { a: A, b: A },
     Mul { a: A, b: A },
     LiteralInt { literal: i64 },
 }
-
-struct ExprBoxed(Box<ExprLayer<ExprBoxed>>);
 ```
-
-So that we can easily write expressions out by hand (for test cases and examples), let's define some helper functions (specifics omitted).
-
-```rust
-// some simple utility functions for creating boxed expressions
-impl ExprBoxed {
-    fn add(a: Self, b: Self) -> Self { ... }
-    fn sub(a: Self, b: Self) -> Self { ... }
-    fn mul(a: Self, b: Self) -> Self { ... }
-    fn literal_int(x: i64) -> Self { ... }
-}
-```
-
 
 In this post we'll be working with the expression `(5 - 3) * (3 + 12)`. Here's what that looks like as code:
 
 ```rust
-use ExprBoxed::*;
-let expr = mul(
-	sub(literal_int(5), literal_int(3)),
-	add(literal_int(3), literal_int(12)),
+use Expr::*;
+let expr = Mul(
+	Box::new(Sub(Box::new(LiteralInt(5)),  Box::new(LiteralInt(3)))),
+	Box::new(Add(Box::new(LiteralInt(3)), Box::new(LiteralInt(12)))),
 );
 ```
 
@@ -147,10 +139,19 @@ impl<A, Underlying, O: MapLayer<StackMarker, Unwrapped = A, To = U>> Expand<A, O
 ```
 </details>
 
-Let's see what expanding a boxed-pointer expression into a `RecursiveTree` looks like. Since it's already made up of `ExprLayer` layers, we can just dereference the boxed value using the `*` operator.
+Let's see what expanding a boxed-pointer expression into a `RecursiveTree` looks like. Since the `Expr` enum is structurally identical to `ExprLayer` layers, it just takes a bit of boilerplate to project a single layer of an `Expr` into an `ExprLayer<Expr>`.
 
 ```rust
-let expr_tree = RecursiveTree::expand_layers(expr, |ExprBoxed(boxed)| *boxed)
+fn project(e: Expr) -> ExprLayer<Expr> {
+    match e {
+        Expr::Add(a, b) => ExprLayer::Add(*a, *b),
+        Expr::Sub(a, b) => ExprLayer::Sub(*a, *b),
+        Expr::Mul(a, b) => ExprLayer::Mul(*a, *b),
+        Expr::LiteralInt(a) => ExprLayer::LiteralInt(a),
+    }
+}
+
+let expr_tree = RecursiveTree::expand_layers(expr, project)
 ```
 
 
@@ -277,10 +278,10 @@ where
 Here's how we can use this function to evaluate a traditional boxed-pointer recursive expression tree, without constructing an intermediate `RecursiveTree` - thus saving on both conceptual overhead and memory-usage overhead:
 
 ```rust
-fn eval(expr: ExprBoxed) -> i63 {
+fn eval(expr: Expr) -> i64 {
     expand_and_collapse(
-        expr,                      // seed value
-        |ExprBoxed(boxed)| *boxed, // expand layer function
+        expr,    // seed value
+        project, // expand layer function
         |expr| {
             // collapse layer function
             use ExprLayer::*;
@@ -295,7 +296,77 @@ fn eval(expr: ExprBoxed) -> i63 {
 }
 ```
 
-This is _fully generic_, and can be used with any recursive structure, not just the simple expression language used in this post. In the next post, I'll show how to use `expand_and_collapse` to build an expression language for matching filesystem entities, with features like short-circuiting to minimize syscalls, arena allocation (as a flex), and, of course, many more execution graphs.
+## Making it more ergonomic
+
+You may have noted that the `project` function, as used above, will have to be repeated for every `expand_and_collapse` use over `Expr`. We can factor it out, to make things more ergonomic.
+
+
+First, we define a `Project` trait, representing the generic ability to project from some type into an associated layer type:
+
+```rust
+/// Projection into some Layer type - from A to Layer<A>
+pub trait Project {
+    // A
+    type To; // F<A>
+    fn project(self) -> Self::To;
+}
+```
+
+Given an implementation of `Project`, we can implement `Collapse` _directly_ on the type we are projecting from - in this case, our boxed `Expr` tree type.
+
+```rust
+impl<
+        // Layer, a type parameter of kind * -> * that cannot be represented in rust
+        Seed: Project<To = GenerateExpr>,
+        Out,
+        GenerateExpr: MapLayer<(), Unwrapped = Seed, To = U>, // Layer<Seed>
+        ConsumeExpr,                                          // Layer<Out>
+        U: MapLayer<Out, To = ConsumeExpr, Unwrapped = ()>,   // Layer<()>
+    > Collapse<Out, ConsumeExpr> for Seed
+{
+    fn collapse_layers<F: FnMut(ConsumeExpr) -> Out>(self, collapse_layer: F) -> Out {
+        expand_and_collapse(self, Project::project, collapse_layer)
+    }
+}
+```
+
+Here's what using it looks like in practice:
+
+```rust
+impl Project for Expr {
+    type To = ExprLayer<Expr>;
+
+    fn project(e: Expr) -> ExprLayer<Expr> {
+        match e {
+            Expr::Add(a, b) => ExprLayer::Add(*a, *b),
+            Expr::Sub(a, b) => ExprLayer::Sub(*a, *b),
+            Expr::Mul(a, b) => ExprLayer::Mul(*a, *b),
+            Expr::LiteralInt(a) => ExprLayer::LiteralInt(a),
+        }
+    }
+}
+
+fn eval(expr: Expr) -> i64 {
+    expr.collapse_layers(
+        |expr| {
+            use ExprLayer::*;
+            match expr {
+                Add { a, b } => a + b,
+                Sub { a, b } => a - b,
+                Mul { a, b } => a * b,
+                LiteralInt { literal } => literal,
+            }
+        },
+    )
+}
+```
+
+
+This is _fully generic_, and makes it so `collapse_layers` can be used with any boxed recursive structure, not just the simple expression language used in this post.
+
+
+In the next post, I'll show how to use `expand_and_collapse` to build an expression language for matching filesystem entities, with features like short-circuiting to minimize syscalls, and, of course, many more execution graphs.
+
 
 # Computer Science Implications
 
@@ -307,8 +378,7 @@ There does appear to be a fundamental correspondence between stack machines and 
 
 # Change Notes
 
-TODO: add project/separate layer and boxed expr tree types
-TODO: that fixed point shit is just too galaxy brain!
+- Added separate `Expr` type for boxed expression trees, added section on `Project` for ergonomics.
 
 # Thank you
 

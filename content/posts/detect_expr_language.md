@@ -11,18 +11,22 @@ feature = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 thumbnail = "/img/rust_schemes/stack_machines_1/simple_expr_eval.gif"
 +++
 
+TODO: update images/feature/thumbnail above
 
 - Blog title: "expression languages in rust ", twitter post with 4x gif of my find tool collapsing a nontrivial expr, preceded by 1x screenshot of shell examination of file via ls/cat
 	- subheading: concise, performant, easy
 Rust has been used to implement many fast modern command line tools with low overhead, quick start times, and extremely high performance. Most of these tools use command line flags to express query and filtering rules. General purpose expression languages are traditionally seen as nice to have but hard to implement, and are thus not common in the Rust ecosystem. I think it would be nice to change that. Expression languages are useful tools for expressing complex logic, and I think they're worth adding.
 
-This blog post shows how to implement a nontrivially complex expression language for filtering filesystem entries: it's similar to the `fd` and `find` tools, but instead of command line flags it uses expressions like `extension(.rs) && contents(eval) || filesize(0..1024) && executable()`.
+This blog post shows how to implement a nontrivially complex expression language for filtering filesystem entries: it's similar to the `fd` and `find` tools, but instead of command line flags it uses expressions like `executable() && size(1mb..) && filename(detect) || extension(.rs) && contains(fn main)`.
+
 
 <!--more--> 
 
-This is the 4th post in a series, but it's intended to be an entry point to motivate reading the previous posts: if you haven't read them, some patterns may be unfamiliar, but I've provided visualizations of each stage so you can follow along.
+This is the 4th post in a series, but it's intended to be an entry point to motivate reading the previous posts: if you haven't read them, some patterns may be unfamiliar, but I've provided animated visualizations of each stage so you can follow along.
 
 TODO: gif here
+
+TODO: short circuiting -> reducing
 
 # A file matching expression language
 
@@ -31,27 +35,31 @@ This tool is a proof of concept and does not provide feature parity with `find` 
 
 ## An example expression
 
-Here's an example of the kind of expression it takes as input: `extension(.rs) && contents(eval) || filesize(0..1024) && executable()`. It has 4 different predicates and 2 different operators. Here are the predicates, in order of evaluation cost:
-- `extension(.rs)`is a name predicate. It examines a file's name. This is pretty much free, because we start with the file's path.
-- `filesize(0..1024)` and  `executable()` are metadata predicates. Both of these are a bit more expensive, because they require reading a file's metadata using the path.
-- Finally, we have the `contents(eval)` predicate. It's a contents predicate, meaning it runs against the full on-disc contents of a file. These are the most expensive, because they require reading the full contents of a file from the filesystem.
+TODO: explain the predicates here I guess?
+TODO: actually remove the filename detect thing b/c that skips hitting the metadata? this may not be desirable
+
+Here's an example of the kind of expression it takes as input: `executable() && size(1mb..) || extension(.rs) && contains(fn main)`. It has 4 different predicates and 2 different operators. Here are the predicates, in order of evaluation cost:
+- `extension(.rs)` is a file name predicate. Running a predicate against a file's name is pretty much free, because we start with the file's path.
+- `size(1mb..)` and  `executable()` are metadata predicates. Both of these are a bit more expensive, because they require reading a file's metadata (size, permissions, etc) using a syscall.
+- Finally, we have the `contents(fn main)` predicate. It's a contents predicate, meaning it runs against the full on-disc contents of a file. These are the most expensive, because they require reading the full contents of a file from the filesystem.
 
 We would like to evaluate the least expensive predicates first, and to skip evaluation of the more expensive predicates wherever possible. Here's how: boolean operators allow for short circuiting.
 - The Or operator, `||`, evaluates to true if _either side_ is true. 
 - The And operator, `&&`, evaluates to false if _either side_ is false.
 
+
 ## Evaluating expressions
 
-Let's see what this looks like in practice. First, imagine we're evaluating this expression for a small executable named `my_executable`. It's very small, only 64 bytes.
-- First, we start with`extension(.rs) && contents(eval) || filesize(0..1024) && executable() ` , the full expression.
-- First we evaluate the name predicate, `extension(.rs)`: the filename `my_executable` doesn't have the .rs extension, so it evaluates to `false`.  That false can be substituted in, resulting in `false && contents(eval) || filesize(0..1024) && executable()` which can then be collapsed down to `false || filesize(0..1024) && executable()` via the short circuiting rule for `&&`.
-- We still don't have a boolean result, so we read the metadata and evaluate the metadata predicates `filesize(0..1024` and `executable()`. Doing so results in `false || true && true` . Since every remaining predicate in the expression has been evaluated, we can return `true` and entirely skip looking at the contents of the file.
+Let's see what this looks like in practice. First, imagine we're evaluating this expression for the `detect` binary itself.
+- First, we start with `executable() && size(1mb..) || extension(.rs) && contains(fn main)`, the full expression.
+- First we evaluate the name predicate: the filename detect doesn't have the .rs extension, so `extension(.rs)` evaluates to false. That leaves us with `executable() && size(1mb..) || false && contains(fn main)`, which we reduce down to `executable() && size(1mb..)`.
+- We still don't have a boolean result, so we read the metadata and evaluate the metadata predicates `size(1mb..)` and `executable()`. Doing so results in `true && true` . Since every remaining predicate in the expression has been evaluated, we can return `true` and entirely skip looking at the contents of the file.
 
-Another example: this time we're looking at a rust file, `eval.rs`, that has contents `fn() eval { todo!() }`.
-- As before, we start with the full expression: `extension(.rs) && contents(eval) || filesize(0..1024) && executable() `
-- First we evaluate the name predicate, `extension(.rs)`: the filename `eval.rs` has the .rs extension, so it evaluates to `true`.  That  is then substituted in, resulting in `true && contents(eval) || filesize(0..1024) && executable()`.
-- We still don't have a boolean result for the expression, so next we read the metadata and evaluate the metadata predicates `filesize(0..1024` and `executable()`. This results in `true && contents(eval) || true && false`. This is then short circuited to `true && contents(eval) || false` via the short circuiting rule for `&&`
-- We still don't have a boolean result, so we run the last and most expensive predicate: `contents(eval)`. Since the file contains the substring `eval`, it evaluates to `true`. Substituting that result in, we get `true && true || false`. This then evaluates to `true`, which is returned.
+Another example: this time we're looking at the `main.rs` file for the `detect` project.
+- As before, we start with the full expression: `executable() && size(1mb..) || extension(.rs) && contains(fn main)`.
+- First we evaluate the name predicates: `extension(.rs)` evaluates to `true`. This value is then substituted in, resulting in `executable() && size(1mb..) || true && contains(fn main)`, which is reduced down to `executable() && size(1mb..) || contains(fn main)`.
+- We still don't have a boolean result for the expression, so next we read the metadata and evaluate the metadata predicates: `size(1mb..)` and `executable()`. This results in `false && false || contents(fn main)`. This is then reduced to `contents(fn main)`.
+- We still don't have a boolean result, so we run the last and most expensive predicate: `contents(fn main)`. Since the file contains the substring `fn main`, it evaluates to `true`. Substituting that result in, we get `true`, which is then returned.
 
 These examples illustrate how short circuiting works, and how predicates are run in multiple stages. Now we can move on to the implementation:
 
@@ -169,10 +177,12 @@ pub enum Operator<Recurse> {
     And(Vec<Recurse>),
     Or(Vec<Recurse>),
 }
-
 ```
 
-Defining `Operator` as its own enum lets us factor out boolean short circuiting logic as the `attempt_short_circuit` function. The rules are:
+For brevity, the `MapLayer` and `Project` implementations have been ommited.
+
+
+Defining `Operator` as its own enum lets us factor out boolean short circuiting logic as the `attempt_short_circuit` function. To recap, the rules are:
 - an And operator
   - returns true if all elements are true
   - returns false if _any_ element is false
@@ -190,6 +200,7 @@ This is especially desirable because the actual implementation is a bit verbose.
       <summary>Click to expand operator short circuiting</summary>
 
 ```rust
+// TODO: update to match most recent code
 impl<A, B, C> Operator<Expr<A, B, C>> {
     pub fn attempt_short_circuit(self) -> Expr<A, B, C> {
         use Expr::*;
@@ -222,32 +233,8 @@ impl<A, B, C> Operator<Expr<A, B, C>> {
 ```
 </details>
 
-## machinery of recursion sidebar: boilerplate
 
-We're going to _project_ our boxed expression type into `ExprLayer` layers - think of it as a purpose-specific stack frame, with the `project` function handling traversing the boxed expression type `Expr` and generating our stack frames.
-- this lets us write _collapse_layer_ directly over `Expr` instances - as mentioned before, there's no need to use any idosyncratic idioms.
-- These concepts (except for `project`, which just factors out the boilerplate) are introduced in the previous posts in this series
-
-```rust
-impl<'a, S1: 'a, S2: 'a, S3: 'a> Project for &'a Expr<S1, S2, S3> {
-    type To = ExprLayer<'a, Self, S1, S2, S3>;
-
-    // project into ExprLayer
-    fn project(self) -> Self::To {
-        match self {
-            Expr::Not(x) => ExprLayer::Operator(Operator::Not(x)),
-            Expr::And(xs) => ExprLayer::Operator(Operator::And(xs.iter().collect())),
-            Expr::Or(xs) => ExprLayer::Operator(Operator::Or(xs.iter().collect())),
-            Expr::KnownResult(b) => ExprLayer::KnownResult(*b),
-            Expr::Name(n) => ExprLayer::Name(n),
-            Expr::Metadata(m) => ExprLayer::Metadata(m),
-            Expr::Contents(c) => ExprLayer::Contents(c),
-        }
-    }
-}
-```
-
-TODO: link to previous/next posts in each post of said series (modify previous posts to include project, I think - mb, would also require dropping fixed point bullshit)
+TODO: link to previous/next posts in each post of said series
 
 
 ## The eval function
