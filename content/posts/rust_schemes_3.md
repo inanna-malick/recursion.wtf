@@ -17,7 +17,7 @@ This is the third post in a three-post series. In the [first post](https://recur
 
 In this post we will see how to _combine_ these two things - expanding a structure and collapsing it at the same time, performing both operations in a single pass. In the process, we will gain the ability to write arbitrary recursive functions over traditional boxed-pointer recursive structures (instead of the novel `RecursiveTree` type introduced in my previous post) while retaining stack safety. 
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
 <!--more--> 
 
@@ -98,13 +98,13 @@ pub struct RecursiveTree<Wrapped> {
 
 Here's a visualization of what this data structure looks like for the expression `(5 - 3) * (3 + 12)`.
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
 
 # Expand
 
 Let's see what expanding a boxed expression tree for `(5 - 3) * (3 + 12)` into a `RecursiveTree` looks like. We'll look at the implementation soon, but this visualization shows what the computation looks like.
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_expand_only.gif" alt="execution graph for expansion of a simple expression" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_expand_only.gif" alt="execution graph for expansion of a simple expression" position="center" style="border-radius: 8px;" >}}
 
 
 You can see the implementation of `expand_layers` for this structure below, if you're curious, but the important thing is _that_ we have an implementation of `Expand` provided by the `recursion` crate, not _how_ its implemented. The whole point of having a crate is not having to examine every implementation detail!
@@ -156,7 +156,7 @@ let expr_tree = RecursiveTree::expand_layers(expr, |ExprBoxed(boxed)| *boxed)
 
 Here's what collapsing the `RecursiveTree` that we just constructed for `(5 - 3) * (3 + 12)` looks like. As in the last section, this visualization shows what the computation looks like.
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_collapse_only.gif" alt="execution graph for collapsing of a simple expression" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_collapse_only.gif" alt="execution graph for collapsing of a simple expression" position="center" style="border-radius: 8px;" >}}
 
 
 
@@ -200,15 +200,15 @@ let result = recursive_tree.collapse_layers(|expr| {
 
 As a reminder, the `RecursiveTree` representing `(5 - 3) * (3 + 12)` looks like this:
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_structure.png" alt="simple expr data at rest" position="center" style="border-radius: 8px;" >}}
 
 Here's a visualization showing what the full evaluation looks like, if we run `expand_layers` immediately followed by `collapse_layers`: 
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval_sorted.gif" alt="execution graph for expanding and then collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_eval_sorted.gif" alt="execution graph for expanding and then collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
 But what if could run both operations in a single pass? That would remove the need to hold the full tree in memory. It would also let us avoid introducing a new type of data structure - `RecursiveTree` - into our projects. It should be possible to evaluate the expression like this, one branch at a time, instead of constructing the full tree:
 
-{{< image src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
+{{< figure src="/img/rust_schemes/stack_machines_1/simple_expr_eval.gif" alt="execution graph for simultaneously expanding and collapsing a simple expression" position="center" style="border-radius: 8px;" >}}
 
 The function that does this is called `expand_and_collapse`, and it's provided by the `recursion` crate. Docs are [here](https://docs.rs/recursion/0.3.1/recursion/stack_machine/fn.expand_and_collapse.html).
 
