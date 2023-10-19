@@ -13,3 +13,9 @@
 [submodule "themes/hugo-theme-relearn"]
 	path = themes/hugo-theme-relearn
 	url = https://github.com/McShelby/hugo-theme-relearn.git
+[submodule "themes/themes/hugo-dynamic-tabs"]
+	path = themes/themes/hugo-dynamic-tabs
+	url = https://github.com/rvanhorn/hugo-dynamic-tabs
+[submodule "themes/hugo-dynamic-tabs"]
+	path = themes/hugo-dynamic-tabs
+	url = https://github.com/rvanhorn/hugo-dynamic-tabs
