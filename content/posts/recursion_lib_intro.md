@@ -11,9 +11,11 @@ feature = "img/recursion_crate/detect_example_expr_frame.gif"
 thumbnail = "img/recursion_crate/detect_example_expr_frame.gif"
 +++
 
-The [recursion crate](https://crates.io/crates/recursion) provides abstractions for separating the _machinery_ of recursion from the _logic_ of recursion. This is similar to how iterators separate the _machinery_ of iteration from the _logic_ of iteration, allowing us to replace  {{< highlight c "hl_inline=true">}} for (int i = 0; i < 10; ++i) {} {{< /highlight >}} with {{< highlight rust "hl_inline=true">}}  for item in items.iter() {}{{< /highlight >}} 
 
-This post doesn't attempt to explain every feature of the recursion crate (that's what the [cargo docs](https://docs.rs/recursion/0.5.1/recursion/) are for), but instead aims to spark your curiosity and to motivate you to use the tools provided by the recursion crate.
+In traditional low level languages such as C iteration is implemented manually, with users writing out {{< highlight c "hl_inline=true">}} for (int idx = 0; idx < items_len; ++idx) { do_thing(items[idx] } {{< /highlight >}}, every time they want to iterate over a list. Newer languages like Rust provide abstractions - iterators - that separate the _machinery_ of recursion from the logic: {{< highlight rust "hl_inline=true">}}  for item in items.iter() { do_thing(item) }{{< /highlight >}} .
+
+The [recursion crate](https://crates.io/crates/recursion) does the same thing for recursive data structures. This post is an introduction to the new version of the `recursion` crate
+
 
 <!--more--> 
 
@@ -21,11 +23,11 @@ This post doesn't attempt to explain every feature of the recursion crate (that'
 # Motivation: a file matching tool
 
 
-I often use the `find` tool to find files matching some set of criteria - name, metadata, file contents, that kind of thing. Almost every time I use it for something nontrivial, I end up having to google the right combination of command line flags to express my query. For example, let's say we want to list all files that fit one of the two following criteria: 
+I often use the `find` tool to find files matching some set of criteria - name, metadata, file contents, that kind of thing. Almost every time I use it for something nontrivial, I end up having to google the right combination of command line flags to express my query. For example, let's say we want to list all files that fits one of the two following criteria: 
 1. the file is executable and has 'detect' in its name
 2. the filename includes '.rs' and the file contents include the string 'map_frame'
 
-It's important to note that it _is_ possible to express this query using `find`, but due to the inherent constraints of the tools involved doing so is nontrivially complex and a bit hard to read.
+While you can still express this query using `find`, due to the inherent constraints of the tools involved doing so is nontrivially complex.
 
 ```bash
 {
@@ -43,40 +45,81 @@ It's important to note that it _is_ possible to express this query using `find`,
 
 ## Detect
 
-That's why I wrote `detect`. It's like `find`, but instead of flags it uses an expression language with a series of predicates. Since some matching criteria are cheap and some are expensive, it runs in multiple stages - first filename criteria, then metadata criteria, and only then criteria that require looking at the full file contents.
+That's why I wrote `detect`. It's like `find`, but instead of flags it uses an expression language with a series of predicates. 
 
 ```bash
 detect 'filename(detect) && executable() || filename(.rs) && contains(map_frame)'
 ```
 
+Since some matching criteria are cheap and some are expensive, the `detect` tools is clever enough to run them in multiple stages - first filename criteria, then metadata criteria, and only then criteria that require looking at the full file contents. At each stage, it attempts to short circuit before running the next, more expensive, stage.
 
-Here's a visualization of `detect` running this expression against three different files in its own repository (link):
+For the expression above, here are some visualizations of `detect` , as run against three different files in its own [repository](https://github.com/inanna-malick/detect):
 
-## README.md
 
-short circuits as `false` using only filename matcher
+README.md: short circuits as `false` using only filename matcher
 
 {{< figure src="/img/recursion_crate/detect_example_readme.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
-## target/debug/detect
 
-short circuits as `true` after reading metadata:
+target/debug/detect: short circuits as `true` after reading metadata:
 
 {{< figure src="/img/recursion_crate/detect_example_target_detect.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
-## src/expr/frame.rs
 
-evaluates to `true` after reading metadata and file contents
+src/expr/frame.rs: evaluates to `true` after reading metadata and file contents
 
 {{< figure src="/img/recursion_crate/detect_example_expr_frame.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
 These GIFs show the process of running partial evaluation with short circuiting. Now we turn our eye to the implementation of this functionality.
-# Why the Recursion Crate
 
- The `recursion` crate is a great fit for problems involving expression languages. That's why it was used it to implement `detect`, and why it's used to implement nextest's test filtering expression language, as implemented in [nextest-filtering](https://github.com/nextest-rs/nextest/tree/main/nextest-filtering).
-## An expression language
+# Predicates
 
-The structure of the expression language is the same throughout each phase, with only the type representing still-unevaluated predicates changing as we step through the phases.
+We evaluate expressions in three phases, and we have three types of predicate: Name, Metadata, and Content:
+
+```rust
+enum Predicate<Name, Metadata, Content> {
+    Name(Name),
+    Metadata(Metadata),
+    Content(Content),
+}
+```
+
+The type parameters let us change the type of a `Predicate` to indicate what stage we're on. As stages are eliminated we will use `Done` - an uninhabited type - to mark those branches as eliminated.
+
+```rust
+enum Done {}
+```
+
+Because `Done` is an enum with zero branches, it cannot exist at runtime. That means any branch of an enum containing it cannot exist either. For example, a `Predicate<Done, Done, Content>` can _only_ contain `Predicate::Content` branches. We will evaluate predicates by eliminating predicate type parameters to mark the evaluation of the corresponding phase, short circuiting where evaluation is possible:
+
+```rust
+enum ShortCircuit<A> {
+  Unknown<A>,
+  Known(bool),
+}
+
+
+impl<A, B> Predicate<NamePredicate, A, B> {
+    fn eval_name_predicate(self, filename: String)
+        -> ShortCircuit<Predicate<Done, A, B>>  {}
+}
+
+impl<A> Predicate<Done, MetadataPredicate, B> {
+    fn eval_metadata_predicate(self, metadata: Metadata)
+        -> ShortCircuit<Predicate<Done, Done, B>>  {}
+}
+
+impl Predicate<Done, Done, ContentPredicate> {
+    fn eval_content_predicate(self, contents: String)
+        -> ShortCircuit<Predicate<Done, Done, Done>>  {}
+}
+```
+
+At each stage, one type of predicate is eliminated as a possibility until none are left.
+
+# An expression language
+
+The structure of the expression language is the same throughout each phase, with only the predicate type changing as we step through each phase.
 
 ```rust
 enum Expr<Predicate> {
@@ -88,21 +131,15 @@ enum Expr<Predicate> {
 }
 ```
 
-The core of `detect` is a function called `reduce_and_short_circuit` that shrinks the set of available predicates, short circuiting where possible and substituting in some new predicate type where not.
+The core of `detect` is a function called `reduce_and_short_circuit` that shrinks the set of available predicates, short circuiting where possible and otherwise substituting in the predicate type for the next phase of evaluation.
 
 ```rust
 // apply some potentially short circuiting transformation to all predicates in
 // this expression, with the goal of eventually eliminating all predicate cases
 fn reduce_and_short_circuit<A, B>(
 	&e: Expr<A>,
-	f: impl Fn(A) -> ShortCircuit<B>,
+	eval_predicate: impl Fn(A) -> ShortCircuit<B>,
 ) -> Expr<B> { /* etc */ }
-
-
-enum ShortCircuit<A> {
-  Unknown<A>,
-  Known(bool),
-}
 ```
 
 Let's see what the `reduce_and_short_circuit` function looks like, with and without the recursion crate.
@@ -113,13 +150,13 @@ The traditional way to write this function is both hard to read and can cause a 
 ```rust
 pub fn reduce_and_short_circuit<A, B>(
 	&e: Expr<A>,
-	f: impl Fn(A) -> ShortCircuit<B>,
+	eval_predicate: impl Fn(A) -> ShortCircuit<B>,
 ) -> Expr<B> {
 	match self {
 		// Literal expressions are unchanged
 		Expr::Literal(x) => Expr::Literal(*x),
 		// apply 'f' to Predicate expressions
-		Expr::Predicate(p) => match f(p.clone()) {
+		Expr::Predicate(p) => match eval_predicate(p.clone()) {
 			ShortCircuit::Known(bool) => Expr::Literal(bool),
 			ShortCircuit::Unknown(p) => Expr::Predicate(p),
 		},
@@ -127,11 +164,11 @@ pub fn reduce_and_short_circuit<A, B>(
 		Expr::And(a, b) => match (&**a, &**b) {
 			(Expr::Literal(false), _) => Expr::Literal(false),
 			(_, Expr::Literal(false)) => Expr::Literal(false),
-			(x, Expr::Literal(true)) => x.reduce_and_short_circuit(f),
-			(Expr::Literal(true), x) => x.reduce_and_short_circuit(f),
+			(x, Expr::Literal(true)) => x.reduce_and_short_circuit(eval_predicate),
+			(Expr::Literal(true), x) => x.reduce_and_short_circuit(eval_predicate),
 			(a, b) => Expr::And(
-				Box::new(a.reduce_and_short_circuit(&f)),
-				Box::new(b.reduce_and_short_circuit(&f)),
+				Box::new(a.reduce_and_short_circuit(&eval_predicate)),
+				Box::new(b.reduce_and_short_circuit(&eval_predicate)),
 			),
 		},
         /* ...and so on for Or and Not */
@@ -146,13 +183,13 @@ With the recursion crate, this can be simplified dramatically. The idioms used b
 ```rust
 pub fn reduce_and_short_circuit<A, B>(
 	&e: Expr<A>,
-	f: impl Fn(A) -> ShortCircuit<B>,
+	eval_predicate: impl Fn(A) -> ShortCircuit<B>,
 ) -> Expr<B> {
 	self.collapse_frames(|e| match e {
 		// Literal expressions are unchanged
 		ExprFrame::Literal(x) => Expr::Literal(x),
 		// apply 'f' to Predicate expressions
-		ExprFrame::Predicate(p) => match f(p) {
+		ExprFrame::Predicate(p) => match eval_predicate(p) {
 			ShortCircuit::Known(b) => Expr::Literal(b),
 			ShortCircuit::Unknown(p) => Expr::Predicate(p),
 		},
@@ -167,7 +204,7 @@ pub fn reduce_and_short_circuit<A, B>(
 }
 ```
 
-Note that this is not just less verbose, it also _does not use the call stack_. The `collapse_frames` function uses an internal heap-allocated stack to manage the bookkeeping of recursion, and thus is not susceptible to call stack overflows.
+Note that this is not just , it also more concise and easier to read, it _does not use the call stack_. The `collapse_frames` function uses an internal heap-allocated stack to manage the bookkeeping of recursion, and thus is not susceptible to call stack overflows.
 
 # How?
 
@@ -228,7 +265,7 @@ Generally speaking, you won't use these traits yourself - they're used by the in
 
 # Writing Recursive Algorithms
 
-The `Collapsible` trait provides the ability to write recursive algorithms that _collapse_ some structure into a single value, frame by frame. Let's look at some examples:
+The `Collapsible` trait provides the ability to write recursive algorithms that _collapse_ some structure into a single value, frame by frame. Let's look at an examples:
 
 ### Evaluating simple expressions
 
@@ -251,21 +288,13 @@ Here's a GIF showing each stage of the evaluation of `false && true || true` usi
 
 {{< figure src="/img/recursion_crate/eval_simple.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
-This GIF was generated by a special _instrumented_ version of the recursive machinery used by `collapse_frames`  that automatically generates animated 'stack traces'u.
+# Conclusions
+## Generating Visualizations
 
-## Link to full impl
+All GIFs in this post were generated by a special _instrumented_ version of the recursive machinery used by `collapse_frames`  that automatically generates animated 'stack traces'. Source code for this is [here](https://github.com/inanna-malick/detect/blob/94bcff1593c685dfee019c5caffbff6fa7ad6477/src/eval.rs).
 
-You can find a frozen version of the detect crate implementing the functionality described in this crate [here]("img/recursion_crate/detect_example_expr_frame.gif"])
+This is a great example of the kind of thing that you can do once you've separated the _logic_ of recursion from the _machinery_.
 
+## The Detect crate
 
-link to frozen version of detect w/ only the fn from the intro, no viz, etc.
-https://github.com/inanna-malick/detect/blob/version_for_blog_post/src/expr.rs#L32-L60
-
-link to main branch of detect with etc etc etc
-# The Detect crate
-
-The `reduce_predicate_and_short_circuit` function is taken from my `detect` crate, which provides tools for finding files on the filesystem using an expression language matcher. It supports multiple predicate stages (filename, file metadata, file contents, arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
-
-## Another example
-
-The most recent version of `detect` also supports spawning subprocesses - for fun, I tried using it with `file` to look for ASCII files, and I used short circuiting to ensure the subprocess is only run on X
+The `reduce_predicate_and_short_circuit` function is taken from my `detect` crate, which provides tools for finding files on the filesystem using an expression language matcher. The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
