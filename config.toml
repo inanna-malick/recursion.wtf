@@ -1,11 +1,11 @@
-# baseurl = "https://username.github.io"
+baseURL = "https://recursion.wtf/"
 DefaultContentLanguage = "en"
 title = "Inanna Malick"
 theme = "beautifulhugo"
 
 [Params]
 #  homeTitle = "Beautiful Hugo Theme" # Set a different text for the header on the home page
-  subtitle = "SOMETHING ABOUT ME"
+  subtitle = "Adventures in Rust"
   mainSections = ["post","posts"]
   logo = "img/avatar-icon.png" # Expecting square dimensions
   favicon = "img/favicon.ico"

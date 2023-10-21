@@ -14,7 +14,7 @@ thumbnail = "img/recursion_crate/detect_example_expr_frame.gif"
 
 In traditional low level languages such as C iteration is implemented manually, with users writing out {{< highlight c "hl_inline=true">}} for (int idx = 0; idx < items_len; ++idx) { do_thing(items[idx] } {{< /highlight >}}, every time they want to iterate over a list. Newer languages like Rust provide abstractions - iterators - that separate the _machinery_ of recursion from the logic: {{< highlight rust "hl_inline=true">}}  for item in items.iter() { do_thing(item) }{{< /highlight >}} .
 
-The [recursion crate](https://crates.io/crates/recursion) does the same thing for recursive data structures. This post is an introduction to the new version of the `recursion` crate
+The [recursion crate](https://crates.io/crates/recursion) does the same thing for recursive data structures. This post is an introduction to the new version of the `recursion` crate. This post is an introduction to the new version of the `recursion` crate, but you don't have to read [my](https://recursion.wtf/posts/rust_schemes/) [earlier](https://recursion.wtf/posts/rust_schemes_2/) [posts](https://recursion.wtf/posts/rust_schemes_3/) to understand it.
 
 
 <!--more--> 
@@ -56,17 +56,17 @@ Since some matching criteria are cheap and some are expensive, the `detect` tool
 For the expression above, here are some visualizations of `detect` , as run against three different files in its own [repository](https://github.com/inanna-malick/detect):
 
 
-README.md: short circuits as `false` using only filename matcher
+`README.md`: short circuits as `false` using only filename matcher
 
 {{< figure src="/img/recursion_crate/detect_example_readme.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
 
-target/debug/detect: short circuits as `true` after reading metadata:
+`target/debug/detect`: short circuits as `true` after reading metadata:
 
 {{< figure src="/img/recursion_crate/detect_example_target_detect.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
 
-src/expr/frame.rs: evaluates to `true` after reading metadata and file contents
+`src/expr/frame.rs`: evaluates to `true` after reading metadata and file contents
 
 {{< figure src="/img/recursion_crate/detect_example_expr_frame.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
@@ -90,7 +90,9 @@ The type parameters let us change the type of a `Predicate` to indicate what sta
 enum Done {}
 ```
 
-Because `Done` is an enum with zero branches, it cannot exist at runtime. That means any branch of an enum containing it cannot exist either. For example, a `Predicate<Done, Done, Content>` can _only_ contain `Predicate::Content` branches. We will evaluate predicates by eliminating predicate type parameters to mark the evaluation of the corresponding phase, short circuiting where evaluation is possible:
+Because `Done` is an enum with zero branches, it cannot exist at runtime. That means any branch of an enum containing it cannot exist either. For example, a `Predicate<Done, Done, Content>` can _only_ contain `Predicate::Content` branches, because all the other branches are marked as uninhabited.
+
+We will evaluate predicates by eliminating predicate type parameters to mark the evaluation of the corresponding phase, short circuiting where evaluation is possible:
 
 ```rust
 enum ShortCircuit<A> {
@@ -117,7 +119,7 @@ impl Predicate<Done, Done, ContentPredicate> {
 
 At each stage, one type of predicate is eliminated as a possibility until none are left.
 
-# An expression language
+# The expression language
 
 The structure of the expression language is the same throughout each phase, with only the predicate type changing as we step through each phase.
 
@@ -143,7 +145,7 @@ fn reduce_and_short_circuit<A, B>(
 ```
 
 Let's see what the `reduce_and_short_circuit` function looks like, with and without the recursion crate.
-## the old ways
+## The old ways
 
 The traditional way to write this function is both hard to read and can cause a stack overflow if an expression is too deeply nested. Feel free to let your eyes slide over it - the nested matches, the `&**` invocations, the verbose recursive calls - terrible. We can do better.
 
@@ -284,17 +286,31 @@ fn eval(e: &Expr) -> bool {
 
 Note that the function passed to `collapse_frames` only collapses a single frame of type `ExprFrame<bool>` - `collapse_frames` handles the rest.
 
-Here's a GIF showing each stage of the evaluation of `false && true || true` using this function
+Here's a GIF showing each step in the evaluation of `false && true || true` using this function:
 
 {{< figure src="/img/recursion_crate/eval_simple.gif" alt="visualization showing evaluation of simple boolean expression" position="center" style="border-radius: 8px;" >}}
 
 # Conclusions
+
+## Use Recursion
+
+The recursion crate is a perfect fit for working with recursive data structures. We've seen how it can used to implement a lazily evaluated expression language, and how expression languages can be a powerful tool for expressing arbitrary logic (for example, [test filtering expressions in nextest](https://github.com/nextest-rs/nextest/tree/main/nextest-filtering) are implemented using the recursion crate). Next time you're developing a tool, consider providing users with an expression language - it's easier than you might think.
+
+The crate is [here](crates.io/recursion), docs are [here](https://docs.rs/recursion/0.5.1/recursion/), the github repository is [here](https://github.com/inanna-malick/recursion).
+
+## Use Detect
+
+Detect is on [crates.io](crates.io/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
+
+```shell
+➜  cargo install detect_rs
+➜  detect 'filename(detect) && executable() || filename(.rs) && contains(map_frame)'
+...
+```
+
+
 ## Generating Visualizations
 
 All GIFs in this post were generated by a special _instrumented_ version of the recursive machinery used by `collapse_frames`  that automatically generates animated 'stack traces'. Source code for this is [here](https://github.com/inanna-malick/detect/blob/94bcff1593c685dfee019c5caffbff6fa7ad6477/src/eval.rs).
 
 This is a great example of the kind of thing that you can do once you've separated the _logic_ of recursion from the _machinery_.
-
-## The Detect crate
-
-The `reduce_predicate_and_short_circuit` function is taken from my `detect` crate, which provides tools for finding files on the filesystem using an expression language matcher. The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
