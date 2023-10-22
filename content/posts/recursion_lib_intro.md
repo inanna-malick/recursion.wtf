@@ -14,7 +14,7 @@ thumbnail = "img/recursion_crate/detect_example_expr_frame.gif"
 
 In traditional low level languages such as C iteration is implemented manually, with users writing out {{< highlight c "hl_inline=true">}} for (int idx = 0; idx < items_len; ++idx) { do_thing(items[idx] } {{< /highlight >}}, every time they want to iterate over a list. Newer languages like Rust provide abstractions - iterators - that separate the _machinery_ of recursion from the logic: {{< highlight rust "hl_inline=true">}}  for item in items.iter() { do_thing(item) }{{< /highlight >}} .
 
-The [recursion crate](https://crates.io/crates/recursion) does the same thing for recursive data structures. This post is an introduction to the new version of the `recursion` crate. This post is an introduction to the new version of the `recursion` crate, but you don't have to read [my](https://recursion.wtf/posts/rust_schemes/) [earlier](https://recursion.wtf/posts/rust_schemes_2/) [posts](https://recursion.wtf/posts/rust_schemes_3/) to understand it.
+The [recursion crate](https://crates.io/crates/recursion) does the same thing for recursive data structures. This post is an introduction to the new version of the `recursion` crate, but you don't have to read [my](https://recursion.wtf/posts/rust_schemes/) [earlier](https://recursion.wtf/posts/rust_schemes_2/) [posts](https://recursion.wtf/posts/rust_schemes_3/) to understand it.
 
 
 <!--more--> 
@@ -296,11 +296,11 @@ Here's a GIF showing each step in the evaluation of `false && true || true` usin
 
 The recursion crate is a perfect fit for working with recursive data structures. We've seen how it can used to implement a lazily evaluated expression language, and how expression languages can be a powerful tool for expressing arbitrary logic (for example, [test filtering expressions in nextest](https://github.com/nextest-rs/nextest/tree/main/nextest-filtering) are implemented using the recursion crate). Next time you're developing a tool, consider providing users with an expression language - it's easier than you might think.
 
-The crate is [here](crates.io/recursion), docs are [here](https://docs.rs/recursion/0.5.1/recursion/), the github repository is [here](https://github.com/inanna-malick/recursion).
+The crate is [here](https://crates.io/recursion), docs are [here](https://docs.rs/recursion/0.5.1/recursion/), the github repository is [here](https://github.com/inanna-malick/recursion).
 
 ## Use Detect
 
-Detect is on [crates.io](crates.io/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
+Detect is on [crates.io](https://crates.io/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
 
 ```shell
 ➜  cargo install detect_rs
