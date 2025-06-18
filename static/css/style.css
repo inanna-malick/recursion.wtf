@@ -6,16 +6,83 @@
   }
 }
 
-/* Stance shortcode styles - Confident Minimalism */
-.stance {
-  margin: 4rem 0;
-  padding: 0 0 0 3rem;
-  position: relative;
-  border-left: 4px solid #0085a1;
-  counter-increment: stance-counter;
+/* Solarized Dark color palette */
+:root {
+  --base03: #002b36;
+  --base02: #073642;
+  --base01: #586e75;
+  --base00: #657b83;
+  --base0:  #839496;
+  --base1:  #93a1a1;
+  --yellow:  #b58900;
+  --orange:  #cb4b16;
+  --red:     #dc322f;
+  --magenta: #d33682;
+  --violet:  #6c71c4;
+  --blue:    #268bd2;
+  --cyan:    #2aa198;
+  --green:   #859900;
 }
 
-/* Stance variations by emphasis */
+/* Stance shortcode styles - Solarized Dark Variants */
+.stance {
+  margin: 4rem 0;
+  padding: 1.5rem 2rem 1.5rem 3rem;
+  position: relative;
+  border-left: 4px solid var(--base01);
+  background: rgba(7, 54, 66, 0.3);
+  color: var(--base0);
+  counter-increment: stance-counter;
+  transition: all 0.2s ease;
+}
+
+/* Stance type variants - Solarized Dark semantic colors */
+.stance-analysis {
+  border-left-color: var(--blue);
+  background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-theory {
+  border-left-color: var(--yellow);
+  background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-experience {
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-synthesis {
+  border-left-color: var(--cyan);
+  background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-meta {
+  border-left-color: var(--violet);
+  background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-observation {
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-pattern {
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-application {
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-conclusion {
+  border-left-color: var(--magenta);
+  background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+/* Emphasis variants */
 .stance-normal {
   border-left-width: 4px;
 }
@@ -38,7 +105,7 @@
   font-size: 2.5rem;
   font-weight: 200;
   line-height: 1;
-  color: #0085a1;
+  color: var(--base1);
   margin-bottom: 0.5rem;
   letter-spacing: normal;
   text-transform: none;
@@ -49,21 +116,27 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
-  color: #1a1a1a;
+  color: var(--base1);
   line-height: 1.3;
   font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .stance-persona strong {
   font-weight: 700;
-  color: #0085a1;
+  color: var(--base1);
+}
+
+/* Hover effects */
+.stance:hover {
+  border-left-width: 6px;
+  margin-left: -2px;
 }
 
 /* Content typography */
 .stance-content {
   font-size: 1.125rem;
   line-height: 1.75;
-  color: #2a2a2a;
+  color: var(--base0);
   font-family: 'Lora', 'Times New Roman', serif;
   letter-spacing: 0.01em;
 }
@@ -71,7 +144,7 @@
 /* First-line emphasis */
 .stance-content p:first-child::first-line {
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--base1);
 }
 
 /* Vary line height by thinker density */
@@ -102,20 +175,17 @@
   margin-bottom: 0;
 }
 
-/* Visual rhythm through alternating backgrounds */
+/* Visual rhythm through alternating backgrounds - Solarized Dark */
 .stance:nth-of-type(even) {
-  background: linear-gradient(to right, #fafafa 0%, transparent 100%);
-  padding: 1.5rem 2rem 1.5rem 3rem;
-  margin-left: -2rem;
-  margin-right: -2rem;
+  background: linear-gradient(to right, rgba(7, 54, 66, 0.5) 0%, rgba(7, 54, 66, 0.3) 100%);
 }
 
-/* Brief stance styles - Enhanced presence */
+/* Brief stance styles - Solarized Dark */
 .brief-stance {
   margin: 0.75rem 0;
   padding-left: 2rem;
   position: relative;
-  color: #444;
+  color: var(--base0);
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -123,7 +193,7 @@
 .brief-marker {
   position: absolute;
   left: 0;
-  color: #0085a1;
+  color: var(--cyan);
   font-size: 1.25rem;
   font-weight: bold;
 }
@@ -135,7 +205,7 @@
 .brief-content strong {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #1a1a1a;
+  color: var(--base1);
   margin-right: 0.5rem;
 }
 
