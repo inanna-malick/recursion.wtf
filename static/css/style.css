@@ -126,6 +126,26 @@
   color: var(--base1);
 }
 
+/* Bridge indicators */
+.stance-bridge {
+  margin-top: 1.5rem;
+  text-align: center;
+  border-top: 1px solid rgba(147, 161, 161, 0.2);
+  padding-top: 1rem;
+}
+
+.bridge-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--base01);
+  background: var(--base03);
+  padding: 0.25rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 161, 161, 0.2);
+}
+
 /* Hover effects */
 .stance:hover {
   border-left-width: 6px;
