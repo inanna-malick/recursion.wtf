@@ -53,6 +53,11 @@
   transition: all 0.2s ease;
 }
 
+/* Compact spacing for short stances */
+.stance-brief {
+  margin: 0;
+}
+
 /* Stance type variants - Solarized Dark semantic colors */
 .stance-analysis {
   border-left-color: var(--blue);
