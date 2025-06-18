@@ -5,3 +5,152 @@
     border: 5px solid var(--accent);
   }
 }
+
+/* Stance shortcode styles - Expressive dialogue system */
+.stance {
+  margin: 2.5rem -1rem;
+  padding: 1.5rem 2rem;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Animated entrance */
+.stance {
+  animation: stance-enter 0.6s ease-out;
+}
+
+@keyframes stance-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Stance header styling */
+.stance-header {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.stance-persona {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  opacity: 0.8;
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Remove icon styling since we removed the icon */
+.stance-persona i {
+  display: none;
+}
+
+/* Content styling - no italic, let the voice speak clearly */
+.stance-content {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'Lora', 'Times New Roman', serif;
+  font-style: normal;
+}
+
+.stance-content p {
+  margin-bottom: 1rem;
+}
+
+.stance-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Hover effects */
+.stance:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .stance {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    padding: 1.25rem 1rem;
+  }
+  
+  .stance:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .stance[aria-labelledby*="Peter-Watts"] {
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 100%);
+  }
+  
+  .stance[aria-labelledby*="Douglas-Hofstadter"],
+  .stance[aria-labelledby*="Daniel-Dennett"],
+  .stance[aria-labelledby*="Virginia-Woolf"],
+  .stance[aria-labelledby*="Carl-Jung"],
+  .stance[aria-labelledby*="Christopher-Alexander"],
+  .stance[aria-labelledby*="Stewart-Brand"],
+  .stance[aria-labelledby*="Marshall-McLuhan"] {
+    filter: brightness(0.8) saturate(1.2);
+  }
+  
+  .stance-content {
+    color: inherit;
+  }
+}
+
+/* Quick stance shortcode styles - For rapid perspective shifts */
+.quick-stance {
+  display: block;
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  border-left: 3px solid;
+  transition: all 0.2s ease;
+}
+
+.quick-stance:hover {
+  transform: translateX(3px);
+}
+
+.quick-stance-persona {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+  margin-right: 0.5rem;
+}
+
+.quick-stance-content {
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* Group quick stances together */
+.quick-stance + .quick-stance {
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .quick-stance {
+    padding-left: 1rem;
+    font-size: 0.95rem;
+  }
+}
