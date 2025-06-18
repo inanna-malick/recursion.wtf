@@ -37,14 +37,9 @@
   --magenta: #d33682;
   --violet:  #6c71c4;
   --blue:    #268bd2;
-  --cyan:    #2aa198;
-  --green:   #859900;
-}
-
-/* Stance shortcode styles - Solarized Dark Variants */
 .stance {
-  margin: 4rem 0;
-  padding: 1.5rem 2rem 1.5rem 3rem;
+  margin: 2rem 0;
+  padding: 1rem 1.5rem 1rem 2rem;
   position: relative;
   border-left: 4px solid var(--base01);
   background: rgba(7, 54, 66, 0.3);
@@ -55,7 +50,8 @@
 
 /* Compact spacing for short stances */
 .stance-brief {
-  margin: 0;
+  margin: 0.5rem;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
 }
 
 /* Stance type variants - Solarized Dark semantic colors */
@@ -124,17 +120,14 @@
 
 
 /* Keep terminal fonts for bridge text */
-.bridge-text, code, pre {
+code, pre {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }
 
 .stance-persona {
-  font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
   color: var(--base1);
-  line-height: 1.3;
-  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .stance-persona strong {
@@ -151,41 +144,28 @@
 }
 
 .bridge-text {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
+  font-size: 70%;
+  font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--base01);
-  background: var(--base03);
-  padding: 0.25rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(147, 161, 161, 0.2);
+  color: var(--base1);
+  background: var(--base02);
+  padding: 0.4rem 1.2rem 0.4rem 0.8rem;
+  border: 1px solid rgba(147, 161, 161, 0.4);
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
 }
 
-/* Focus states for accessibility */
-:focus-visible {
-  outline: 3px solid var(--yellow);
-  outline-offset: 2px;
-}
 
 /* Remove outline for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Hover effects */
-.stance:hover {
-  border-left-width: 6px;
-  margin-left: -2px;
-}
 
 /* Content typography - readable fonts for body text */
 .stance-content {
-  font-size: 1.125rem;
   line-height: 1.75;
   color: var(--base0);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  letter-spacing: 0.01em;
   max-width: 65ch; /* Optimal line length for readability */
 }
 
