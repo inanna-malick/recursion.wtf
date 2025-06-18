@@ -6,63 +6,92 @@
   }
 }
 
-/* Stance shortcode styles - Expressive dialogue system */
+/* Stance shortcode styles - Confident Minimalism */
 .stance {
-  margin: 2.5rem -1rem;
-  padding: 1.5rem 2rem;
+  margin: 4rem 0;
+  padding: 0 0 0 3rem;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px;
-  overflow: hidden;
+  border-left: 4px solid #0085a1;
+  counter-increment: stance-counter;
 }
 
-/* Animated entrance */
-.stance {
-  animation: stance-enter 0.6s ease-out;
+/* Stance variations by emphasis */
+.stance-normal {
+  border-left-width: 4px;
 }
 
-@keyframes stance-enter {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.stance-strong {
+  border-left-width: 5px;
 }
 
-/* Stance header styling */
+.stance-recursive {
+  border-left-style: dashed;
+}
+
+/* Header structure */
 .stance-header {
-  margin-bottom: 1rem;
-  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.stance-meta {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 200;
+  line-height: 1;
+  color: #0085a1;
+  margin-bottom: 0.5rem;
+  letter-spacing: normal;
+  text-transform: none;
+  font-family: Georgia, serif;
 }
 
 .stance-persona {
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin: 0;
-  opacity: 0.8;
+  color: #1a1a1a;
+  line-height: 1.3;
   font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-/* Remove icon styling since we removed the icon */
-.stance-persona i {
-  display: none;
+.stance-persona strong {
+  font-weight: 700;
+  color: #0085a1;
 }
 
-/* Content styling - no italic, let the voice speak clearly */
+/* Content typography */
 .stance-content {
   font-size: 1.125rem;
   line-height: 1.75;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
+  color: #2a2a2a;
   font-family: 'Lora', 'Times New Roman', serif;
-  font-style: normal;
+  letter-spacing: 0.01em;
+}
+
+/* First-line emphasis */
+.stance-content p:first-child::first-line {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+/* Vary line height by thinker density */
+.stance[aria-labelledby*="Hofstadter"] .stance-content,
+.stance[aria-labelledby*="Dennett"] .stance-content {
+  line-height: 1.65;
+}
+
+.stance[aria-labelledby*="Woolf"] .stance-content,
+.stance[aria-labelledby*="McLuhan"] .stance-content {
+  line-height: 1.8;
+}
+
+/* Subtle typography variations */
+.stance[aria-labelledby*="Watts"] .stance-content {
+  font-weight: 300;
+}
+
+.stance[aria-labelledby*="Alexander"] .stance-content {
+  font-weight: 400;
 }
 
 .stance-content p {
@@ -73,84 +102,109 @@
   margin-bottom: 0;
 }
 
-/* Hover effects */
-.stance:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+/* Visual rhythm through alternating backgrounds */
+.stance:nth-of-type(even) {
+  background: linear-gradient(to right, #fafafa 0%, transparent 100%);
+  padding: 1.5rem 2rem 1.5rem 3rem;
+  margin-left: -2rem;
+  margin-right: -2rem;
 }
 
-/* Responsive design */
-@media (max-width: 767px) {
-  .stance {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    border-radius: 0;
-    padding: 1.25rem 1rem;
-  }
-  
-  .stance:hover {
-    transform: none;
-  }
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .stance[aria-labelledby*="Peter-Watts"] {
-    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 100%);
-  }
-  
-  .stance[aria-labelledby*="Douglas-Hofstadter"],
-  .stance[aria-labelledby*="Daniel-Dennett"],
-  .stance[aria-labelledby*="Virginia-Woolf"],
-  .stance[aria-labelledby*="Carl-Jung"],
-  .stance[aria-labelledby*="Christopher-Alexander"],
-  .stance[aria-labelledby*="Stewart-Brand"],
-  .stance[aria-labelledby*="Marshall-McLuhan"] {
-    filter: brightness(0.8) saturate(1.2);
-  }
-  
-  .stance-content {
-    color: inherit;
-  }
-}
-
-/* Quick stance shortcode styles - For rapid perspective shifts */
-.quick-stance {
-  display: block;
+/* Brief stance styles - Enhanced presence */
+.brief-stance {
   margin: 0.75rem 0;
-  padding-left: 1.5rem;
+  padding-left: 2rem;
   position: relative;
-  border-left: 3px solid;
-  transition: all 0.2s ease;
-}
-
-.quick-stance:hover {
-  transform: translateX(3px);
-}
-
-.quick-stance-persona {
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  opacity: 0.9;
-  margin-right: 0.5rem;
-}
-
-.quick-stance-content {
-  font-style: italic;
+  color: #444;
+  font-size: 1rem;
   line-height: 1.6;
 }
 
-/* Group quick stances together */
-.quick-stance + .quick-stance {
+.brief-marker {
+  position: absolute;
+  left: 0;
+  color: #0085a1;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.brief-content {
+  line-height: 1.6;
+}
+
+.brief-content strong {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  margin-right: 0.5rem;
+}
+
+/* Group brief stances */
+.brief-stance + .brief-stance {
   margin-top: 0.5rem;
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 767px) {
-  .quick-stance {
-    padding-left: 1rem;
-    font-size: 0.95rem;
+  .stance {
+    margin: 2.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .stance-meta {
+    font-size: 2rem;
+  }
+  
+  .stance:nth-of-type(even) {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 1.25rem 1rem 1.25rem 1.5rem;
+  }
+  
+  .brief-stance {
+    padding-left: 1.5rem;
+  }
+}
+
+/* Dark mode - enhanced contrast */
+@media (prefers-color-scheme: dark) {
+  .stance {
+    border-left-color: #5a9fd4;
+  }
+  
+  .stance-meta {
+    color: #5a9fd4;
+  }
+  
+  .stance-persona {
+    color: #e0e0e0;
+  }
+  
+  .stance-persona strong {
+    color: #7dd3fc;
+  }
+  
+  .stance-content {
+    color: #d1d5db;
+  }
+  
+  .stance-content p:first-child::first-line {
+    color: #e0e0e0;
+  }
+  
+  .stance:nth-of-type(even) {
+    background: linear-gradient(to right, #1f1f1f 0%, transparent 100%);
+  }
+  
+  .brief-stance {
+    color: #d1d5db;
+  }
+  
+  .brief-marker {
+    color: #5a9fd4;
+  }
+  
+  .brief-content strong {
+    color: #e0e0e0;
   }
 }

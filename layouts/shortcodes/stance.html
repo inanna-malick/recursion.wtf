@@ -1,28 +1,26 @@
 {{- $persona := .Get "persona" -}}
 {{- $lens := .Get "lens" -}}
-{{- $bg := .Get "bg" | default "#f3f4f6" -}}
-{{- $bgTo := .Get "bgTo" | default "#e5e7eb" -}}
-{{- $border := .Get "border" | default "#6b7280" -}}
-{{- $color := .Get "color" | default "#1f2937" -}}
+{{- $type := .Get "type" | default "PERSPECTIVE" -}}
+{{- $emphasis := .Get "emphasis" | default "normal" -}}
 
 {{- if not $persona -}}
   {{- errorf "The %q shortcode requires a 'persona' parameter: see %s" .Name .Position -}}
 {{- end -}}
 
-<aside class="stance" role="complementary" aria-labelledby="stance-{{ .Ordinal }}" 
-  style="background: linear-gradient(135deg, {{ $bg }} 0%, {{ $bgTo }} 100%); 
-         border-left: 5px solid {{ $border }}; 
-         color: {{ $color }};">
+{{- .Page.Scratch.Add "stancecount" 1 -}}
+{{- $count := .Page.Scratch.Get "stancecount" -}}
+
+<aside class="stance stance-{{ $emphasis }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}">
   <div class="stance-header">
+    <div class="stance-meta">{{ $count }}. {{ $type }}</div>
     <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
-      Imagine you are {{ $persona }}
-      {{- if $lens }} {{ $lens }}{{- end -}}...
+      <strong>{{ $persona }}</strong>{{- if $lens }}, {{ $lens }}{{ end }}
     </h4>
   </div>
   
   {{- if .Inner -}}
-  <blockquote class="stance-content">
+  <div class="stance-content">
     {{ .Inner | .Page.RenderString }}
-  </blockquote>
+  </div>
   {{- end -}}
 </aside>
