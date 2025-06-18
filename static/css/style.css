@@ -6,6 +6,23 @@
   }
 }
 
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  background: var(--base02);
+  color: var(--base1);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 0;
+  z-index: 9999;
+}
+
 /* Solarized Dark color palette */
 :root {
   --base03: #002b36;
@@ -100,16 +117,10 @@
   margin-bottom: 1.5rem;
 }
 
-.stance-meta {
-  display: block;
-  font-size: 2.5rem;
-  font-weight: 200;
-  line-height: 1;
-  color: var(--base1);
-  margin-bottom: 0.5rem;
-  letter-spacing: normal;
-  text-transform: none;
-  font-family: Georgia, serif;
+
+/* Keep terminal fonts for bridge text */
+.bridge-text, code, pre {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }
 
 .stance-persona {
@@ -146,19 +157,31 @@
   border: 1px solid rgba(147, 161, 161, 0.2);
 }
 
+/* Focus states for accessibility */
+:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Hover effects */
 .stance:hover {
   border-left-width: 6px;
   margin-left: -2px;
 }
 
-/* Content typography */
+/* Content typography - readable fonts for body text */
 .stance-content {
   font-size: 1.125rem;
   line-height: 1.75;
   color: var(--base0);
-  font-family: 'Lora', 'Times New Roman', serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   letter-spacing: 0.01em;
+  max-width: 65ch; /* Optimal line length for readability */
 }
 
 /* First-line emphasis */
@@ -200,39 +223,6 @@
   background: linear-gradient(to right, rgba(7, 54, 66, 0.5) 0%, rgba(7, 54, 66, 0.3) 100%);
 }
 
-/* Brief stance styles - Solarized Dark */
-.brief-stance {
-  margin: 0.75rem 0;
-  padding-left: 2rem;
-  position: relative;
-  color: var(--base0);
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.brief-marker {
-  position: absolute;
-  left: 0;
-  color: var(--cyan);
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.brief-content {
-  line-height: 1.6;
-}
-
-.brief-content strong {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--base1);
-  margin-right: 0.5rem;
-}
-
-/* Group brief stances */
-.brief-stance + .brief-stance {
-  margin-top: 0.5rem;
-}
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
@@ -241,9 +231,6 @@
     padding-left: 1.5rem;
   }
   
-  .stance-meta {
-    font-size: 2rem;
-  }
   
   .stance:nth-of-type(even) {
     margin-left: -1rem;
@@ -251,9 +238,6 @@
     padding: 1.25rem 1rem 1.25rem 1.5rem;
   }
   
-  .brief-stance {
-    padding-left: 1.5rem;
-  }
 }
 
 /* Dark mode - enhanced contrast */
@@ -262,9 +246,6 @@
     border-left-color: #5a9fd4;
   }
   
-  .stance-meta {
-    color: #5a9fd4;
-  }
   
   .stance-persona {
     color: #e0e0e0;
@@ -286,15 +267,65 @@
     background: linear-gradient(to right, #1f1f1f 0%, transparent 100%);
   }
   
-  .brief-stance {
-    color: #d1d5db;
+}
+
+/* Light mode support - respects user preference */
+@media (prefers-color-scheme: light) {
+  :root {
+    --base03: #fdf6e3;  /* Light background */
+    --base02: #eee8d5;  /* Light surface */
+    --base01: #93a1a1;  /* Light comments */
+    --base00: #839496;  /* Light emphasis */
+    --base0:  #657b83;  /* Light body text */
+    --base1:  #586e75;  /* Light headings */
   }
   
-  .brief-marker {
-    color: #5a9fd4;
+  .stance {
+    background: rgba(238, 232, 213, 0.3);
   }
   
-  .brief-content strong {
-    color: #e0e0e0;
+  .stance-analysis {
+    background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-theory {
+    background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-experience {
+    background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-synthesis {
+    background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-meta {
+    background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-observation {
+    background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-pattern {
+    background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-application {
+    background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-conclusion {
+    background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance:nth-of-type(even) {
+    background: linear-gradient(to right, rgba(238, 232, 213, 0.5) 0%, rgba(238, 232, 213, 0.3) 100%);
+  }
+  
+  .bridge-text {
+    background: var(--base03);
+    color: var(--base00);
   }
 }
