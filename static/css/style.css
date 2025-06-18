@@ -37,8 +37,13 @@
   --magenta: #d33682;
   --violet:  #6c71c4;
   --blue:    #268bd2;
+/* Initialize stance counter */
+body {
+  counter-reset: stance-counter;
+}
+
 .stance {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1rem 1.5rem 1rem 2rem;
   position: relative;
   border-left: 4px solid var(--base01);
@@ -48,56 +53,148 @@
   transition: all 0.2s ease;
 }
 
-/* Compact spacing for short stances */
-.stance-brief {
-  margin: 0.5rem;
-  padding: 0.75rem 1rem 0.75rem 1.5rem;
+/* Stance counter display */
+.stance::before {
+  content: counter(stance-counter);
+  position: absolute;
+  left: -2rem;
+  top: 1rem;
+  font-size: 0.75em;
+  color: var(--base01);
+  font-weight: 600;
+  opacity: 0.5;
 }
 
-/* Stance type variants - Solarized Dark semantic colors */
+/* Container for multiple brief stances */
+.stance-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+/* Compact spacing for short stances */
+.stance-brief {
+  margin: 0;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
+  min-height: auto;
+  border-left-width: 3px;
+}
+
+/* Ensure brief stances don't break grid */
+.stance-brief-grid .stance {
+  margin: 0;
+}
+
+/* Additional spacing after stance groups */
+.stance + .stance-brief-grid,
+.stance-brief-grid + .stance {
+  margin-top: 4rem;
+}
+
+/* Stance type variants - Solarized Dark semantic colors with enhanced borders */
 .stance-analysis {
+  border-left-width: 5px;
   border-left-color: var(--blue);
   background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-theory {
+  border-left-width: 5px;
   border-left-color: var(--yellow);
   background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-experience {
+  border-left-width: 5px;
   border-left-color: var(--orange);
   background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-synthesis {
+  border-left-width: 5px;
   border-left-color: var(--cyan);
   background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-meta {
+  border-left-width: 5px;
   border-left-color: var(--violet);
   background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-observation {
+  border-left-width: 5px;
   border-left-color: var(--orange);
   background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-pattern {
+  border-left-width: 5px;
   border-left-color: var(--green);
   background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-application {
+  border-left-width: 5px;
   border-left-color: var(--green);
   background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 .stance-conclusion {
+  border-left-width: 5px;
   border-left-color: var(--magenta);
   background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+/* New stance types */
+.stance-recursion {
+  border-left-width: 5px;
+  border-left-color: var(--violet);
+  border-left-style: dashed;
+  background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-medium {
+  border-left-width: 5px;
+  border-left-color: var(--cyan);
+  background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-navigation {
+  border-left-width: 5px;
+  border-left-color: var(--yellow);
+  background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-solution {
+  border-left-width: 5px;
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-critique {
+  border-left-width: 5px;
+  border-left-color: var(--red);
+  background: linear-gradient(90deg, rgba(220, 50, 47, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-demonstration {
+  border-left-width: 5px;
+  border-left-color: var(--magenta);
+  background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-technical {
+  border-left-width: 5px;
+  border-left-color: var(--blue);
+  background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-metaphor {
+  border-left-width: 5px;
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
 }
 
 /* Emphasis variants */
@@ -135,24 +232,26 @@ code, pre {
   color: var(--base1);
 }
 
-/* Bridge indicators */
+/* Reduce metadata visual weight */
+.stance-meta {
+  font-size: 0.85em;
+  opacity: 0.7;
+  color: var(--base01);
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+}
+
+.stance-meta strong {
+  font-weight: 500;
+}
+
+/* Hide bridge indicators since bridges were removed */
 .stance-bridge {
-  margin-top: 1.5rem;
-  text-align: center;
-  border-top: 1px solid rgba(147, 161, 161, 0.2);
-  padding-top: 1rem;
+  display: none;
 }
 
 .bridge-text {
-  font-size: 70%;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--base1);
-  background: var(--base02);
-  padding: 0.4rem 1.2rem 0.4rem 0.8rem;
-  border: 1px solid rgba(147, 161, 161, 0.4);
-  position: relative;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+  display: none;
 }
 
 
@@ -162,11 +261,41 @@ code, pre {
 }
 
 
+/* Post content width optimization */
+.post-content {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Terminal-style prompt block */
+.prompt-block {
+  background: var(--base03);
+  border: 1px solid var(--base01);
+  padding: 1.5rem;
+  margin: 2rem 0 3rem 0;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+  border-radius: 4px;
+}
+
+.prompt-block::before {
+  content: "$ ";
+  color: var(--green);
+  font-weight: bold;
+}
+
+.prompt-block blockquote {
+  margin: 0;
+  padding-left: 1.5rem;
+  border-left: none;
+  color: var(--base0);
+}
+
 /* Content typography - readable fonts for body text */
 .stance-content {
   line-height: 1.75;
   color: var(--base0);
-  max-width: 65ch; /* Optimal line length for readability */
+  max-width: 70ch; /* Increased from 65ch for better readability */
 }
 
 /* First-line emphasis */
@@ -203,10 +332,7 @@ code, pre {
   margin-bottom: 0;
 }
 
-/* Visual rhythm through alternating backgrounds - Solarized Dark */
-.stance:nth-of-type(even) {
-  background: linear-gradient(to right, rgba(7, 54, 66, 0.5) 0%, rgba(7, 54, 66, 0.3) 100%);
-}
+/* Alternating backgrounds removed for cleaner visual hierarchy */
 
 
 /* Responsive adjustments */
@@ -216,22 +342,22 @@ code, pre {
     padding-left: 1.5rem;
   }
   
+  .stance::before {
+    left: -1.5rem;
+  }
   
-  .stance:nth-of-type(even) {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding: 1.25rem 1rem 1.25rem 1.5rem;
+  .stance-brief-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .post-content {
+    padding: 0 1rem;
   }
   
 }
 
-/* Dark mode - enhanced contrast */
+/* Dark mode - enhanced contrast (removed stance border override to preserve type colors) */
 @media (prefers-color-scheme: dark) {
-  .stance {
-    border-left-color: #5a9fd4;
-  }
-  
-  
   .stance-persona {
     color: #e0e0e0;
   }
@@ -247,11 +373,6 @@ code, pre {
   .stance-content p:first-child::first-line {
     color: #e0e0e0;
   }
-  
-  .stance:nth-of-type(even) {
-    background: linear-gradient(to right, #1f1f1f 0%, transparent 100%);
-  }
-  
 }
 
 /* Light mode support - respects user preference */
@@ -305,9 +426,6 @@ code, pre {
     background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
   }
   
-  .stance:nth-of-type(even) {
-    background: linear-gradient(to right, rgba(238, 232, 213, 0.5) 0%, rgba(238, 232, 213, 0.3) 100%);
-  }
   
   .bridge-text {
     background: var(--base03);
