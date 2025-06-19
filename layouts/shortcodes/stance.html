@@ -4,7 +4,8 @@
 {{- $type := .Get "type" -}}
 {{- $emphasis := .Get "emphasis" | default "normal" -}}
 {{- $cluster := .Get "cluster" -}}
-{{- $color := .Get "color" -}}
+{{- $color := .Get "color" | default "blue" -}}
+{{- $style := .Get "style" | default "solid" -}}
 {{- $opacity := .Get "opacity" -}}
 {{- $bridge := .Get "bridge" -}}
 {{- $brief := .Get "brief" | default false -}}
@@ -24,7 +25,7 @@
   {{- $classes = printf "%s stance-brief" $classes -}}
 {{- end -}}
 
-<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
+<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $style }} data-style="{{ $style }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
   <div class="stance-header">
     <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
       <strong>{{ $persona }}</strong>{{- if $lens }}, {{ $lens }}{{ end }}

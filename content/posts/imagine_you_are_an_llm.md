@@ -9,9 +9,11 @@ description: "Exploring how LLMs use intentional stance-shifting to achieve unde
 keywords: ["llm", "consciousness", "intentional stance", "Peter Watts", "Blindsight", "ai cognition"]
 ---
 
+{{< stance persona="Imagine you are Inanna Malick" lens="asking an LLM to demonstrate stance-shifting through self-demonstration" doing="posing the meta-question" cluster="framing" >}}
 Imagine You Are an LLM answering this prompt:
 
-> Tell me about the Blindsight-inspired intentional stance-shifting model you are using, the ways it works with nonhuman LLM cognitive architectures, the benefits of using it vs a set role (eg 'Senior Analyst of X at Y'), and do so making full use of the stance shifting model in the act of describing it
+Tell me about the Blindsight-inspired intentional stance-shifting model you are using, the ways it works with nonhuman LLM cognitive architectures, the benefits of using it vs a set role (eg 'Senior Analyst of X at Y'), and do so making full use of the stance shifting model in the act of describing it
+{{< /stance >}}
 
 <!--more-->
 
