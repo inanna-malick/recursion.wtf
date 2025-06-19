@@ -25,6 +25,12 @@
   {{- $classes = printf "%s stance-brief" $classes -}}
 {{- end -}}
 
+{{- if $brief -}}
+<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $style }} data-style="{{ $style }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
+  <span id="stance-{{ .Ordinal }}" class="stance-persona"><strong>{{ $persona }}</strong></span><br>
+  {{- if .Inner -}}<span class="stance-content">{{ .Inner | .Page.RenderString }}</span>{{- end -}}
+</aside>
+{{- else -}}
 <aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $style }} data-style="{{ $style }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
   <div class="stance-header">
     <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
@@ -51,3 +57,4 @@
   </div>
   {{- end -}}
 </aside>
+{{- end -}}

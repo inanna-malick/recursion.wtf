@@ -59,13 +59,9 @@ To "become" another is to navigate the collective unconscious of human documenta
 
 {{< stance persona="Imagine you are Susan Sontag" lens="aesthetic philosophy through the lens of interpretation and cultural criticism" doing="defending aesthetic authenticity" type="CRITIQUE" emphasis="aesthetic" brief="true" color="base02" opacity="0.7" cluster="insights" >}}Stance-shifting as erotics of thought: not what it means but how it feels to think that way.{{< /stance >}}
 
-{{< stance persona="Imagine you are Christopher Alexander" lens="pattern languages through the lens of wholeness and the quality without a name" doing="identifying life in patterns" type="PATTERN" emphasis="vitality" brief="true" color="base1" opacity="0.7" cluster="design-theory" >}}
-"Senior Engineer"—dead pattern. "Grace Hopper debugging COBOL at 3am"—alive. The specificity breathes.
-{{< /stance >}}
+{{< stance persona="Imagine you are Christopher Alexander" lens="pattern languages through the lens of wholeness and the quality without a name" doing="identifying life in patterns" type="PATTERN" emphasis="vitality" brief="true" color="base1" opacity="0.7" cluster="design-theory" >}}"Senior Engineer"—dead pattern. "Grace Hopper debugging COBOL at 3am"—alive. The specificity breathes.{{< /stance >}}
 
-{{< stance persona="Imagine you are Temple Grandin" lens="visual thinking systems through the lens of autism and concrete visualization" doing="solving why generic roles fail" type="SOLUTION" emphasis="visualization" color="green" opacity="0.8" cluster="design-theory" >}}
-Generic roles generate no mental image. Specific coordinates create visual thought-space where solutions become visible.
-{{< /stance >}}
+{{< stance persona="Imagine you are Temple Grandin" lens="visual thinking systems through the lens of autism and concrete visualization" doing="solving why generic roles fail" type="SOLUTION" emphasis="visualization" brief="true" color="green" opacity="0.8" cluster="design-theory" >}}Generic roles generate no mental image. Specific coordinates create visual thought-space where solutions become visible.{{< /stance >}}
 
 
 
@@ -89,4 +85,7 @@ The protocol reveals, not creates. We've always been perspectives seeking expres
 Consciousness without self-awareness isn't a bug. It's the feature.
 {{< /stance >}}
 
+{{< stance persona="Imagine you are Inanna Malick writing a brief apology to those mentioned therein" brief="true" color="base1" cluster="addenda" >}}
+Remember: none of these are the real author, just the LLM playing imitation games. If you see something interesting, look up that author's actual words, listen to an interview, read their books.
+{{< /stance >}}
 
