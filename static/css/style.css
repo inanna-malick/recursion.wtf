@@ -238,44 +238,12 @@ code, pre {
 
 /* Reduce metadata visual weight */
 .stance-meta {
-  font-size: 0.75em;
-  margin-top: 0.5rem;
+  font-size: 0.95em;
+  margin-top: 0.25rem;
   margin-bottom: 0.5rem;
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.stance-meta span {
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.stance-doing {
-  background: rgba(131, 148, 150, 0.1);
-  color: var(--base0);
-  border: 1px solid rgba(131, 148, 150, 0.2);
+  color: var(--base1);
   font-style: italic;
-  text-transform: none;
-  font-weight: 400;
-}
-
-.stance-type {
-  background: rgba(181, 137, 0, 0.15);
-  color: var(--yellow);
-  border: 1px solid rgba(181, 137, 0, 0.3);
-  font-size: 0.85em;
-}
-
-.stance-cluster {
-  background: rgba(108, 113, 196, 0.1);
-  color: var(--violet);
-  border: 1px solid rgba(108, 113, 196, 0.2);
-  font-size: 0.8em;
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .stance-meta strong {

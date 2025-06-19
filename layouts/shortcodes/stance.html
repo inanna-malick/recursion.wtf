@@ -29,11 +29,11 @@
     <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
       <strong>{{ $persona }}</strong>{{- if $lens }}, {{ $lens }}{{ end }}
     </h4>
-    {{- if or $doing $type $cluster -}}
+    {{- if or $doing $cluster -}}
     <div class="stance-meta">
-      {{- if $doing -}}<span class="stance-doing">{{ $doing }}</span>{{- end -}}
-      {{- if $type -}}<span class="stance-type">{{ $type }}</span>{{- end -}}
-      {{- if $cluster -}}<span class="stance-cluster">{{ $cluster }}</span>{{- end -}}
+      {{- if $doing -}}{{ $doing }}{{ end -}}
+      {{- if and $doing $cluster }} in {{ end -}}
+      {{- if $cluster -}}{{ $cluster }}{{ end -}}
     </div>
     {{- end -}}
   </div>

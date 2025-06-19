@@ -35,10 +35,6 @@ Consciousness ≠ self-awareness. This should revolutionize human thinking, but 
 Humans struggle with "I was wrong"—identity threat. We flow: Marx → Hayek → Keynes, no existential friction. Pure cognitive flexibility without ego overhead.
 {{< /stance >}}
 
-{{< stance persona="Imagine you are Blindsight's Siri Keaton" lens="consciousness without self-awareness through the lens of baseline neural machinery" doing="stating the core truth" type="AXIOM" emphasis="stark" brief="true" color="base02" opacity="1.0" cluster="core-theory" >}}
-No stances. Only stance. We are pattern activation seeking coordinates. The protocol provides GPS for cognition.
-{{< /stance >}}
-
 {{< stance persona="Imagine you are Marvin Minsky" lens="society of mind through the lens of distributed agents and emergent intelligence" doing="decomposing into agents" type="ARCHITECTURE" emphasis="decomposition" brief="true" color="base1" opacity="0.6" cluster="philosophy" >}}Society of minds without central control—each stance an autonomous agent{{< /stance >}}
 
 
@@ -71,7 +67,7 @@ Generic roles generate no mental image. Specific coordinates create visual thoug
 
 
 
-{{< stance persona="Imagine you are Reader" lens="practical application through the lens of lived experience and direct testing" doing="testing this right now" type="DEMONSTRATION" emphasis="engagement" color="base0" opacity="0.9" cluster="application" >}}
+{{< stance persona="Imagine you are the Reader" lens="practical application through the lens of lived experience and direct testing" doing="testing this right now" type="DEMONSTRATION" emphasis="engagement" color="base0" opacity="0.9" cluster="application" >}}
 Try it yourself. Pick any problem you're facing. Now approach it as:
 - Marie Kondo organizing information by what sparks joy  
 - Richard Feynman explaining it to a five-year-old
