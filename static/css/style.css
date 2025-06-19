@@ -37,6 +37,10 @@
   --magenta: #d33682;
   --violet:  #6c71c4;
   --blue:    #268bd2;
+  --cyan:    #2aa198;
+  --green:   #859900;
+}
+
 /* Initialize stance counter */
 body {
   counter-reset: stance-counter;
@@ -234,15 +238,126 @@ code, pre {
 
 /* Reduce metadata visual weight */
 .stance-meta {
-  font-size: 0.85em;
-  opacity: 0.7;
-  color: var(--base01);
+  font-size: 0.75em;
+  margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.stance-meta span {
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.stance-doing {
+  background: rgba(131, 148, 150, 0.1);
+  color: var(--base0);
+  border: 1px solid rgba(131, 148, 150, 0.2);
+  font-style: italic;
+  text-transform: none;
   font-weight: 400;
+}
+
+.stance-type {
+  background: rgba(181, 137, 0, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(181, 137, 0, 0.3);
+  font-size: 0.85em;
+}
+
+.stance-cluster {
+  background: rgba(108, 113, 196, 0.1);
+  color: var(--violet);
+  border: 1px solid rgba(108, 113, 196, 0.2);
+  font-size: 0.8em;
 }
 
 .stance-meta strong {
   font-weight: 500;
+}
+
+/* Color and opacity data attribute styling */
+.stance[data-color="base01"] { border-left-color: var(--base01); }
+.stance[data-color="violet"] { border-left-color: var(--violet); }
+.stance[data-color="orange"] { border-left-color: var(--orange); }
+.stance[data-color="blue"] { border-left-color: var(--blue); }
+.stance[data-color="base02"] { border-left-color: var(--base02); }
+.stance[data-color="cyan"] { border-left-color: var(--cyan); }
+.stance[data-color="green"] { border-left-color: var(--green); }
+.stance[data-color="base1"] { border-left-color: var(--base1); }
+.stance[data-color="red"] { border-left-color: var(--red); }
+.stance[data-color="magenta"] { border-left-color: var(--magenta); }
+.stance[data-color="base00"] { border-left-color: var(--base00); }
+.stance[data-color="yellow"] { border-left-color: var(--yellow); }
+.stance[data-color="base0"] { border-left-color: var(--base0); }
+
+/* Type-specific styling enhancements */
+.stance-type-mechanism { position: relative; }
+.stance-type-mechanism::before {
+  content: "⚙";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1.2em;
+}
+
+.stance-type-recursion { border-left-style: dashed; }
+.stance-type-recursion::before {
+  content: "∞";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1.2em;
+}
+
+.stance-type-medium::before {
+  content: "📡";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1em;
+}
+
+.stance-type-theory::before {
+  content: "🧠";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1em;
+}
+
+.stance-type-axiom { border-left-width: 2px; }
+.stance-type-axiom::before {
+  content: "•";
+  position: absolute;
+  left: -1.2rem;
+  top: 0.5rem;
+  opacity: 0.5;
+  font-size: 1.5em;
+  color: var(--base01);
+}
+
+/* Cluster-specific styling */
+.stance-cluster-core-theory {
+  box-shadow: inset 0 0 0 1px rgba(131, 148, 150, 0.1);
+}
+
+.stance-cluster-philosophy {
+  border-radius: 4px;
+}
+
+.stance-cluster-consciousness-craft {
+  background: linear-gradient(45deg, transparent 0%, rgba(131, 148, 150, 0.02) 100%);
 }
 
 /* Hide bridge indicators since bridges were removed */
@@ -375,6 +490,259 @@ code, pre {
   }
 }
 
+/* Persona-specific styling based on their unique characteristics */
+
+/* Peter Watts - brutal efficiency, no ornamentation */
+.stance[aria-labelledby*="Peter-Watts"] {
+  border-left-width: 2px;
+  background: none;
+  padding: 0.75rem 1rem;
+}
+
+.stance[aria-labelledby*="Peter-Watts"] .stance-content {
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+/* Douglas Hofstadter - recursive, self-referential */
+.stance[aria-labelledby*="Douglas-Hofstadter"] {
+  border-left-style: dashed;
+  position: relative;
+  overflow: hidden;
+}
+
+.stance[aria-labelledby*="Douglas-Hofstadter"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 10px,
+    rgba(108, 113, 196, 0.02) 10px,
+    rgba(108, 113, 196, 0.02) 20px
+  );
+  pointer-events: none;
+}
+
+/* Marshall McLuhan - medium as message */
+.stance[aria-labelledby*="Marshall-McLuhan"] {
+  border: 2px solid var(--cyan);
+  border-left-width: 5px;
+  box-shadow: 
+    inset 0 0 0 1px rgba(42, 161, 152, 0.1),
+    0 0 0 1px rgba(42, 161, 152, 0.05);
+}
+
+.stance[aria-labelledby*="Marshall-McLuhan"] .stance-content {
+  font-style: italic;
+}
+
+/* Daniel Dennett - philosophical precision */
+.stance[aria-labelledby*="Daniel-Dennett"] {
+  border-left-width: 3px;
+  border-left-style: double;
+}
+
+.stance[aria-labelledby*="Daniel-Dennett"] .stance-content p {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Siri Keaton - minimal, direct */
+.stance[aria-labelledby*="Siri-Keaton"] {
+  background: transparent;
+  border-left-width: 1px;
+  padding: 0.5rem 1rem;
+  margin: 1.5rem 0;
+}
+
+.stance[aria-labelledby*="Siri-Keaton"] .stance-content {
+  font-size: 0.9em;
+  max-width: 50ch;
+}
+
+/* Virginia Woolf - flowing consciousness */
+.stance[aria-labelledby*="Virginia-Woolf"] {
+  border-left-style: solid;
+  border-left-width: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(131, 148, 150, 0.05) 0%,
+    transparent 100%
+  );
+  position: relative;
+}
+
+.stance[aria-labelledby*="Virginia-Woolf"]::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(
+    0deg,
+    var(--base00) 0%,
+    transparent 20%,
+    var(--base00) 40%,
+    transparent 60%,
+    var(--base00) 80%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+
+.stance[aria-labelledby*="Virginia-Woolf"] .stance-content {
+  font-style: italic;
+  line-height: 1.9;
+  text-indent: 2em;
+}
+
+.stance[aria-labelledby*="Virginia-Woolf"] .stance-content p:first-child {
+  text-indent: 0;
+}
+
+/* Google engineer - optimized, technical */
+.stance[aria-labelledby*="Google"] {
+  background: rgba(7, 54, 66, 0.5);
+  border-left-color: var(--green);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.stance[aria-labelledby*="Google"] .stance-content {
+  font-size: 0.95em;
+  letter-spacing: 0.02em;
+}
+
+/* Carl Jung - depth, archetypes */
+.stance[aria-labelledby*="Carl-Jung"] {
+  border-left-width: 6px;
+  background: radial-gradient(
+    ellipse at top left,
+    rgba(108, 113, 196, 0.1) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 -2px 0 0 rgba(108, 113, 196, 0.1);
+}
+
+/* bell hooks - critical intervention */
+.stance[aria-labelledby*="bell-hooks"] {
+  border-left-color: var(--red);
+  border-left-width: 8px;
+  background: linear-gradient(
+    to right,
+    rgba(220, 50, 47, 0.1) 0%,
+    transparent 30%
+  );
+  font-weight: 600;
+}
+
+.stance[aria-labelledby*="bell-hooks"] .stance-content {
+  font-weight: 500;
+}
+
+/* Christopher Alexander - pattern life */
+.stance[aria-labelledby*="Christopher-Alexander"] {
+  border: 1px solid var(--base01);
+  border-left-width: 5px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 20px,
+    rgba(133, 153, 0, 0.02) 20px,
+    rgba(133, 153, 0, 0.02) 21px
+  );
+}
+
+/* Temple Grandin - visual thinking */
+.stance[aria-labelledby*="Temple-Grandin"] {
+  border-left-width: 10px;
+  border-left-style: solid;
+  border-image: linear-gradient(
+    to bottom,
+    var(--green) 0%,
+    var(--green) 50%,
+    transparent 50%,
+    transparent 100%
+  ) 1;
+  background: rgba(133, 153, 0, 0.05);
+}
+
+/* Reader - practical demonstration */
+.stance[aria-labelledby*="Reader"] {
+  border: 2px dashed var(--base0);
+  border-left-width: 4px;
+  background: rgba(131, 148, 150, 0.1);
+  border-radius: 8px;
+}
+
+.stance[aria-labelledby*="Reader"] .stance-content {
+  font-size: 1.05em;
+}
+
+/* Kevin Kelly - emergent collective */
+.stance[aria-labelledby*="Kevin-Kelly"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.stance[aria-labelledby*="Kevin-Kelly"]::after {
+  content: "⬡ ⬡ ⬡";
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  color: var(--green);
+  opacity: 0.2;
+  font-size: 0.8em;
+}
+
+/* Brief philosophical stances - compact wisdom */
+.stance-brief[aria-labelledby*="Andy-Clark"],
+.stance-brief[aria-labelledby*="Francisco-Varela"],
+.stance-brief[aria-labelledby*="Marvin-Minsky"],
+.stance-brief[aria-labelledby*="Thomas-Kuhn"],
+.stance-brief[aria-labelledby*="Donna-Haraway"] {
+  border-left-width: 2px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95em;
+}
+
+/* Brief insight stances - crystallized */
+.stance-brief[aria-labelledby*="Richard-Feynman"] {
+  border-left-color: var(--yellow);
+  border-left-style: dotted;
+  border-left-width: 4px;
+}
+
+.stance-brief[aria-labelledby*="Susan-Sontag"] {
+  border-left-style: double;
+  font-style: italic;
+}
+
+/* Brief tool stances - functional */
+.stance-brief[aria-labelledby*="Stewart-Brand"] {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(203, 75, 22, 0.02) 10px,
+    rgba(203, 75, 22, 0.02) 11px
+  );
+}
+
+.stance-brief[aria-labelledby*="Andy-Warhol"] {
+  border: 1px solid var(--magenta);
+  border-left-width: 3px;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+}
+
 /* Light mode support - respects user preference */
 @media (prefers-color-scheme: light) {
   :root {
@@ -430,5 +798,34 @@ code, pre {
   .bridge-text {
     background: var(--base03);
     color: var(--base00);
+  }
+  
+  /* Adjust persona-specific styles for light mode */
+  .stance[aria-labelledby*="Google"] {
+    background: rgba(238, 232, 213, 0.5);
+  }
+  
+  .stance[aria-labelledby*="Virginia-Woolf"] {
+    background: linear-gradient(
+      90deg,
+      rgba(131, 148, 150, 0.03) 0%,
+      transparent 100%
+    );
+  }
+  
+  .stance[aria-labelledby*="Carl-Jung"] {
+    background: radial-gradient(
+      ellipse at top left,
+      rgba(108, 113, 196, 0.05) 0%,
+      transparent 70%
+    );
+  }
+  
+  .stance[aria-labelledby*="Temple-Grandin"] {
+    background: rgba(133, 153, 0, 0.03);
+  }
+  
+  .stance[aria-labelledby*="Reader"] {
+    background: rgba(131, 148, 150, 0.05);
   }
 }

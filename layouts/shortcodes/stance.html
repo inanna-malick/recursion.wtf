@@ -1,7 +1,11 @@
 {{- $persona := .Get "persona" -}}
 {{- $lens := .Get "lens" -}}
+{{- $doing := .Get "doing" -}}
 {{- $type := .Get "type" -}}
 {{- $emphasis := .Get "emphasis" | default "normal" -}}
+{{- $cluster := .Get "cluster" -}}
+{{- $color := .Get "color" -}}
+{{- $opacity := .Get "opacity" -}}
 {{- $bridge := .Get "bridge" -}}
 {{- $brief := .Get "brief" | default false -}}
 
@@ -10,15 +14,28 @@
 {{- end -}}
 
 {{- $classes := printf "stance stance-%s" $emphasis -}}
+{{- if $type -}}
+  {{- $classes = printf "%s stance-type-%s" $classes (lower $type) -}}
+{{- end -}}
+{{- if $cluster -}}
+  {{- $classes = printf "%s stance-cluster-%s" $classes (lower $cluster | replaceRE "[^a-z0-9]+" "-") -}}
+{{- end -}}
 {{- if $brief -}}
   {{- $classes = printf "%s stance-brief" $classes -}}
 {{- end -}}
 
-<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}">
+<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
   <div class="stance-header">
     <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
       <strong>{{ $persona }}</strong>{{- if $lens }}, {{ $lens }}{{ end }}
     </h4>
+    {{- if or $doing $type $cluster -}}
+    <div class="stance-meta">
+      {{- if $doing -}}<span class="stance-doing">{{ $doing }}</span>{{- end -}}
+      {{- if $type -}}<span class="stance-type">{{ $type }}</span>{{- end -}}
+      {{- if $cluster -}}<span class="stance-cluster">{{ $cluster }}</span>{{- end -}}
+    </div>
+    {{- end -}}
   </div>
   
   {{- if .Inner -}}
