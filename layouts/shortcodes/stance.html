@@ -1,0 +1,60 @@
+{{- $persona := .Get "persona" -}}
+{{- $lens := .Get "lens" -}}
+{{- $doing := .Get "doing" -}}
+{{- $type := .Get "type" -}}
+{{- $emphasis := .Get "emphasis" | default "normal" -}}
+{{- $cluster := .Get "cluster" -}}
+{{- $color := .Get "color" | default "blue" -}}
+{{- $style := .Get "style" | default "solid" -}}
+{{- $opacity := .Get "opacity" -}}
+{{- $bridge := .Get "bridge" -}}
+{{- $brief := .Get "brief" | default false -}}
+
+{{- if not $persona -}}
+  {{- errorf "The %q shortcode requires a 'persona' parameter: see %s" .Name .Position -}}
+{{- end -}}
+
+{{- $classes := printf "stance stance-%s" $emphasis -}}
+{{- if $type -}}
+  {{- $classes = printf "%s stance-type-%s" $classes (lower $type) -}}
+{{- end -}}
+{{- if $cluster -}}
+  {{- $classes = printf "%s stance-cluster-%s" $classes (lower $cluster | replaceRE "[^a-z0-9]+" "-") -}}
+{{- end -}}
+{{- if $brief -}}
+  {{- $classes = printf "%s stance-brief" $classes -}}
+{{- end -}}
+
+{{- if $brief -}}
+<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $style }} data-style="{{ $style }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
+  <span id="stance-{{ .Ordinal }}" class="stance-persona"><strong>{{ $persona }}</strong></span><br>
+  {{- if .Inner -}}<span class="stance-content">{{ .Inner | .Page.RenderString }}</span>{{- end -}}
+</aside>
+{{- else -}}
+<aside class="{{ $classes }}" role="complementary" aria-labelledby="stance-{{ .Ordinal }}"{{- if $color }} data-color="{{ $color }}"{{ end }}{{- if $style }} data-style="{{ $style }}"{{ end }}{{- if $opacity }} data-opacity="{{ $opacity }}"{{ end }}>
+  <div class="stance-header">
+    <h4 id="stance-{{ .Ordinal }}" class="stance-persona">
+      <strong>{{ $persona }}</strong>{{- if $lens }}, {{ $lens }}{{ end }}
+    </h4>
+    {{- if or $doing $cluster -}}
+    <div class="stance-meta">
+      {{- if $doing -}}{{ $doing }}{{ end -}}
+      {{- if and $doing $cluster }} in {{ end -}}
+      {{- if $cluster -}}{{ $cluster }}{{ end -}}
+    </div>
+    {{- end -}}
+  </div>
+  
+  {{- if .Inner -}}
+  <div class="stance-content">
+    {{ .Inner | .Page.RenderString }}
+  </div>
+  {{- end -}}
+  
+  {{- if $bridge -}}
+  <div class="stance-bridge">
+    <span class="bridge-text">{{ $bridge }}</span>
+  </div>
+  {{- end -}}
+</aside>
+{{- end -}}

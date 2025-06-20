@@ -1,0 +1,14 @@
+{{- $persona := .Get "persona" -}}
+{{- $lens := .Get "lens" -}}
+
+{{- if not $persona -}}
+  {{- errorf "The %q shortcode requires a 'persona' parameter: see %s" .Name .Position -}}
+{{- end -}}
+
+<div class="brief-stance">
+  <span class="brief-marker">▸</span>
+  <span class="brief-content">
+    <strong>{{ $persona }}{{- if $lens }} ({{ $lens }}){{ end }}:</strong>
+    {{ .Inner | .Page.RenderString }}
+  </span>
+</div>

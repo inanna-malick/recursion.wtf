@@ -5,3 +5,524 @@
     border: 5px solid var(--accent);
   }
 }
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  background: var(--base02);
+  color: var(--base1);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 0;
+  z-index: 9999;
+}
+
+/* Solarized Dark color palette */
+:root {
+  --base03: #002b36;
+  --base02: #073642;
+  --base01: #586e75;
+  --base00: #657b83;
+  --base0:  #839496;
+  --base1:  #93a1a1;
+  --yellow:  #b58900;
+  --orange:  #cb4b16;
+  --red:     #dc322f;
+  --magenta: #d33682;
+  --violet:  #6c71c4;
+  --blue:    #268bd2;
+  --cyan:    #2aa198;
+  --green:   #859900;
+}
+
+/* Initialize stance counter */
+body {
+  counter-reset: stance-counter;
+}
+
+.stance {
+  margin: 3rem 0;
+  padding: 1rem 1.5rem 1rem 2rem;
+  position: relative;
+  border-left: 4px solid var(--base01);
+  background: rgba(7, 54, 66, 0.3);
+  color: var(--base0);
+  counter-increment: stance-counter;
+  transition: all 0.2s ease;
+}
+
+/* Stance counter display */
+.stance::before {
+  content: counter(stance-counter);
+  position: absolute;
+  left: -2rem;
+  top: 1rem;
+  font-size: 0.75em;
+  color: var(--base01);
+  font-weight: 600;
+  opacity: 0.5;
+}
+
+/* Container for multiple brief stances */
+.stance-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+/* Compact spacing for short stances */
+.stance-brief {
+  margin: 0;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
+  min-height: auto;
+  border-left-width: 3px;
+}
+
+/* Ensure brief stances don't break grid */
+.stance-brief-grid .stance {
+  margin: 0;
+}
+
+/* Additional spacing after stance groups */
+.stance + .stance-brief-grid,
+.stance-brief-grid + .stance {
+  margin-top: 4rem;
+}
+
+/* Stance type variants - Solarized Dark semantic colors with enhanced borders */
+.stance-analysis {
+  border-left-width: 5px;
+  border-left-color: var(--blue);
+  background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-theory {
+  border-left-width: 5px;
+  border-left-color: var(--yellow);
+  background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-experience {
+  border-left-width: 5px;
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-synthesis {
+  border-left-width: 5px;
+  border-left-color: var(--cyan);
+  background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-meta {
+  border-left-width: 5px;
+  border-left-color: var(--violet);
+  background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-observation {
+  border-left-width: 5px;
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-pattern {
+  border-left-width: 5px;
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-application {
+  border-left-width: 5px;
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-conclusion {
+  border-left-width: 5px;
+  border-left-color: var(--magenta);
+  background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+/* New stance types */
+.stance-recursion {
+  border-left-width: 5px;
+  border-left-color: var(--violet);
+  border-left-style: dashed;
+  background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-medium {
+  border-left-width: 5px;
+  border-left-color: var(--cyan);
+  background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-navigation {
+  border-left-width: 5px;
+  border-left-color: var(--yellow);
+  background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-solution {
+  border-left-width: 5px;
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-critique {
+  border-left-width: 5px;
+  border-left-color: var(--red);
+  background: linear-gradient(90deg, rgba(220, 50, 47, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-demonstration {
+  border-left-width: 5px;
+  border-left-color: var(--magenta);
+  background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-technical {
+  border-left-width: 5px;
+  border-left-color: var(--blue);
+  background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+.stance-metaphor {
+  border-left-width: 5px;
+  border-left-color: var(--orange);
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+/* Emphasis variants */
+.stance-normal {
+  border-left-width: 4px;
+}
+
+.stance-strong {
+  border-left-width: 5px;
+}
+
+.stance-recursive {
+  border-left-style: dashed;
+}
+
+/* Header structure */
+.stance-header {
+  margin-bottom: 1.5rem;
+}
+
+
+/* Keep terminal fonts for bridge text */
+code, pre {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+}
+
+.stance-persona {
+  font-weight: 600;
+  margin: 0;
+  color: var(--base1);
+}
+
+.stance-persona strong {
+  font-weight: 700;
+  color: var(--base1);
+}
+
+/* Reduce metadata visual weight */
+.stance-meta {
+  font-size: 0.95em;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--base1);
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.stance-meta strong {
+  font-weight: 500;
+}
+
+/* Standardized Solarized color system for stances */
+.stance[data-color="blue"] { 
+  border-left-color: var(--blue); 
+  background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="green"] { 
+  border-left-color: var(--green); 
+  background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="orange"] { 
+  border-left-color: var(--orange); 
+  background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="red"] { 
+  border-left-color: var(--red); 
+  background: linear-gradient(90deg, rgba(220, 50, 47, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="violet"] { 
+  border-left-color: var(--violet); 
+  background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="cyan"] { 
+  border-left-color: var(--cyan); 
+  background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="yellow"] { 
+  border-left-color: var(--yellow); 
+  background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+.stance[data-color="magenta"] { 
+  border-left-color: var(--magenta); 
+  background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(7, 54, 66, 0.3) 50%);
+}
+
+/* Border style variations */
+.stance[data-style="solid"] { border-left-style: solid; }
+.stance[data-style="dashed"] { border-left-style: dashed; }
+.stance[data-style="dotted"] { border-left-style: dotted; }
+.stance[data-style="double"] { border-left-style: double; }
+
+/* Type-specific styling enhancements */
+.stance-type-mechanism { position: relative; }
+.stance-type-mechanism::before {
+  content: "⚙";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1.2em;
+}
+
+.stance-type-recursion { border-left-style: dashed; }
+.stance-type-recursion::before {
+  content: "∞";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1.2em;
+}
+
+.stance-type-medium::before {
+  content: "📡";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1em;
+}
+
+.stance-type-theory::before {
+  content: "🧠";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  opacity: 0.3;
+  font-size: 1em;
+}
+
+.stance-type-axiom { border-left-width: 2px; }
+.stance-type-axiom::before {
+  content: "•";
+  position: absolute;
+  left: -1.2rem;
+  top: 0.5rem;
+  opacity: 0.5;
+  font-size: 1.5em;
+  color: var(--base01);
+}
+
+/* Cluster-specific styling */
+.stance-cluster-core-theory {
+  box-shadow: inset 0 0 0 1px rgba(131, 148, 150, 0.1);
+}
+
+.stance-cluster-philosophy {
+  border-radius: 4px;
+}
+
+.stance-cluster-consciousness-craft {
+  background: linear-gradient(45deg, transparent 0%, rgba(131, 148, 150, 0.02) 100%);
+}
+
+/* Hide bridge indicators since bridges were removed */
+.stance-bridge {
+  display: none;
+}
+
+.bridge-text {
+  display: none;
+}
+
+
+/* Remove outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+
+/* Post content width optimization */
+.post-content {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Terminal-style prompt block */
+.prompt-block {
+  background: var(--base03);
+  border: 1px solid var(--base01);
+  padding: 1.5rem;
+  margin: 2rem 0 3rem 0;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+  border-radius: 4px;
+}
+
+.prompt-block::before {
+  content: "$ ";
+  color: var(--green);
+  font-weight: bold;
+}
+
+.prompt-block blockquote {
+  margin: 0;
+  padding-left: 1.5rem;
+  border-left: none;
+  color: var(--base0);
+}
+
+/* Content typography - readable fonts for body text */
+.stance-content {
+  line-height: 1.75;
+  color: var(--base0);
+  max-width: 70ch; /* Increased from 65ch for better readability */
+}
+
+/* First-line emphasis */
+.stance-content p:first-child::first-line {
+  font-weight: 500;
+  color: var(--base1);
+}
+
+
+.stance-content p {
+  margin-bottom: 1rem;
+}
+
+.stance-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Alternating backgrounds removed for cleaner visual hierarchy */
+
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .stance {
+    margin: 2.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .stance::before {
+    left: -1.5rem;
+  }
+  
+  .stance-brief-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .post-content {
+    padding: 0 1rem;
+  }
+  
+}
+
+/* Dark mode - enhanced contrast (removed stance border override to preserve type colors) */
+@media (prefers-color-scheme: dark) {
+  .stance-persona {
+    color: #e0e0e0;
+  }
+  
+  .stance-persona strong {
+    color: #7dd3fc;
+  }
+  
+  .stance-content {
+    color: #d1d5db;
+  }
+  
+  .stance-content p:first-child::first-line {
+    color: #e0e0e0;
+  }
+}
+
+/* Standardized border width for consistency */
+.stance {
+  border-left-width: 4px;
+}
+
+/* Light mode support - respects user preference */
+@media (prefers-color-scheme: light) {
+  :root {
+    --base03: #fdf6e3;  /* Light background */
+    --base02: #eee8d5;  /* Light surface */
+    --base01: #93a1a1;  /* Light comments */
+    --base00: #839496;  /* Light emphasis */
+    --base0:  #657b83;  /* Light body text */
+    --base1:  #586e75;  /* Light headings */
+  }
+  
+  .stance {
+    background: rgba(238, 232, 213, 0.3);
+  }
+  
+  .stance-analysis {
+    background: linear-gradient(90deg, rgba(38, 139, 210, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-theory {
+    background: linear-gradient(90deg, rgba(181, 137, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-experience {
+    background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-synthesis {
+    background: linear-gradient(90deg, rgba(42, 161, 152, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-meta {
+    background: linear-gradient(90deg, rgba(108, 113, 196, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-observation {
+    background: linear-gradient(90deg, rgba(203, 75, 22, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-pattern {
+    background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-application {
+    background: linear-gradient(90deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  .stance-conclusion {
+    background: linear-gradient(90deg, rgba(211, 54, 130, 0.08) 0%, rgba(238, 232, 213, 0.3) 50%);
+  }
+  
+  
+  .bridge-text {
+    background: var(--base03);
+    color: var(--base00);
+  }
+  
+}
