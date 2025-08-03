@@ -300,10 +300,10 @@ The crate is [here](https://crates.io/crates/recursion), docs are [here](https:/
 
 ## Use Detect
 
-Detect is on [crates.io](https://crates.io/crates/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
+Detect is on [crates.io](https://crates.io/crates/detect). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
 
 ```shell
-➜  cargo install detect_rs
+➜  cargo install detect
 ➜  detect 'filename(detect) && executable() || filename(.rs) && contains(map_frame)'
 ...
 ```
