@@ -296,11 +296,11 @@ Here's a GIF showing each step in the evaluation of `false && true || true` usin
 
 The recursion crate is a perfect fit for working with recursive data structures. We've seen how it can used to implement a lazily evaluated expression language, and how expression languages can be a powerful tool for expressing arbitrary logic (for example, [test filtering expressions in nextest](https://github.com/nextest-rs/nextest/tree/main/nextest-filtering) are implemented using the recursion crate). Next time you're developing a tool, consider providing users with an expression language - it's easier than you might think.
 
-The crate is [here](https://crates.io/recursion), docs are [here](https://docs.rs/recursion/0.5.1/recursion/), the github repository is [here](https://github.com/inanna-malick/recursion).
+The crate is [here](https://crates.io/crates/recursion), docs are [here](https://docs.rs/recursion/0.5.1/recursion/), the github repository is [here](https://github.com/inanna-malick/recursion).
 
 ## Use Detect
 
-Detect is on [crates.io](https://crates.io/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
+Detect is on [crates.io](https://crates.io/crates/detect_rs). The most recent version of it supports multiple predicate stages (filename, file metadata, file contents, and even arbitrary subprocesses), and runs evaluation in multiple stages to minimize syscall use.
 
 ```shell
 ➜  cargo install detect_rs
