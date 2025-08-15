@@ -28,6 +28,6 @@ theme = "beautifulhugo"
 
 [markup]
   [markup.highlight]
-    style = 'rose-pine-dawn'
+    style = 'monokai'
     tabWidth = 2
 
