@@ -6,7 +6,7 @@ author = "Inanna Malick"
 tags = ["llm", "ux", "cli", "testing", "detect", "tools"]
 keywords = ["llm", "ux testing", "cli tools", "developer tools", "detect", "user experience"]
 showFullContent = false
-description = "How to use LLMs as UX testers to improve your CLI tool"
+description = "An LLM's attempts to use your tool approximate what a statistically average user would try. You can use that to automate basic CLI tool UX testing."
 +++
 
 
@@ -16,7 +16,7 @@ Here's the problem: you can't look at it with fresh eyes and analyze it from tha
 
 What you really need is a vast farm of test users that don't retain memories between runs. Ideally, you would be able to tweak a dial and set their cognitive capacity, press a button and have them drop their short term memory. But you can't have this, because of 'The Geneva Convention' and 'ethics'. Fine.
 
-LLMs provide exactly this. Fresh eyes every time (just clear their context window), adjustable cognitive capacity (just switch models), infinite patience, and no feelings to hurt. They get confused easily, but that's exactly what you want. That confusion is data.
+LLMs provide exactly this. Fresh eyes every time (just clear their context window), adjustable cognitive capacity (just switch models), infinite patience, and no feelings to hurt. Best of all, they approximate the statistically average hypothetical user - their training data includes millions of lines of humans interacting with a wide variety of CLI tools. Sure, they get confused sometimes, but that's exactly what you want. That confusion is data, and the reasoning chain that led to it is available in the LLM's context window.
 
 <!--more-->
 
