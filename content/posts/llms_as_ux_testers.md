@@ -27,7 +27,7 @@ I'm not the only person noticing this emergent pattern. [For example](https://bs
 
 ## Why I wrote detect
 
-I could never remember command line flags for `find`. I was constantly searching stack overflow for useful snippets, reading man pages, etc. It just didn't stick. I prefer expression languages, so I wrote a tool that uses them instead: [detect](https://github.com/inanna-malick/detect) 
+I could never remember command line flags for `find`. I was constantly searching stack overflow for useful snippets, reading man pages, etc. It just didn't stick. I prefer expression languages, so I wrote a tool that uses them instead: [detect](https://github.com/inanna-malick/detect). The first draft of this tool let me write:
 
 ```bash
 detect 'filename(detect) && executable() || filename(.rs) && contains(map_frame)'
@@ -103,14 +103,12 @@ Here's some feedback I received:
 Here's a highlight reel of issues they found:
 
 - removing the `@` prefix on selectors, to go from `@size` to just `size` (this one was obvious in hindsight, but I had spent too long using it to notice the friction)
-- 'in set' operators  - from `path.ext == js || path.ext == ts` to `path.ext in [js, ts]`
-- glob support (it kept trying to use them and getting confused)
+- 'in set' operators - from `ext == js || ext == ts` to `ext in [js, ts]`
 - parser flexibility:
 	- '5Kb', '5 KB' instead of _just_ '5kb'
 	- aliases like 'modified' for 'mtime', etc
 	- support AND/OR/NOT in addition to '&&/||/!'
-- hierarchical selectors (with alias support for shorthand)
-	- path.full, path.name, path.ext, etc
+- glob support (it kept trying to write expressions like `detect '*.rs'` and getting confused)
 
 ### When to stop
 
@@ -127,3 +125,5 @@ That's when I knew I was done.
 Keep your prompts minimal, just the bare minimum required to use your tool + a scenario. Don't give it any hints or examples, just have it run `tool --help` and go from there. The whole point is seeing with fresh eyes, not pre-loading context window with hints. Let the LLM discover your tool, over and over again, and note how the LLM's experience changes as you improve your CLI ergonomics.
 
 First start with Sonnet - it gets confused more easily, it'll try a bunch of things and give you good reports about the rough edges. Then switch to Opus. It'll be more creative, more likely to ask for new features, but also more likely to ask for over-complex features (correlation, context-specific selectors, etc). I used Anthropic's monthly subscription (their Max plan), and this testing strategy was surprisingly affordable: it barely made a dent in my usage limits. 
+
+Let me know how it goes! I'm [inanna.recursion.wtf](https://bsky.app/profile/inanna.recursion.wtf) on Bluesky.
