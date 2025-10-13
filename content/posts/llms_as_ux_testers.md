@@ -12,11 +12,11 @@ description = "An LLM's attempts to use your tool approximate what a statistical
 
 Every tool has a complexity budget. Users will only devote so much time to understanding what a tool does and how before they give up. You want to use that budget on your innovative new features, not on arbitrary or idiosyncratic syntax choices.
 
-Here's the problem: you can't look at it with fresh eyes and analyze it from that perspective. Finding users for a new CLI tool is hard, especially if the user experience isn't polished. But to polish the user experience, you need users, you need user feedback, and not just from a small group of power users. Many tools fail to grow past this stage.
+Here's the problem: you can't look at a tool you've made with fresh eyes and analyze it from that perspective. Finding users for a new CLI tool is hard, especially if the user experience isn't polished. But to polish the user experience, you need users, you need user feedback, and not just from a small group of power users. Many tools fail to grow past this stage.
 
 What you really need is a vast farm of test users that don't retain memories between runs. Ideally, you would be able to tweak a dial and set their cognitive capacity, press a button and have them drop their short term memory. But you can't have this, because of 'The Geneva Convention' and 'ethics'. Fine.
 
-LLMs provide exactly this. Fresh eyes every time (just clear their context window), adjustable cognitive capacity (just switch models), infinite patience, and no feelings to hurt. Best of all, they approximate the statistically average hypothetical user - their training data includes millions of lines of humans interacting with a wide variety of CLI tools. Sure, they get confused sometimes, but that's exactly what you want. That confusion is data, and the reasoning chain that led to it is available in the LLM's context window.
+LLMs provide exactly this. Fresh eyes every time (just clear their context window), adjustable cognitive capacity (just switch models), infinite patience, and no emotional overhead to navigate. Best of all, they approximate the statistically average hypothetical user - their training data includes millions of lines of humans interacting with a wide variety of CLI tools. Sure, they get confused sometimes, but that's exactly what you want. That confusion is data, and the reasoning chain that led to it is available in the LLM's context window.
 
 <!--more-->
 
