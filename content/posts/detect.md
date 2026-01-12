@@ -92,4 +92,4 @@ The abstractions to support this haven't been implemented yet, but if you're int
 
 # Get in touch
 
-Finally, I'm currently looking for Rust engineering roles: SF Bay Area, fully remote, or EU with visa sponsorship. If you're hiring, let's talk: my email is inanna@recursion.wtf
+Finally, I'm currently looking for Rust engineering roles: SF Bay Area, fully remote, or EU with visa sponsorship. If you're hiring, let's talk: my email is inanna [at] [this domain].wtf
