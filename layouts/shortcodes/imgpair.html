@@ -1,0 +1,26 @@
+{{- /*
+  imgpair: Full-width side-by-side image pair.
+
+  Usage:
+    {{< imgpair
+        left="/img/shadow-queen/screenshot1.png"  left_alt="description"  left_caption="Caption A"
+        right="/img/shadow-queen/screenshot2.png"  right_alt="description" right_caption="Caption B"
+    >}}
+*/ -}}
+{{- $left  := .Get "left" -}}
+{{- $right := .Get "right" -}}
+{{- $leftAlt     := .Get "left_alt"     | default "" -}}
+{{- $rightAlt    := .Get "right_alt"    | default "" -}}
+{{- $leftCaption := .Get "left_caption" | default "" -}}
+{{- $rightCaption:= .Get "right_caption"| default "" -}}
+
+<figure class="imgpair">
+  <div class="imgpair-left">
+    <img src="{{ $left }}" alt="{{ $leftAlt }}" loading="lazy">
+    {{- if $leftCaption }}<figcaption>{{ $leftCaption }}</figcaption>{{ end }}
+  </div>
+  <div class="imgpair-right">
+    <img src="{{ $right }}" alt="{{ $rightAlt }}" loading="lazy">
+    {{- if $rightCaption }}<figcaption>{{ $rightCaption }}</figcaption>{{ end }}
+  </div>
+</figure>

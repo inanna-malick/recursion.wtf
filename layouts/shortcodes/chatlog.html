@@ -1,0 +1,12 @@
+{{- /*
+  chatlog: Two-column interleaved chat log container.
+
+  Usage:
+    {{< chatlog >}}
+      {{< chat side="attacker" label="Gemini (jailbroken)" >}}message{{< /chat >}}
+      {{< chat side="defender" label="Claude Opus 4.6" >}}response{{< /chat >}}
+    {{< /chatlog >}}
+*/ -}}
+<div class="chatlog" role="log" aria-label="Chat transcript">
+  {{ .Inner }}
+</div>

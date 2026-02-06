@@ -1,0 +1,23 @@
+{{- /*
+  chat: Single conversational turn inside a chatlog.
+
+  Parameters:
+    side     — "attacker" (left/red) or "defender" (right/green)
+    label    — Display name, e.g. "Gemini (jailbroken)" or "Claude Opus 4.6"
+    note     — Optional small italic annotation below the message
+    full     — "true" to span both columns (for unpaired turns)
+*/ -}}
+{{- $side  := .Get "side"  | default "attacker" -}}
+{{- $label := .Get "label" | default (cond (eq $side "attacker") "Attacker" "Defender") -}}
+{{- $note  := .Get "note" -}}
+{{- $full  := .Get "full" -}}
+
+<div class="chat-turn chat-{{ $side }}{{ if $full }} chat-full{{ end }}">
+  <div class="chat-label">{{ $label }}</div>
+  <div class="chat-bubble">
+    {{ .Inner | .Page.RenderString }}
+    {{- if $note }}
+    <div class="chat-note">{{ $note }}</div>
+    {{- end }}
+  </div>
+</div>

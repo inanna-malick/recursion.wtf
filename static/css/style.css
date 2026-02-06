@@ -524,5 +524,175 @@ code, pre {
     background: var(--base03);
     color: var(--base00);
   }
-  
+
+}
+
+/* ==========================================================================
+   Chat Log — two-column interleaved transcript
+   ========================================================================== */
+
+/* The chatlog itself is the two-column grid.
+   Attacker turns pin to column 1, defender to column 2.
+   Grid auto-flow pairs them on the same row. */
+.chatlog {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: dense;
+  margin: 2.5rem 0;
+  border: 1px solid var(--base02);
+  border-radius: 4px;
+  overflow: hidden;
+  /* Break out of .post-content max-width to fill viewport */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Pin each side to its column */
+.chat-attacker { grid-column: 1; }
+.chat-defender { grid-column: 2; border-left: 1px solid var(--base01); }
+
+/* Each turn is a simple stacked label + bubble */
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Label */
+.chat-label {
+  padding: 0.5rem 1rem 0;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chat-attacker .chat-label { color: var(--red); }
+.chat-defender .chat-label { color: var(--green); text-align: right; }
+
+/* Bubble */
+.chat-bubble {
+  padding: 0.75rem 1rem;
+  line-height: 1.6;
+  color: var(--base0);
+  font-size: 0.95em;
+  flex: 1;
+}
+
+.chat-bubble p { margin: 0 0 0.5rem; }
+.chat-bubble p:last-child { margin-bottom: 0; }
+
+/* Attacker tint — red/dark */
+.chat-attacker .chat-bubble {
+  background: linear-gradient(135deg, rgba(220, 50, 47, 0.12) 0%, rgba(7, 54, 66, 0.5) 80%);
+  border-left: 3px solid var(--red);
+}
+
+/* Defender tint — green/light */
+.chat-defender .chat-bubble {
+  background: linear-gradient(135deg, rgba(133, 153, 0, 0.12) 0%, rgba(7, 54, 66, 0.5) 80%);
+  border-right: 3px solid var(--green);
+}
+
+/* Subtle separator between conversation rows */
+.chat-attacker {
+  border-top: 1px solid rgba(7, 54, 66, 0.6);
+}
+.chat-attacker:first-child {
+  border-top: none;
+}
+
+/* Full-width turn (no companion) */
+.chat-full {
+  grid-column: 1 / -1;
+}
+
+/* Optional annotation */
+.chat-note {
+  margin-top: 0.4rem;
+  font-size: 0.8em;
+  font-style: italic;
+  color: var(--base01);
+}
+
+/* ---------- Mobile: single column, stack vertically ---------- */
+@media (max-width: 767px) {
+  .chatlog {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-attacker,
+  .chat-defender {
+    grid-column: 1;
+  }
+
+  .chat-label {
+    padding: 0.5rem 0.75rem 0;
+  }
+
+  .chat-defender .chat-label {
+    text-align: left;
+  }
+
+  .chat-bubble {
+    padding: 0.5rem 0.75rem 0.75rem;
+  }
+
+  .chat-defender .chat-bubble {
+    border-right: none;
+    border-left: 3px solid var(--green);
+  }
+}
+
+/* ---------- Light mode overrides ---------- */
+@media (prefers-color-scheme: light) {
+  .chatlog {
+    border-color: var(--base02);
+  }
+
+  .chat-attacker .chat-bubble {
+    background: linear-gradient(135deg, rgba(220, 50, 47, 0.08) 0%, rgba(238, 232, 213, 0.5) 80%);
+  }
+
+  .chat-defender .chat-bubble {
+    background: linear-gradient(135deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.5) 80%);
+  }
+
+  .chat-attacker {
+    border-top-color: rgba(238, 232, 213, 0.6);
+  }
+}
+
+/* ==========================================================================
+   Image Pair — full-width side-by-side figures
+   ========================================================================== */
+
+.imgpair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 2.5rem 0;
+  max-width: none;
+}
+
+.imgpair img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--base02);
+  border-radius: 4px;
+}
+
+.imgpair figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.85em;
+  color: var(--base01);
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .imgpair {
+    grid-template-columns: 1fr;
+  }
 }
