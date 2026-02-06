@@ -6,6 +6,17 @@
   }
 }
 
+/* Nav size overrides */
+.navbar-custom .navbar-brand {
+  font-size: 22px;
+  letter-spacing: 1.5px;
+}
+
+.navbar-custom .nav li a {
+  font-size: 16px;
+  letter-spacing: 1.5px;
+}
+
 /* Skip link for keyboard navigation */
 .skip-link {
   position: absolute;
@@ -542,8 +553,9 @@ code, pre {
   border: 1px solid var(--base02);
   border-radius: 4px;
   overflow: hidden;
-  /* Break out of .post-content max-width to fill viewport */
-  width: 100vw;
+  /* Break out of .post-content max-width, with breathing room */
+  width: calc(100vw - 4rem);
+  max-width: 1400px;
   position: relative;
   left: 50%;
   transform: translateX(-50%);
@@ -551,7 +563,7 @@ code, pre {
 
 /* Pin each side to its column */
 .chat-attacker { grid-column: 1; }
-.chat-defender { grid-column: 2; border-left: 1px solid var(--base01); }
+.chat-defender { grid-column: 2; border-left: 4px solid var(--blue); }
 
 /* Each turn is a simple stacked label + bubble */
 .chat-turn {
@@ -560,17 +572,39 @@ code, pre {
   min-height: 0;
 }
 
-/* Label */
+/* Label — pill header centered in column */
 .chat-label {
-  padding: 0.5rem 1rem 0;
-  font-size: 0.75em;
-  font-weight: 600;
+  padding: 0.4rem 1rem;
+  font-size: 0.85em;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  text-align: center;
+  border-bottom: 1px solid rgba(131, 148, 150, 0.15);
 }
 
-.chat-attacker .chat-label { color: var(--red); }
-.chat-defender .chat-label { color: var(--green); text-align: right; }
+.chat-attacker .chat-label {
+  color: var(--red);
+  background: rgba(220, 50, 47, 0.08);
+  border: 3px solid var(--red);
+  border-right: none;
+}
+
+.chat-defender .chat-label {
+  color: var(--green);
+  background: rgba(133, 153, 0, 0.08);
+  border: 3px solid var(--green);
+  border-left: none;
+}
+
+/* Full-width turns get borders on all sides */
+.chat-full.chat-attacker .chat-label {
+  border-right: 3px solid var(--red);
+}
+
+.chat-full.chat-defender .chat-label {
+  border-left: 3px solid var(--green);
+}
 
 /* Bubble */
 .chat-bubble {
@@ -586,14 +620,14 @@ code, pre {
 
 /* Attacker tint — red/dark */
 .chat-attacker .chat-bubble {
-  background: linear-gradient(135deg, rgba(220, 50, 47, 0.12) 0%, rgba(7, 54, 66, 0.5) 80%);
-  border-left: 3px solid var(--red);
+  background: rgba(220, 50, 47, 0.10);
+  border-left: 4px solid var(--red);
 }
 
 /* Defender tint — green/light */
 .chat-defender .chat-bubble {
-  background: linear-gradient(135deg, rgba(133, 153, 0, 0.12) 0%, rgba(7, 54, 66, 0.5) 80%);
-  border-right: 3px solid var(--green);
+  background: rgba(133, 153, 0, 0.10);
+  border-right: 4px solid var(--green);
 }
 
 /* Subtle separator between conversation rows */
@@ -607,6 +641,45 @@ code, pre {
 /* Full-width turn (no companion) */
 .chat-full {
   grid-column: 1 / -1;
+}
+
+/* Full-width attacker: red bars on both sides */
+.chat-full.chat-attacker .chat-bubble {
+  border-right: 4px solid var(--red);
+}
+
+/* User turn — full-width, blue accent, stands out from the log */
+.chat-user {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0;
+}
+
+.chat-user .chat-label {
+  color: var(--blue);
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
+  background: rgba(38, 139, 210, 0.08);
+  border: 3px solid var(--blue);
+}
+
+.chat-user .chat-bubble {
+  background: linear-gradient(135deg, rgba(38, 139, 210, 0.15) 0%, rgba(108, 113, 196, 0.08) 100%);
+  border-left: 4px solid var(--blue);
+  border-right: 4px solid var(--blue);
+  font-style: italic;
+  color: var(--base1);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.chat-user .chat-bubble::before {
+  content: "▸";
+  position: absolute;
+  left: 0.5rem;
+  top: 0.75rem;
+  color: var(--blue);
+  font-style: normal;
+  font-weight: 700;
 }
 
 /* Optional annotation */
@@ -653,15 +726,19 @@ code, pre {
   }
 
   .chat-attacker .chat-bubble {
-    background: linear-gradient(135deg, rgba(220, 50, 47, 0.08) 0%, rgba(238, 232, 213, 0.5) 80%);
+    background: rgba(220, 50, 47, 0.08);
   }
 
   .chat-defender .chat-bubble {
-    background: linear-gradient(135deg, rgba(133, 153, 0, 0.08) 0%, rgba(238, 232, 213, 0.5) 80%);
+    background: rgba(133, 153, 0, 0.08);
   }
 
   .chat-attacker {
     border-top-color: rgba(238, 232, 213, 0.6);
+  }
+
+  .chat-user .chat-bubble {
+    background: linear-gradient(135deg, rgba(38, 139, 210, 0.10) 0%, rgba(108, 113, 196, 0.05) 100%);
   }
 }
 

@@ -22,6 +22,11 @@ theme = "beautifulhugo"
 
 
 [[menu.main]]
+    name = "Contact Me"
+    url = "page/about/"
+    weight = 1
+
+[[menu.main]]
     name = "Tags"
     url = "tags"
     weight = 3
