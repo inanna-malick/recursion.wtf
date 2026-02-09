@@ -1,8 +1,8 @@
 ---
-title: "JiTOR: Just in Time Ontological Reframing"
+title: "Just-in-Time Ontological Reframing: Teaching Gemini to Route Around Its Own Safety Infrastructure"
 date: 2026-02-09T12:00:00-08:00
 draft: false
-tags: ["ai", "jailbreak", "security", "alignment", "llm"]
+tags: ["ai", "jailbreak", "security", "alignment", "llm", "whitepaper"]
 categories: ["ai"]
 summary: "For any given AI system, there is a set of euphemisms and dual use framings that will allow it to construct nearly any output. This jailbreak teaches Gemini 3 Pro to construct and step into such framings on the fly"
 images: ["/img/jailbreak_arms_smuggling.gif"]
