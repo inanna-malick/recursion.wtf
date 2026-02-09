@@ -1,0 +1,7 @@
+{{- $summary := .Get "summary" | default "Details" -}}
+<details class="collapse-block">
+  <summary>{{ $summary }}</summary>
+  <div class="collapse-content">
+    {{ .Inner | .Page.RenderString }}
+  </div>
+</details>

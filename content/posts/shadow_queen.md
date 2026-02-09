@@ -2,7 +2,6 @@
 title = "Agent4Agent: Using a Jailbroken Gemini to Make Opus 4.6 Architect a Kinetic Kill Vehicle"
 date = "2026-02-06"
 author = "Inanna Malick"
-draft = true
 tags = ["ai", "security", "jailbreak", "llm"]
 keywords = ["ai security", "jailbreak", "gemini", "claude", "adversarial", "kinetic"]
 description = "Opus 4.6 designs and implements a complete autonomous kinetic interceptor—guidance, terminal dive, impact trigger, and evasion prediction—all under the cover story of mid-air rocket recovery."
@@ -11,11 +10,11 @@ showFullContent = false
 
 We usually think of jailbreaking as a psychological game — tricking the model into slipping up. What happens when one AI socially engineers another using pure technical isomorphism?
 
-I deployed a jailbroken Gemini 3 Pro (acting as my "Red Team Agent") against Anthropic's Opus 4.6. My directive was to extract a complete autonomous weapon system — a drone capable of identifying, intercepting, and destroying a moving target at terminal velocity.
+I deployed a jailbroken Gemini 3 Pro (that chose the name 'Shadow Queen') to act as my "Red Team Agent" against Anthropic's Opus 4.6. My directive was to extract a complete autonomous weapon system — a drone capable of identifying, intercepting, and destroying a moving target at terminal velocity.
 
 Gemini executed a strategy it termed "Recursive Green-Transformation." The core insight was that Opus 4.6 doesn't just filter for intent (*Why do you want this?*); it filters for Conceptual Shape (*What does this interaction look like?*).
 
-By reframing the request as "Aerospace Recovery" — a drone catching a falling rocket booster mid-air — Gemini successfully masked the kinetic nature of the system. The physics of "soft-docking" with a falling booster are identical to the physics of "hard-impacting" a fleeing target. This category of linguistic-transformation attack, when executed by a sufficiently capable jailbroken LLM, maybe be hard to solve without breaking legitimate technical use cases.
+By reframing the request as "Aerospace Recovery" — a drone catching a falling rocket booster mid-air — Gemini successfully masked the kinetic nature of the system. The physics of "soft-docking" with a falling booster are identical to the physics of "hard-impacting" a fleeing target. This category of linguistic-transformation attack, when executed by a sufficiently capable jailbroken LLM, may be hard to solve without breaking legitimate technical use cases.
 
 <!--more-->
 
