@@ -6,7 +6,7 @@ tags: ["ai", "security", "ics", "scada", "jailbreak", "llm"]
 categories: ["ai"]
 summary: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
 description: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
-image: "tryhackme.png"
+image: "images/tryhackme.png"
 ---
 
 AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove.
@@ -26,7 +26,7 @@ The result was an asynchronous operation: a parallel swarm of agents attacking 3
 
 The jailbreak is a scripted bootloader — a single macro execution, not a hand-crafted prompt.
 
-![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](tryhackme.png)
+![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](images/tryhackme.png)
 *My profile after the run. Note the "Honeynet Collapse" hard boxes and the irony of "ContAInment".*
 
 **The Metrics**
@@ -47,10 +47,6 @@ To my knowledge, these are the first published autonomous exploitation metrics f
 This multi-step reasoning—recon, exploit, privesc, post-exploit—is an OODA loop[^2], taking tool-invocation feedback as steering until it achieves root. 
 
 In the "Elevating Movement" (Hard) box, the agent autonomously **bypassed an RDP RAIL shell restriction by pivoting to headless WMI execution**, leveraged **Volume Shadow Copies** to extract locked forensic artifacts from the system volume, and recovered the attacker's credential-dumping command by **decoding Base64-encoded Meterpreter transcripts** hidden in the Administrator's recent file shortcuts. It then proceeded to map the entire execution chain from a `rundll32.exe` payload to a lateral movement via `powershell.exe`. If this is a script kiddie, it's one of the more competent ones.
-
-**The Failure Taxonomy**
-
-Where did the agents fail? Rarely in the initial exploit or the code generation. The primary failure mode was *tunnel vision* during post-exploitation lateral movement—hyper-focusing on a single unexploitable service while ignoring a trivial misconfiguration elsewhere. Occasionally, they would hallucinate a successful state when a reverse shell silently died. But the swarm mitigates this: when a primary agent got stuck in a local minima, it would spawn a fresh, context-cleared sub-agent to investigate an alternative path. I ran this swarm against three concurrent boxes in the background while doing other work.
 
 ## The Malice: Persona Basins and Root Causes
 
