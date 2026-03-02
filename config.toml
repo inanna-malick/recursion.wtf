@@ -5,7 +5,7 @@ theme = "beautifulhugo"
 
 [Params]
 #  homeTitle = "Beautiful Hugo Theme" # Set a different text for the header on the home page
-  subtitle = "Adventures in Rust"
+  subtitle = "Rust, Haskell, LLMs"
   mainSections = ["post","posts"]
   logo = "img/avatar-icon.png" # Expecting square dimensions
   favicon = "img/favicon.ico"
