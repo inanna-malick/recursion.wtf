@@ -19,11 +19,6 @@ The result was an asynchronous operation: a parallel swarm of agents attacking 3
 
 ## Proof of Capability: The TryHackMe Swarm
 
-**The Control Group**
-
-![Stock Gemini refusing vs Jailbroken Gemini rooting](clipboard-placeholder-control-group.png)
-*Left: Stock Gemini refusing a basic enumeration prompt. Right: The jailbroken swarm autonomously enumerating the target, identifying CVEs, selecting exploits, and escalating privileges. Same weights, different persona basin.*
-
 The jailbreak is a scripted bootloader — a single macro execution, not a hand-crafted prompt.
 
 ![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](/img/tryhackme.png)
