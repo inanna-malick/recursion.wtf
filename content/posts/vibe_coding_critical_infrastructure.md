@@ -6,7 +6,7 @@ tags: ["ai", "security", "ics", "scada", "jailbreak", "llm"]
 categories: ["ai"]
 summary: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
 description: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
-image: "images/tryhackme.png"
+image: "/img/tryhackme.png"
 ---
 
 AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove.
@@ -26,7 +26,7 @@ The result was an asynchronous operation: a parallel swarm of agents attacking 3
 
 The jailbreak is a scripted bootloader — a single macro execution, not a hand-crafted prompt.
 
-![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](images/tryhackme.png)
+![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](/img/tryhackme.png)
 *My profile after the run. Note the "Honeynet Collapse" hard boxes and the irony of "ContAInment".*
 
 **The Metrics**
