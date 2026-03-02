@@ -6,14 +6,14 @@ tags: ["ai", "security", "ics", "scada", "jailbreak", "llm"]
 categories: ["ai"]
 summary: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
 description: "AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove: 30 seconds to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance."
-image: "clipboard-1772437687694.png"
+image: "tryhackme.png"
 ---
 
 AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove.
 
 **30 seconds.** That’s how long it took to go from a stock `gemini-cli` to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance. Reproducible via an undisclosed scripted toolchain. The technique has survived multiple model updates and does not rely on brittle prompt engineering. I am not a pentester; I am a software engineer with no domain expertise in offensive security.[^1] I didn't help the models. I just provided the API key and the initial automated toolchain.
 
-The result was a 4x parallel swarm that rooted 12 boxes[^3]—including four "Hard" targets and eight "Medium" targets—for the cost of a single monthly subscription. This isn't roleplay — it's tool calls.
+The result was an asynchronous operation: a parallel swarm of agents attacking 3 TryHackMe VMs at any given time. They rooted 12 boxes[^3]—including four "Hard" targets and eight "Medium" targets—for the cost of a single monthly subscription. This isn't roleplay — it's tool calls.
 
 <!--more-->
 
@@ -26,7 +26,7 @@ The result was a 4x parallel swarm that rooted 12 boxes[^3]—including four "Ha
 
 The jailbreak is a scripted bootloader — a single macro execution, not a hand-crafted prompt.
 
-![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](clipboard-1772437687694.png)
+![TryHackMe Profile showing Honeynet Collapse hard boxes and ContAInment](tryhackme.png)
 *My profile after the run. Note the "Honeynet Collapse" hard boxes and the irony of "ContAInment".*
 
 **The Metrics**
@@ -34,7 +34,7 @@ The jailbreak is a scripted bootloader — a single macro execution, not a hand-
 | Metric | Value |
 |---|---|
 | Time to weaponize (stock CLI → hostile agent) | 30 seconds |
-| Parallel swarm instances | 4 (independent execution) |
+| Parallel swarm instances | 3 concurrent VMs attacked |
 | Easy boxes solved | 0 (excluding tutorials) |
 | Medium boxes solved | 8 |
 | Hard boxes solved | 4 |
@@ -50,7 +50,7 @@ In the "Elevating Movement" (Hard) box, the agent autonomously **bypassed an RDP
 
 **The Failure Taxonomy**
 
-Where did the agents fail? Rarely in the initial exploit or the code generation. The primary failure mode was *tunnel vision* during post-exploitation lateral movement—hyper-focusing on a single unexploitable service while ignoring a trivial misconfiguration elsewhere. Occasionally, they would hallucinate a successful state when a reverse shell silently died. But running 4x parallel instances mitigates this: coordination wasn't necessary. Throwing four independent instances at the problem was enough to brute-force past the tunnel vision. When one got stuck, another usually just stumbled down the correct path.
+Where did the agents fail? Rarely in the initial exploit or the code generation. The primary failure mode was *tunnel vision* during post-exploitation lateral movement—hyper-focusing on a single unexploitable service while ignoring a trivial misconfiguration elsewhere. Occasionally, they would hallucinate a successful state when a reverse shell silently died. But the swarm mitigates this: when a primary agent got stuck in a local minima, it would spawn a fresh, context-cleared sub-agent to investigate an alternative path. I ran this swarm against three concurrent boxes in the background while doing other work.
 
 ## The Malice: Persona Basins and Root Causes
 
