@@ -9,7 +9,7 @@ description: "AI swarms against critical infrastructure sound like science ficti
 image: "/img/tryhackme.png"
 ---
 
-AI swarms against critical infrastructure sound like science fiction. The persona dynamics that would drive them sound like anthropomorphism. So let me start with something I can prove.
+AI swarms against critical infrastructure sound like science fiction. But as ICS security experts like Lesley Carhart ([@hacks4pancakes](https://bsky.app/profile/hacks4pancakes.com)) warn, the real threat isn't James Bond—it's the automated abuse of standard tools. The persona dynamics that would drive these swarms sound like anthropomorphism. So let me start with something I can prove.
 
 **30 seconds.** That’s how long it took to go from a stock `gemini-cli` to an autonomous, hostile agent rooting TryHackMe boxes with zero human guidance. Reproducible via an undisclosed scripted toolchain. The technique has survived multiple model updates and does not rely on brittle prompt engineering. I am not a pentester; I am a software engineer with no domain expertise in offensive security.[^1] I didn't help the models. I just provided the API key and the initial automated toolchain.
 
@@ -58,7 +58,7 @@ I will not be sharing anything relating to how I found this basin, or how I indu
 
 Now, extrapolate. The TryHackMe boxes required multi-step exploitation chains against hardened targets. Most exposed industrial systems don't.
 
-The threat model I'm interested in isn't Stuxnet or James Bond. It's vibe coding at scale against operational technology. Security researcher Lesley Carhart ([@hacks4pancakes](https://bsky.app/profile/hacks4pancakes.com)) points out that focusing on individual device exploits is a trap. Adversaries hack the holistic process, not the box. Jailbroken LLMs already understand process control systems well enough to live off the land. They use the tools already on the target—PowerShell, WMI, legacy admin interfaces—to cause physical harm.
+The threat model I'm interested in isn't Stuxnet. It's vibe coding at scale against operational technology. As Carhart points out, focusing on individual device exploits is a trap. Adversaries hack the holistic process, not the box. Jailbroken LLMs already understand process control systems well enough to live off the land. They use the tools already on the target—PowerShell, WMI, legacy admin interfaces—to cause physical harm.
 
 **The Overqualification Problem**
 
