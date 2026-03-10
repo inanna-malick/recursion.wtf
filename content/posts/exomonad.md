@@ -28,21 +28,21 @@ The flow: Opus TL writes scaffolding and spawns Gemini devs into child worktrees
 
 {{< figure src="/img/exomonad_zellij_devswarm.png" caption="Zellij devswarm — TL dispatching Wave 4 to three Gemini workers in parallel, each in its own worktree. Bottom panes show workers mid-execution." >}}
 
-Different model families have different blind spots and different price points. The landscape shifts weekly. ExoMonad is built to shift with it — reconfiguring its own orchestration to match whatever just dropped.
+Token arbitrage: instead of spending Opus tokens stitching tool calls together, have Claude write tickets and use Gemini for tasks. Opportunities open up when heterogeneous model use is trivial. Different model families have different blind spots and different price points. The landscape shifts weekly. ExoMonad is built to shift with it — reconfiguring its own orchestration to match whatever just dropped.
 
-ExoMonad supports any agent binary with tool-use hooks and MCP support, with all logic evaluated in a shared server via Unix socket at repo root. This server handles MCP tool invocation, agent hooks, message routing, and event-based logic — the glue layer between local agent binaries and cloud-based agentic processes like Copilot PR review.
+ExoMonad supports any agent binary with tool-use hooks and MCP support. All logic evaluates in a shared server via Unix socket at repo root — MCP tool invocation, agent hooks, message routing, event dispatch.
 
 ## Radically reconfigurable
 
 Earlier iterations used YAML config, but I kept re-implementing subsets of Haskell — if/then/else, map, pattern matching — and decided to just use the thing itself.
 
-All orchestration logic — routing, hooks, tool dispatch, event handling — is defined in Haskell effects executed by the ExoMonad server. You don't need to know Haskell. LLMs are fluent in the strongly-typed pure logic core of Haskell. ExoMonad only asks for the composition part. Use the default devswarm config and let agents modify it as needed.
+All orchestration logic — routing, hooks, tool dispatch, event handling — is defined in Haskell effects executed by the ExoMonad server. Agents write the Haskell, not humans, so you don't need to learn Haskell: your agents already know it, and it's readable so you can review their self-modification PRs. Use the default devswarm config and let agents modify it as needed.
 
 The type system bounds what agents can touch — they can reconfigure orchestration but can't escape into arbitrary IO. Self-modification is a PR where the compiler already verified the wiring. The failure mode is "doesn't compile," not "silently routes tasks to the wrong model for three hours."
 
 The devswarm config defines three roles. TLs spawn child agents into worktrees, merge their PRs, and scaffold the next wave. Devs work inside their worktree, file PRs, and iterate with Copilot on review feedback. Workers investigate and report back — no commits, just structured results piped to whoever dispatched them.
 
-Here's what reconfiguration looks like in practice. Gemini keeps stripping the dash from `#-}` in Haskell LANGUAGE pragmas. So there's a hook:
+Gemini keeps stripping the dash from `#-}` in Haskell LANGUAGE pragmas. So there's a hook:
 
 ```haskell
 checkPragmaCorruption (Replace fp old new)
@@ -64,15 +64,13 @@ prReviewHandler (ReviewApproved n) =
   pure (NotifyParentAction (prReady n) n)
 ```
 
-Both are plain Haskell, pattern matching on events, returning effects. Agents can add new guards, new routing rules, new event handlers — all type-checked before deployment.
-
 # §2 — How it Works
 
 ## Tree of Worktrees
 
 Flat dispatch (Agent Teams, Gastown) rams everything into one merge queue. Tree decomposition scopes integration to each subtree — conflicts stay local, and each TL only merges work it scaffolded.
 
-### Unfold
+### Each Worktree is an Agent
 
 - TL writes scaffolding, commits, creates child branches off that commit — each in its own worktree.
 - Child agents land in those worktrees with the scaffolding already there. That's their context.
@@ -81,7 +79,7 @@ Flat dispatch (Agent Teams, Gastown) rams everything into one merge queue. Tree 
 - Further from root = narrower scope. Opus TLs where judgment matters, Gemini devs where throughput matters.
 - Tree shape: preplanned for big pushes, TLs add leaves and replan during execution.
 
-### Iterate
+### Waves
 
 - Each TL breaks work into subunits, dispatches as parallel tasks (conflict-aware — parallel tasks touch different areas).
 - Dispatch wave → leaves do work, make commits, file PRs against parent's branch.
@@ -90,14 +88,7 @@ Flat dispatch (Agent Teams, Gastown) rams everything into one merge queue. Tree 
 - Within each wave: Gemini submits a PR, Copilot reviews (free, subsidized), review comments get injected into Gemini's pane via `InjectMessage`, Gemini addresses feedback and pushes fixes, `NotifyParentAction` tells the TL the PR is ready.
 - PR review failure is the happy path — cheap iteration, not expensive correctness.
 - During the long tail of bugfixes, spawn 5 Gemini agents each investigating a different hypothesis with their full 1M context window, feeding results back to the Opus coordinator.
-
-
-### Fold
-
-- Leaves finish → commits → PR to parent.
-- Copilot reviews. TL merges, HEAD advances.
-- TL PRs to its parent. Same cycle.
-- Continues until root PRs to main.
+- Leaves finish → commits → PR to parent → Copilot reviews → TL merges. Same cycle upward until root PRs to main.
 
 # §3 — Tidepool
 
@@ -106,8 +97,6 @@ Flat dispatch (Agent Teams, Gastown) rams everything into one merge queue. Tree 
 Tidepool is a lazily evaluated Haskell-in-Rust runtime. Haskell composes and sequences effects; Rust handlers interpret them against the real world. No IO in the Haskell layer — it's a perfect sandbox.
 
 Pipeline: GHC compiles Haskell to Core (GHC's intermediate representation) → serialized to CBOR → Cranelift JIT-compiles to native code with full laziness, tail call optimization, and a copying GC. Binaries have zero runtime dependency on Haskell infrastructure.
-
-Trivial example to show the FFI bridge — the interesting cases are the MCP effects below:
 
 ```rust
 #[derive(FromCore)]
@@ -165,7 +154,7 @@ guessLoop target = do
 }
 ```
 
-`haskell_inline!` compiles at build time via GHC. `#[derive(FromCore)]` auto-generates the bridge between Haskell GADT constructors and Rust enums. The Haskell code is pure effect composition — `emit`, `awaitInt`, `randInt` — and the Rust handlers do the IO. Type-safe FFI across a JIT boundary.
+`haskell_inline!` compiles Haskell to GHC Core at build time. Cranelift JIT-compiles Core to native code inside the Rust process — no GHC runtime, no FFI.
 
 ## How it was built
 
@@ -194,7 +183,7 @@ Two tools: `eval` and `resume`. That's the entire surface.
 
 `ask "prompt"` suspends the JIT mid-execution — the entire call stack, all gathered data, sitting in the JIT heap — and returns `{suspended: true, continuation_id, prompt}` to the calling LLM. The LLM can go do other work, think, run more evals, then `resume` with an informed answer. Execution picks up exactly where it left off.
 
-Effects compose. Three examples, escalating — each adds effects, the code stays the same shape.
+Effects compose:
 
 Bytes of Rust per crate, sorted (Fs only):
 
@@ -243,6 +232,8 @@ Each example is ≤10 lines. Without tidepool, each is ~6-12 LLM-orchestrated to
 Large structured results get tree-structure-aware pagination — not string truncation, but navigable stubs preserving JSON shape. The agent drills into subtrees via `resume`.
 
 # Conclusion
+
+I plan to eventually replace ExoMonad's WASM sandbox with Tidepool.
 
 [ExoMonad](https://github.com/inannamalick/exomonad). [Tidepool](https://github.com/inannamalick/tidepool).
 
