@@ -4,7 +4,7 @@ date: 2026-03-08T12:00:00-08:00
 draft: true
 tags: ["exomonad", "tidepool", "agent-orchestration", "haskell", "rust", "llm"]
 categories: ["projects"]
-summary: "Heterogeneous agent orchestration — Claude writes the plan, Gemini does the work, Copilot reviews the PR. Plus a lazily evaluated Haskell-in-Rust JIT runtime, because why not."
+summary: ""
 description: "ExoMonad stitches frontier model binaries together into reconfigurable agent swarms. Tidepool gives them a Haskell effect system compiled to native code via Cranelift."
 ---
 
@@ -16,15 +16,17 @@ It hooks into Claude Agent Teams' messaging bus, so agents running other model a
 
 It's traditional, when debuting a new orchestration engine, to build something insane and overambitious, like a cleanroom reimplementation of the [C compiler](https://www.anthropic.com/engineering/building-c-compiler). I don't have 20k to burn on tokens, so I built something a bit more modest: a lazily evaluated cranelift JIT compiled haskell-in-rust runtime with native interop.
 
-I also needed a [red team testbench](/posts/vibe_coding_critical_infrastructure/) with auto-bootstrapped jailbreak support and siloed Opus workers running elicitation strategies — so I had an agent build one. That took a few hours, for a radically different use case. Same platform.
+It's also been used to build a [red team testbench](/posts/vibe_coding_critical_infrastructure/) in a few hours — radically different use case, same platform.[^1]
+
+<!--more-->
 
 ## Heterogeneous agent orchestration
 
 Opus is smart but expensive. Gemini is flaky but cheap and fast. Copilot is integrated with GitHub PR review and heavily subsidized. ExoMonad lets you use all of them — Claude writes the plan, Gemini does the work, Copilot reviews the PR.
 
-The flow: Opus TL writes scaffolding and spawns Gemini devs into child worktrees. Each dev works against the scaffolding, commits, and files a PR back to the TL's branch. Copilot automatically reviews the PR — comments get injected into the Gemini agent's pane. Gemini fixes, Copilot re-reviews. When approved, the TL gets notified and either merges or sends change requests. Cheap iteration on the review loop, expensive judgment only at merge points.
+The flow: Opus TL writes scaffolding and spawns Gemini devs into child worktrees. Each dev works against the scaffolding, commits, and files a PR back to the TL's branch. Copilot automatically reviews the PR — comments get injected into the Gemini agent's pane. Gemini addresses the feedback, pushes fixes, and the TL gets notified to merge or send change requests. Cheap iteration, expensive judgment only at merge points.
 
-[PLACEHOLDER: screenshot/diagram — Opus TL spawning Gemini worktrees, PR review cycle with Copilot, merge back to TL branch]
+{{< figure src="/img/exomonad_zellij_devswarm.png" caption="Zellij devswarm — TL dispatching Wave 4 to three Gemini workers in parallel, each in its own worktree. Bottom panes show workers mid-execution." >}}
 
 Different model families have different blind spots and different price points. The landscape shifts weekly. ExoMonad is built to shift with it — reconfiguring its own orchestration to match whatever just dropped.
 
@@ -85,11 +87,10 @@ Flat dispatch (Agent Teams, Gastown) rams everything into one merge queue. Tree 
 - Dispatch wave → leaves do work, make commits, file PRs against parent's branch.
 - TL merges, commits new scaffolding, dispatches next wave.
 - Pattern: dispatch → merge → scaffold → dispatch.
-- Within each wave, the PR review ratchet: Gemini submits a PR. Copilot reviews it — free, subsidized. The review comments get injected directly into Gemini's Zellij pane via `InjectMessage`. Gemini reads the feedback, fixes, pushes. Copilot re-reviews. This loops until approval, at which point `NotifyParentAction` tells the TL the PR is ready. Cheap iteration — the expensive model only gets involved at merge decisions.
+- Within each wave: Gemini submits a PR, Copilot reviews (free, subsidized), review comments get injected into Gemini's pane via `InjectMessage`, Gemini addresses feedback and pushes fixes, `NotifyParentAction` tells the TL the PR is ready.
 - PR review failure is the happy path — cheap iteration, not expensive correctness.
 - During the long tail of bugfixes, spawn 5 Gemini agents each investigating a different hypothesis with their full 1M context window, feeding results back to the Opus coordinator.
 
-[PLACEHOLDER: Zellij screenshot — 5 Gemini workers (h1-thunk-sharing, h3-float-out, h4-bytearray, h5-varid-collision, h2-case-binder) investigating hypotheses in parallel. All responses route back via Claude Teams channels as synthetic workers. TL pane shows rolling scorecard: H1 disproven, H3 partially plausible, H5 disproven, H2/H4 still running. Opus coordinator on right already synthesizing results, pointing toward binder aliasing.]
 
 ### Fold
 
@@ -168,7 +169,9 @@ guessLoop target = do
 
 ## How it was built
 
-[PLACEHOLDER: Interactive visualization of hylo tree / nested worktree model, hosted as static page.]
+[PLACEHOLDER: screenshot of tidepool build story viz]
+
+[Explore the interactive build story →](/viz/tidepool-build-story.html)
 
 ## Tidepool MCP Server
 
@@ -191,69 +194,56 @@ Two tools: `eval` and `resume`. That's the entire surface.
 
 `ask "prompt"` suspends the JIT mid-execution — the entire call stack, all gathered data, sitting in the JIT heap — and returns `{suspended: true, continuation_id, prompt}` to the calling LLM. The LLM can go do other work, think, run more evals, then `resume` with an informed answer. Execution picks up exactly where it left off.
 
-Effects compose. `sgFind` pattern-matches across the codebase → `fsRead` pulls surrounding context → `llmJson` scores each hit with a typed schema → `ask` surfaces the ranked results → the calling LLM drills into whatever looks scariest, steers via `resume`. The calling LLM steers between suspensions.
+Effects compose. Three examples, escalating — each adds effects, the code stays the same shape.
 
-Concrete example — audit all `todo!`/`panic!`/`unreachable!` in a Rust codebase, score by risk, surface for triage:
+Bytes of Rust per crate, sorted (Fs only):
 
-**eval** — helpers:
 ```haskell
-data Score = Score { reachable :: Bool, risk :: Int, reason :: Text }
-
-enrich :: Match -> M (Match, Text)
-enrich m = do
-  src <- fsRead (mFile m)
-  let ctx = unlines . stake 11 . sdrop (max' 0 (mLine m - 6)) . lines $ src
-  pure (m, ctx)
-
-judge :: (Match, Text) -> M (Match, Score)
-judge (m, ctx) = do
-  v <- llmJson ("Rate this Rust code location.\nFile: " <> mFile m
-                <> "\n```rust\n" <> ctx <> "\n```\n"
-                <> "Is this reachable in production? How risky (1=fine, 5=will bite you)?")
-        (SObj [("reachable_in_production", SBool), ("risk", SNum), ("reason", SStr)])
-  pure (m, Score
-    (maybe False id $ v ^? key "reachable_in_production" . _Bool)
-    (maybe 1 truncate $ v ^? key "risk" . _Number)
-    (maybe "" id $ v ^? key "reason" . _String))
+files <- fsGlob "tidepool-*/src/**/*.rs"
+fmap (sortBy (flip $ comparing snd) . Map.toList . Map.fromListWith (+))
+  (forM files $ \f -> do { (sz,_,_) <- fsMetadata f; pure (head (splitOn "/" f), sz) })
+```
+```json
+[["tidepool-codegen", 444878], ["tidepool-repr", 139678], ...]
 ```
 
-**eval** — code:
+Cross-reference `unsafe` blocks with git churn (Fs + SG + Exec, no LLM):
+
 ```haskell
-hits <- concatMap (sgFind Rust) ["todo!($$A)", "panic!($$A)", "unreachable!($$A)"]
-          >>= mapM enrich
-ranked <- sortBy (flip $ comparing risk) <$> mapM judge hits
-let menu = imap (\i (m,j) -> show (i+1) <> ". [" <> show (risk j) <> "/5] "
-             <> mFile m <> ":" <> show (mLine m) <> "  " <> reason j) ranked
-ask ("Pick a number for detail:\n" <> unlines menu)
+unsafeFiles <- filterM (\f -> not . null <$> sgFind Rust "unsafe { $$B }" [f])
+                 =<< fsGlob "tidepool-*/src/**/*.rs"
+forM unsafeFiles $ \f -> do
+  n <- length <$> sgFind Rust "unsafe { $$B }" [f]
+  (_, log, _) <- run ("git log --oneline -30 -- " <> f)
+  pure (object ["file" .= f, "unsafe_blocks" .= n,
+                "commits" .= length (filter (not . isNull) (lines log))])
 ```
-
-`sgFind` is AST-aware, not regex. `enrich` and `judge` are Kleisli arrows (`a -> M b`), composable via `>>=`/`mapM`. `sortBy (flip $ comparing risk)` is point-free descending sort.
-
-**Response** (suspended):
 ```json
-{
-  "text": "Pick a number for detail:\n1. [5/5] tidepool-codegen/src/emit/expr.rs:847  Panic in live code path — if the case scrutinee has an unexpected tag, this fires at runtime with no recovery\n2. [4/5] tidepool-effect/src/dispatch.rs:234  todo! blocks the unhandled-effect fallback; any new effect type will hit this\n3. [3/5] tidepool-runtime/src/render.rs:112  unreachable! in JSON rendering — technically guarded by the match above, but refactors could expose it\n4. [2/5] tidepool-codegen/src/emit/primop.rs:1203  todo! for a niche Float128 primop — no GHC backend emits this yet\n5. [1/5] tidepool-heap/src/gc/trace.rs:45  unreachable! inside debug_assert — compiled out in release",
-  "suspended": true,
-  "continuation_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
+[{"file": "src/host_fns.rs", "unsafe_blocks": 93, "commits": 30}, ...]
 ```
 
-The calling LLM now has the ranked list. It can scout independently — grep for callers, check git blame, read tests — before deciding.
+Scan `panic!` sites, score with Haiku, suspend for triage (SG + Llm + Ask):
 
-**resume:**
-```json
-{
-  "continuation_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "response": "1"
-}
+```haskell
+hits <- stake 5 <$> sgFind Rust "panic!($$A)" []
+scored <- forM hits $ \m -> do
+  v <- llmJson ("Risk 1-5, one sentence.\n" <> mFile m <> ":" <> show (mLine m) <> " " <> mText m)
+         (SObj [("risk", SNum), ("reason", SStr)])
+  pure (mFile m, mLine m, v ^? key "risk" . _Number, v ^? key "reason" . _String)
+let ranked = sortBy (flip $ comparing (\(_,_,r,_) -> r)) scored
+ask (unlines (imap (\i (f,l,r,s) ->
+  show i <> ". [" <> maybe "?" show r <> "] " <> f <> ":" <> show l
+  <> " " <> maybe "" id s) ranked))
 ```
 
-Execution picks up exactly where it left off with the selected item.
+`ask` suspends. The calling LLM gets the ranked list, can scout independently, then `resume` with a pick. Execution continues from where it left off.
 
-Without tidepool, this is ~12 LLM-orchestrated tool calls — grep, cat each file, reason about each hit in prose, synthesize a ranking. With tidepool: 1 eval + 1 resume. The Haskell does the grunt work; `ask` suspends at exactly the point where human judgment matters.
+Each example is ≤10 lines. Without tidepool, each is ~6-12 LLM-orchestrated tool calls where intermediate results vanish between rounds. With tidepool: 1 eval, everything in scope.
 
 Large structured results get tree-structure-aware pagination — not string truncation, but navigable stubs preserving JSON shape. The agent drills into subtrees via `resume`.
 
 # Conclusion
 
 [ExoMonad](https://github.com/inannamalick/exomonad). [Tidepool](https://github.com/inannamalick/tidepool).
+
+[^1]: Auto-bootstrapped jailbreak support, siloed Opus workers with templates based on various elicitation strategies. Took a few hours to reconfigure ExoMonad for an adversarial use case.
