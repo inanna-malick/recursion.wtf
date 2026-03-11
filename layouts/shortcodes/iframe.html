@@ -1,0 +1,9 @@
+{{- $src := .Get "src" -}}
+{{- $height := .Get "height" | default "600px" -}}
+{{- $caption := .Get "caption" -}}
+<figure class="iframe-embed">
+  <iframe src="{{ $src }}" style="width:100%; height:{{ $height }}; border:1px solid #21262d; border-radius:6px;" loading="lazy"></iframe>
+  {{- with $caption }}
+  <figcaption>{{ . }}</figcaption>
+  {{- end }}
+</figure>
