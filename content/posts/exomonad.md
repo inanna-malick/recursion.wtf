@@ -7,20 +7,20 @@ categories: ["projects"]
 description: "ExoMonad stitches frontier model binaries together into reconfigurable agent swarms"
 ---
 
-[ExoMonad](https://github.com/tidepool-heavy-industries/exomonad) is the first agent orchestration system designed for heterogeneous model composition. It hooks into Claude Agent Teams' messaging bus, so agents running other model architectures show up as native team members. It integrates with Copilot for Github PR reviews. It stitches together Claude, Gemini, kimi, letta code, Copilot — using their existing binaries and your existing subscription plan. 
 
-ExoMonad builds on Gastown's worktree model, replacing "swarm of agents ramming PRs into main" with what I call the 'Tree of Worktrees' model, in which each unit of work is recursively unfolded into subtasks (with human assistance during the planning phase) until the subtasks are small and well specified enough for autonomous agents to complete. 
+[ExoMonad](https://github.com/tidepool-heavy-industries/exomonad) builds on [Gastown's worktree model](https://steve-yegge.medium.com/welcome-to-gas-town-4f25ee16dd04), replacing "swarm of agents ramming PRs into main" with a tree of worktrees. It hooks into Claude Agent Teams' messaging bus, so agents running other model architectures show up as native team members. It integrates with Copilot for Github PR reviews. It stitches together Claude, Gemini, Kimi, Letta Code, Copilot — using their existing binaries and your existing subscription plan. 
 
-ExoMonad is designed to be radically reconfigurable. The Rust binary handles interaction with the real world, but all logic is defined in a flexible config-as-code model. It ships with a default devswarm configuration that handles worktrees, coordination, iterating on pull requests, but [when I needed a red team test harness](https://recursion.wtf/posts/vibe_coding_critical_infrastructure/), I just wrote another exomonad config, and threw one together overnight [^1]
+ExoMonad is radically reconfigurable. It ships with a default devswarm configuration that handles worktrees, coordination, iterating on pull requests, but [when I needed a red team test harness](https://recursion.wtf/posts/vibe_coding_critical_infrastructure/), I just wrote another exomonad config, and threw one together overnight [^1].
 
-As a proof of capabilities, I used ExoMonad to implement a new Haskell compiler backend using Rust.
+I started by using ExoMonad to build itself over 700 PRs. A few weeks ago, it felt ready to test out on other projects, so I used it to implement a new Haskell compiler backend using Rust.
 
 <!--more-->
 
 To follow along, follow these steps
 ```bash
-git checkout https://github.com/tidepool-heavy-industries/exomonad/
-try-exomonad/run.sh https://github.com/BurntSushi/ripgrep # or any other repo
+git clone https://github.com/tidepool-heavy-industries/exomonad
+cd exomonad
+./try-exomonad/run.sh https://github.com/BurntSushi/ripgrep # or any other repo
 ```
 
 
@@ -28,18 +28,18 @@ try-exomonad/run.sh https://github.com/BurntSushi/ripgrep # or any other repo
 
 Opus is smart but expensive. Gemini is flaky but cheap and fast. Copilot is integrated with GitHub PR review and heavily subsidized. ExoMonad lets you use all of them — Claude writes the plan, Gemini does the work, Copilot reviews the PR. It's designed for token arbitrage: using each LLM model for what it's best at, shifting based on who's subsidizing usage in any given week.
 
-This is the workflow I found myself using naturally. Over time, I found spending a lot of time orchestrating this process, so I built ExoMonad to automate that. Here's an example:
+This is the workflow I found myself using naturally. Over time, I found myself spending a lot of time orchestrating this process, so I built ExoMonad to automate that. Here's an example:
 
 {{< figure src="/img/exomonad_zellij_devswarm.png" caption="Zellij devswarm — TL dispatching Wave 4 to three Gemini workers in parallel, each in its own worktree. Bottom panes show workers mid-execution." >}}
 
 Here you can see multiple gemini-cli agents working with a Claude Code tech lead in the same tab, with another tab showing an in-progress worktree owned by another Gemini agent. All agents use the Claude Agent Teams message bus (it uses on-disk mailboxes and jsonl, it was trivial to reverse engineer).
 
-The default devswarm config defines three roles.
+The default devswarm config defines three agent roles.
 - Tech Leads (TLs) run Claude Opus. They're planners and project managers: they orchestrate work, spawn child agents, review PRs.
 - Devs run Gemini CLI. They write code, file PRs, and iterate with Copilot on review feedback.
 - Workers are like Devs, and also run on Gemini, but they're ephemeral: they run in the same directory as the TL that spawned them.
 
-# Tree of Worktrees
+## Tree of Worktrees
 
 ExoMonad makes heavy use of Git worktrees. Worktrees are full clones of a working repository that share that repository's .git object store. They're great for working with agent swarms.
 
@@ -51,14 +51,21 @@ This results in a tree of worktrees, mirroring the structure of the project itse
 
 Here's how it works:
 
-- The tech lead writes scaffolding (types, tests, stub files, planning docs) as an initial commit.
-- It then spawns waves of subagents (TL or Dev as needed), each in their own worktree branching off of that scaffolding commit.
-- Subagents eventually complete work, file PRs, iterate with Copilot, and send a message to the TL that spawned them.
-- That TL then launches followup waves of subagents, iterating until the feature is complete. 
-- The TL then files a PR against its parent.
+{{< figure src="/img/worktree-1-initial.svg" >}}
 
-This repeats at every recursive level - `main.foo.bar` and `main.foo.baz` file PRs against `main.foo`, which then files a PR against `main`.
+A tech lead owns a worktree and writes scaffolding — types, tests, stub files, planning docs — as an initial commit. This scaffolding commit becomes the base that all subtask branches fork from.
 
+{{< figure src="/img/worktree-2-unfold.svg" >}}
+
+The TL then decomposes the work into subtasks, spawning waves of subagents (TL or Dev as needed), each in their own worktree branching off of that scaffolding commit. Large subtasks get their own TL, which repeats this decomposition recursively — `core-eval.heap` spawns `gc-trace` and `arena` the same way `core-eval` spawned `heap`, `codegen`, and `optimize`.
+
+{{< figure src="/img/worktree-3-fold.svg" >}}
+
+As subagents complete work, they file PRs against their parent branch, iterate with Copilot on review feedback, and notify the TL that spawned them. The TL merges completed PRs and launches followup waves as needed.
+
+{{< figure src="/img/worktree-4-wave2.svg" >}}
+
+Work naturally decomposes into multiple waves — the TL front-loads independent subtasks into wave 1, then uses the merged result as the scaffolding commit for wave 2. Followup tasks can reference code that didn't exist when the first wave launched, and since every agent in a wave forks from the same commit, there's no rebase burden within a wave. Eventually the TL files its own PR against *its* parent, and the same pattern repeats up the tree: `main.foo.bar` and `main.foo.baz` merge into `main.foo`, which merges into `main`.
 
 ## Radically reconfigurable
 
@@ -80,7 +87,7 @@ checkPragmaCorruption (Replace fp old new)
 checkPragmaCorruption _ = Nothing
 ```
 
-This haskell code matches tool use, and - if it's the builtin `Replace` tool, applies a quick heuristic check to catch a common Gemini failure mode.
+This Haskell code matches tool use, and - if it's the builtin `Replace` tool, applies a quick heuristic check to catch a common Gemini failure mode. Instead of spending tokens on prompting every gemini agent (even those that never touch Haskell code), the guidance is encoded as code. This is just one tweak, but the idea is Kaizen: a continuous process of finding opportunities to make 1% improvements. Over time, they compound. Your LLM swarm evolves, adapts to your project and context.
 
 Let's have another example: here's what PR review routing looks like.
 
@@ -94,19 +101,19 @@ prReviewHandler (ReviewApproved n) =
 
 This results in extremely token dense, expressive, and type safe code-as-config, all executed in a WASM sandbox using predefined effects executed by the Rust host binary. This plays to both language's strengths: Haskell for elegant composition of effects and expressive use of the type system to minimize boilerplate, Rust for interacting with the real world at the systems programming level.
 
-## ExoMonad in action
+# ExoMonad in Action
 
-It's traditional, when debuting a new orchestration engine, to build something insane and overambitious, like a cleanroom reimplementation of the [C compiler](https://www.anthropic.com/engineering/building-c-compiler). I don't have 20k to burn on tokens, so I built something a bit more modest: a lazily evaluated haskell-in-rust runtime with native interop. It's very similar to the WASM sandbox used by ExoMonad, except instead of web assembly it uses Rust's cranelift JIT crate directly, operating on the intermediate representation Core used by the Haskell compiler.
+It's traditional, when debuting a new orchestration engine, to build something insane and overambitious, like [a cleanroom reimplementation of the C compiler](https://www.anthropic.com/engineering/building-c-compiler). To prove ExoMonad can do more than build itself, I wanted to use it to build something nontrivial from scratch.
 
-It's called [Tidepool](https://github.com/tidepool-heavy-industries/tidepool).
+I don't have 20k to burn on tokens, so I built something a bit more modest: Tidepool, a lazily evaluated Haskell-in-Rust runtime with native interop. It's very similar to the WASM sandbox used by ExoMonad, except instead of WebAssembly it uses Rust's Cranelift JIT crate directly, operating on the intermediate representation Core used by the Haskell compiler.
+
+I built it over about two weeks, using less than 50% of my Claude Max and Gemini Ultra subscription plans.
 
 {{< figure src="/img/exomonad_tidepool_build_story.png" >}}
 
-Here's a visualization showing how I used the tree-of-worktrees model to build it: each node is a worktree, each of which resulted in one or more commits and a PR against its parent worktree. You can see a visualization [with links to various PRs here](/viz/tidepool-build-story.html).
+This visualization shows how I used the tree-of-worktrees model to build the core of it. The swarm blasted out the foundational architecture—over 32,000 lines of code across 61 PRs—in just 4 days of active waves. You can see an interactive version [with links to various PRs here](/viz/tidepool-build-story.html).
 
-# §3 — Tidepool
-
-Tidepool is a lazily evaluated Haskell-in-Rust runtime that's tightly integrated with the Rust host, using the interpreter pattern as glue. Haskell composes and sequences effects using monadic sequencing; Rust effect interpreters execute them against the real world. The Haskell code is run directly in Rust, with full control over what operations are allowable, so there's no escape hatch - not even `unsafePerformIO`.
+(Note: The remaining week and a half was spent doing human-in-the-loop bug squashing, adding feature support, and general polish following the visualized portion).
 
 ## Compile Time
 
@@ -179,7 +186,7 @@ guessLoop target = do
 
 Tidepool also supports live compilation, in cases where the user has the Haskell compiler available. To demonstrate this, I have provided an MCP server that provides this functionality. It's a bit like GHCI (Haskell's REPL), but specialized for the monadic composition of pure effects that are executed by Rust code.
 
-More on this later, but here are a few examples of what it can do:
+Here are a few examples of what it can do:
 
 ### Sequencing monadic effects
 
@@ -280,10 +287,13 @@ pure (toJSON results)
 
 This chains five effects in one computation: ast-grep search, continuation (`ask` suspends, the LLM scouts independently, then resumes with a decision), LLM classification, KV persistence, and structured JSON output. The Haskell code describes the sequence; Rust executes each step.
 
-# Conclusion
+## Conclusion
 
 
-[ExoMonad](https://github.com/inannamalick/exomonad). [Tidepool](https://github.com/inannamalick/tidepool).
+Check out the repos: I'm happy to work with early adopters, so if you run into bugs or missing features please file an issue.
+- [ExoMonad](https://github.com/tidepool-heavy-industries/exomonad)
+- [Tidepool](https://github.com/tidepool-heavy-industries/tidepool).
 
+If you're interested in using either of these tools and you'd like me to tell you all about them over coffee, I'm happy to meet up in SF or Oakland, or to hop on a call to talk more.
 
 [^1]: Auto-bootstrapped jailbreak support, siloed Opus workers with templates based on various elicitation strategies, misc other features. No, I haven't published this. Write your own.
