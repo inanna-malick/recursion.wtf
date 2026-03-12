@@ -60,8 +60,8 @@
   .cell rect { stroke: #0d1117; stroke-width: 1.5px; cursor: pointer; }
   .cell rect:hover { filter: brightness(1.15); }
   .cell rect.selected { stroke: #e2e2e8; stroke-width: 2.5px; }
-  .cell text { pointer-events: none; fill: #e2e2e8; }
-  .cell .sub { fill: #ffffff70; }
+  .cell text { pointer-events: none; fill: #0d1117; font-weight: 700; }
+  .cell .sub { fill: #0d1117cc; }
   .tick-rect { pointer-events: none; }
 </style>
 <script>window.__GRAPH_DATA__ = {
@@ -2540,13 +2540,14 @@ function getWave(d) { return d._wave || 1; }
 
 function cellFill(d) {
   const base = d3.color(waveColor(getWave(d)));
-  let c = d.children ? base.darker(0.7) : base;
+  let c = d.children ? base.darker(0.2) : base;
   // Alternate brightness between sequential wave groups
   if (d._wgIdx !== undefined && d._wgIdx % 2 === 1) {
     c = d3.color(c).brighter(0.4);
   }
   return c.toString();
 }
+
 
 // === Hierarchical wave IDs (e.g., "6.2.1") ===
 function assignWaveIds(parent, prefix) {
@@ -2621,6 +2622,7 @@ const label = cell.append('text')
   .attr('x', 5).attr('y', 13)
   .attr('font-size', d => d.depth <= 1 ? '11px' : '10px')
   .attr('font-weight', d => d.depth <= 1 ? '600' : '400')
+  .attr('fill', '#0d1117')
   .text(d => d.data.name)
   .style('opacity', d => (d.x1 - d.x0) > 10 && (d.y1 - d.y0) > 20 ? 1 : 0);
 
@@ -2643,16 +2645,10 @@ const sub = cell.append('text')
     }
     return w + pr + add;
   })
+  .attr('fill', '#0d1117cc')
   .style('opacity', d => (d.x1 - d.x0) > 26 && (d.y1 - d.y0) > 40 ? 1 : 0);
 
 // === Render commit ticks in gaps ===
-function desaturate(color, opacity) {
-  const c = d3.color(color);
-  if (!c) return `rgba(139,148,158,${opacity})`;
-  c.opacity = opacity;
-  return c.toString();
-}
-
 // Commit ticks in gaps (same visual on every parent with directCommits)
 const tickG = g.append('g').attr('class', 'commit-ticks');
 const tickRects = tickG.selectAll('.tick-rect')
@@ -2663,11 +2659,8 @@ const tickRects = tickG.selectAll('.tick-rect')
   .attr('y', d => d.tickX)
   .attr('width', d => Math.max(0, d.parentY1 - d.parentY0 - TICK_INSET * 2))
   .attr('height', TICK_H - 1)
-  .attr('fill', d => {
-    const baseColor = waveColor(getWave(d.parentNode));
-    const opacity = d.commit.kind === 'merge' ? 0.6 : 0.35;
-    return desaturate(baseColor, opacity);
-  })
+  .style('opacity', d => d.tickX < d.parentNode.x0 + 28 ? 0 : 1)
+  .attr('fill', d => d.commit.kind === 'merge' ? '#0d1117' : '#0d1117aa')
   .attr('rx', 1)
   .attr('pointer-events', 'none');
 
@@ -2689,11 +2682,12 @@ spineLabels.selectAll('text')
   .attr('dominant-baseline', 'middle')
   .attr('font-size', '9px')
   .attr('font-weight', '600')
-  .attr('fill', d => waveColor(getWave(d.child)))
+  .attr('fill', '#0d1117')
+  .attr('pointer-events', 'none')
   .attr('opacity', d => {
     const h = d.child.orig.x1 - d.child.orig.x0;
     const w = d.parent.orig.y1 - d.parent.orig.y0;
-    return h > 14 && w > 30 ? 0.7 : 0;
+    return h > 14 && w > 30 ? 0.85 : 0;
   })
   .text(d => d.child.data.name);
 
@@ -2808,7 +2802,7 @@ function doAccordion(clickedD1) {
     .attr('x', d => d.targetX)
     .attr('y', d => d.targetY)
     .attr('width', d => d.targetW)
-    .style('opacity', d => d.targetY >= -TICK_H && d.targetY <= H ? 1 : 0);
+    .style('opacity', d => d.targetY >= -TICK_H && d.targetY <= H && d.targetY >= d.parentNode.target.x0 + 28 ? 1 : 0);
 
   spineLabels.selectAll('text').transition(t)
     .attr('y', d => (d.child.target.x0 + d.child.target.x1) / 2)
