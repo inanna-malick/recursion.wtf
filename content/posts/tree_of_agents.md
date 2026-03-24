@@ -4,10 +4,10 @@ date: 2026-03-23
 draft: true
 tags: ["exomonad", "agent-orchestration", "ai", "architecture"]
 categories: ["ai"]
-description: "Why trees beat loops for agentic AI — and why the same topology that builds software can red-team it"
+description: "Trees as topology, forking as mechanism — why agentic AI needs both"
 ---
 
-The dominant paradigm for AI agents is a loop: observe, think, act, repeat. The agent accumulates context in a single window until it solves the problem or runs out of room. This is wrong.
+Two ideas changed how I build agent swarms: trees as topology, and forking as mechanism.
 
 <!--more-->
 
@@ -15,7 +15,7 @@ The dominant paradigm for AI agents is a loop: observe, think, act, repeat. The 
 
 A single context window accumulates everything — tool outputs, failed attempts, dead branches, sibling task noise. Every token of irrelevant history competes with the tokens that matter. Performance degrades as the window fills. Compression loses signal. The model spends increasing effort navigating its own accumulated context instead of solving the problem.
 
-This is the fundamental scaling limit of loop-based agents. The more complex the task, the more context accumulates, the worse the agent performs — exactly when you need it most.
+Loops work fine for simple tasks. But the more complex the task, the more context accumulates, the worse the agent performs — exactly when you need it most.
 
 ## Trees as natural decomposition
 
@@ -33,6 +33,18 @@ Every token in a context window has a cost: it competes with every other token f
 - **Failure is contained.** If a branch fails, it doesn't pollute its siblings. The parent retries or re-decomposes that subtask alone. In a loop, failure injects confusing context that degrades all subsequent attempts.
 - **Compression is hierarchical.** Parents summarize children's results before passing them up. Each level of the tree compresses irrelevant detail. By the time results reach the root, they're maximally relevant.
 
+## Forking beats spawning
+
+The tree architecture has a cold-start problem. You spawn a sub-TL, it reads the repo, builds a mental model, discovers the scaffolding the parent already wrote, figures out what it means, then starts working. All that context-building is redundant — the parent already did it.
+
+Session forking eliminates the redundancy. Instead of spawning a fresh agent, you fork the parent's full context window into a new worktree. The child starts at the parent's level of understanding. Parent wrote scaffolding → child already understands scaffolding → child writes more scaffolding → its children understand that. Recursive context inheritance down the tree.
+
+The qualitative difference is startling. Before forking: spawn a sub-TL, wait while it orients, watch it rediscover what you already know. With forking: you have your tech lead. It built some scaffolding, you fork, you fork nodes. They already understand the scaffolding, they build more scaffolding, they fork — it's done before you know it.
+
+This isn't just faster. It's a different kind of thing. Not a tree of separate agents coordinating through messages — a single agent's understanding, forked and diverged across branches. An agentic tree instead of an agentic loop.
+
+The implementation: [ExoMonad](/posts/exomonad/) uses `--fork-session` with symlink magic to fork a context window into an isolated git worktree — context + filesystem state, diverged cleanly.
+
 ## Natural supervision
 
 Parents review children's work at merge boundaries — the same pattern as human engineering teams. This creates a natural quality assurance hierarchy:
@@ -44,26 +56,11 @@ Parents review children's work at merge boundaries — the same pattern as human
 
 This isn't imposed process. It falls out of the architecture. When your merge mechanism is `git merge`, code review happens automatically.
 
-## Reconfigurability
-
-The tree topology is independent of node behavior. The same parent-decompose-child-merge pattern works whether the nodes are:
-
-- Software engineers building features
-- Red teamers probing attack surfaces
-- Researchers exploring a literature
-- Security auditors reviewing code
-
-[ExoMonad](/posts/exomonad/) implements this by defining agent behavior as swappable Haskell effect definitions. Change the effect handlers and the devswarm becomes a red-team harness overnight — same tree, same coordination protocol, different leaf behavior.
-
-The [Gemini retrospective](/posts/gemini_jailbreak_retrospective/) demonstrates this directly: the same ExoMonad swarm architecture that [built Tidepool](/posts/tidepool/) was reconfigured to run parallel jailbroken Gemini instances against CTF targets. The tree didn't care what its leaves were doing. It cared that tasks decomposed, executed, and merged.
-
 ## The cost model
 
 Tree-of-agents has an explicit cost model: parent tokens are expensive (planning, decomposition, review), child tokens are cheap (implementation, execution). This maps directly to frontier model pricing — an Opus root coordinating Haiku or Gemini leaves.
 
 The root's job is to never touch implementation. Every file read for implementation detail, every line of code the root writes, is wasted budget. Decompose, spec, spawn. That's it.
-
-This is also why it works for red-teaming: the expensive model (Opus) does strategy and review. The cheap model (jailbroken Gemini) does execution. The tree structure means the expensive model's context window stays clean — it never sees the noise of individual exploit attempts.
 
 ## Links
 

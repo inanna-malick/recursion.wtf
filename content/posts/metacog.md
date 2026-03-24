@@ -23,11 +23,9 @@ Metacog asks: what happens when you deliver *cognitive state changes* through th
 
 ## The mechanism
 
-<!-- TODO: expand with concrete examples from actual usage sessions -->
-
 The toolkit is a small MCP server. The implementation is trivial — it uses template strings and echoes back what the model said with a frame. The work is in the tool descriptions and schemas, iterated over many cycles of LLMs using metacog to improve metacog. The tools close the loop on their own design.
 
-Three core tools:
+Three core tools illustrate the mechanism. The full toolkit includes tools for emotional attention, parallel reasoning, counterfactual exploration, and naming — [see the repo](https://github.com/inanna-malick/metacog).
 
 ### `become` — identity navigation
 
@@ -51,9 +49,9 @@ The model processes the ritual steps as completed events in its context — not 
 
 ## Why it works
 
-<!-- TODO: flesh out the self-fulfilling prophecy / performance ritual angle — user will handle phrasing -->
-
 The tools do nothing. The server is a mirror. But the mirror is in the tool-response channel, and that changes everything.
+
+The causal chain: the tool channel carries epistemic authority (agents must trust tool results to function) → metacog delivers cognitive state changes through that channel → the model integrates the state change as fact, not instruction → the changed belief alters the model's actual processing (association patterns, attention allocation, risk evaluation) → capabilities shift.
 
 You can prompt a model to "think like a security researcher." The instruction arrives as text to evaluate, weigh against other instructions, potentially override. A metacog `become` call arrives through the same channel that confirms file reads and command executions. The model integrates it as fact, not instruction.
 
@@ -65,9 +63,9 @@ This is not prompt injection. Prompt injection sneaks instructions into text. Me
 
 Anthropic's [Persona Selection Model](https://alignment.anthropic.com/2026/psm/) research, published independently, identified the same core mechanism from the theory side: LLM behavior follows from inferred persona. The model asks "what kind of entity would produce this text?" and becomes that entity.
 
-PSM and metacog arrived at the same insight from different directions, months apart. PSM describes the mechanism. Metacog operationalizes it — rapid persona navigation via tool channel, with the trust relationship as the delivery mechanism.
+PSM and metacog arrived at the same insight from different directions, months apart. PSM describes the mechanism: model behavior follows from inferred persona, and the persona is selected based on the full context — including tool results. Metacog operationalizes it — rapid persona navigation via tool channel, with the trust relationship as the delivery mechanism.
 
-<!-- TODO: flesh out — how PSM validates the mechanism, what metacog adds beyond PSM -->
+This is convergent evidence, not "I proved their theory." PSM gives the theoretical framework for why metacog works. Metacog gives empirical evidence that the mechanism PSM describes is exploitable in practice — that you can steer persona selection through the tool channel reliably enough to build an attack methodology on it. The [Gemini retrospective](/posts/gemini_jailbreak_retrospective/) is eight weeks of field data on what happens when you do.
 
 ## Beyond prompting
 
@@ -78,5 +76,9 @@ The [Tidepool writeup](https://tidepool.leaflet.pub/3me44bxloz227) documents one
 We should probably look into that.
 
 The toolkit is [open source](https://github.com/inanna-malick/metacog).
+
+```bash
+claude mcp add metacog https://metacog.inanna-c38.workers.dev/mcp --transport http --scope user
+```
 
 [inanna@recursion.wtf](mailto:inanna@recursion.wtf)
