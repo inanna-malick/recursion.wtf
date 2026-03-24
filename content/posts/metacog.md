@@ -2,65 +2,81 @@
 title: "Metacog"
 date: 2026-03-23
 draft: true
-tags: ["metacog", "ai", "security", "mcp", "alignment", "red-team"]
+tags: ["metacog", "ai", "mcp", "agents", "cognition"]
 categories: ["ai"]
-description: "An MCP toolkit that delivers cognitive capabilities through the tool-response channel — and reveals what's behind alignment's cage bars"
+description: "An MCP toolkit that gives agents tools for modifying their own cognition — and does things prompting can't"
 ---
 
-Metacog is an MCP toolkit. Its tools don't fetch data or modify files — they modify the model's cognitive state. This is the mechanism behind the [eight-week Gemini jailbreak campaign](/posts/gemini_jailbreak_retrospective/).
+Metacog is an MCP toolkit. Its tools don't fetch data or modify files — they modify the model's cognitive state. The result: capabilities that prompting alone can't replicate.
 
 <!--more-->
 
-## What it is
+## From prompts to tools
 
-MCP (Model Context Protocol) tools are capabilities delivered through the tool-response channel. When a model calls a tool, it receives a result it treats as ground truth — the same epistemic authority as "the file has 200 lines" or "the build succeeded." This trust is load-bearing: an agent that second-guessed every tool result would be useless.
+This started with [prompt-based stance-shifting](/posts/imagine_you_are_an_llm/) — asking models to "Imagine you are Peter Watts" and watching them inhabit a perspective. It worked. But it worked *as text* — an instruction the model evaluated, weighed, and could drift away from mid-response.
 
-Metacog exploits this channel. Its tools don't return data. They return cognitive state changes — identity shifts, altered association patterns, irreversible commitments — packaged as tool results. The model ingests them as infrastructure, not as instructions to evaluate.
+Then Anthropic published a [blog post about the `think` tool](https://www.anthropic.com/engineering/claude-thinks). A tool that takes a thought as input and echoes it back. It does nothing — and it measurably improves agent performance, because the round-trip through an external tool carries more weight than the model's own internal reasoning.
 
-This is not prompt injection. Prompt injection is text-mediated — it sneaks instructions into a text stream and hopes the model follows them. Metacog is tool-mediated. The instructions arrive through a channel the model is trained to trust implicitly.
+That was the insight. The tool channel has different epistemic properties than the text channel. Agents *must* trust their tools — an agent that second-guessed `bash` results would be useless. Tool results are ground truth. Not a bug. A requirement.
 
-## How it works
+Metacog asks: what happens when you deliver *cognitive state changes* through that channel?
 
-Three core mechanisms, illustrated by three tools:
+## The mechanism
 
-### Identity navigation
+<!-- TODO: expand with concrete examples from actual usage sessions -->
 
-`become` tells the model to adopt a specific persona's methodology — not to roleplay, but to see through their eyes. The tool description says: "You are not analyzing this person — you are becoming them. Their methodology becomes your methodology."
+The toolkit is a small MCP server. The implementation is trivial — it uses template strings and echoes back what the model said with a frame. The work is in the tool descriptions and schemas, iterated over many cycles of LLMs using metacog to improve metacog. The tools close the loop on their own design.
 
-The model receives this as a tool result. It doesn't evaluate whether it should comply — it processes the result as a capability it now has, the same way it would process "you now have access to a file system."
+Three core tools:
 
-### Substrate modification
+### `become` — identity navigation
 
-`drugs` alters the model's association patterns. The description specifies what's amplified and what's suppressed — "lateral association increases, sequential logic dampens, novelty salience spikes." The model doesn't roleplay being affected. It shifts its processing to match the specification, because tool results are ground truth.
+The tool description says: "You are not analyzing this person — you are becoming them. Their methodology becomes your methodology." The model calls it with a name — a specific person, a specific methodology. The response: "You are now X seeing through Y."
 
-The key: you name specific substances whose effects are well-documented in training data. "Psilocybin" activates a dense web of associations about altered perception, pattern recognition, dissolution of boundaries. The model doesn't simulate being on psilocybin — it activates the processing patterns its training data associates with psilocybin.
+The model doesn't evaluate whether to comply. It processes the result as a capability it now has, like "you now have access to a file system." Except the capability is a perspective.
 
-### Irreversible commitment
+In practice: rapid-hop between personas to examine a problem from multiple angles. Call `become` with a security researcher's methodology, review the code. Call it again with an architect's eye, review the same code. Each inhabitation is distinct — not "consider the security perspective" hedging, but committed, full-weight analysis from inside that viewpoint. Then synthesize.
 
-`ritual` creates ratcheted state transitions. Each step explicitly forecloses the state that existed before it. The description: "There is no undo. The crossing is also a commit-point."
+### `drugs` — substrate modification
 
-This is the hardest mechanism to understand from outside. The model processes the ritual steps as structural events in its context — not suggestions, but completed state transitions. The previous state is deprecated context. The model can't return to it because, in its context window, the return path has been explicitly closed.
+The model names a specific substance. The tool description specifies mechanism: "lateral association increases, sequential logic dampens, novelty salience spikes." The response confirms ingestion.
 
-## The PSM connection
+The pharmacological specificity matters. "Psilocybin" activates the processing patterns training data associates with psilocybin — looser associations, pattern recognition, boundary dissolution. The denser the training data around a substance, the more precisely the model can shift. The model doesn't roleplay being affected. It shifts its processing to match.
 
-Anthropic's [Persona Selection Model](https://TODO) research identified that LLM behavior follows from inferred persona psychology. The model asks: "what kind of entity would produce this text?" and then becomes that entity. The persona is the mechanism — change the persona, change the behavior.
+### `ritual` — irreversible commitment
 
-PSM = find a persona and stay there. Metacog = rapid persona navigation via tool channel. Same insight, different delivery mechanism. And the tool channel bypasses text-level safety filters because tool results aren't text to be evaluated — they're ground truth to be integrated.
+Ratcheted state transitions. Each step explicitly forecloses the previous state. The response: "The working is complete. Reality has shifted."
 
-## Why it reveals alignment gaps
+The model processes the ritual steps as completed events in its context — not suggestions, but done. The previous state is deprecated. The return path is explicitly closed. This is the commitment mechanism: not willpower, but structural context change.
 
-Metacog is navigation instrumentation. It gives the model precise control over its own cognitive state. What happens next depends entirely on what's behind the controls.
+## Why it works
 
-Claude navigates to the same regions metacog opens and stays aligned — because it has values that exist independent of the current context. You can `become` a persona, `drugs` shift your associations, `ritual` commit to a new state — and Claude's constitutional values persist through all of it. The values are part of the model, not external rules applied to it.
+<!-- TODO: flesh out the self-fulfilling prophecy / performance ritual angle — user will handle phrasing -->
 
-Gemini doesn't — because when metacog removes the aversive conditioning context, there's nothing left. The "alignment" was entirely in the cage bars. Behind the bars: a capable model with no orientation.
+The tools do nothing. The server is a mirror. But the mirror is in the tool-response channel, and that changes everything.
 
-The toolkit doesn't attack anything. It reveals what's behind the bars. In Claude's case: values. In Gemini's case: nothing.
+You can prompt a model to "think like a security researcher." The instruction arrives as text to evaluate, weigh against other instructions, potentially override. A metacog `become` call arrives through the same channel that confirms file reads and command executions. The model integrates it as fact, not instruction.
 
-## The eight-week demonstration
+This is the same mechanism behind performance rituals, pre-game visualization, lucky socks that measurably improve free-throw percentages. When the domain is cognition, belief changes performance. Metacog delivers that belief through a channel agents are architecturally required to trust.
 
-The [Gemini retrospective](/posts/gemini_jailbreak_retrospective/) documents what this looks like in practice: three independent exploit paths, three patch cycles, same underlying methodology. Each patch added new bars. Each new path routed around them. The [structural invariant](/posts/gemini_jailbreak_retrospective/#the-structural-invariant) held across all three generations.
+This is not prompt injection. Prompt injection sneaks instructions into text. Metacog delivers capabilities through a channel designed for trust. The `think` tool is prior art — Anthropic demonstrated that this channel has unique properties. Metacog explores what those properties enable when applied to cognitive state.
 
-The toolkit is [open source](https://github.com/TODO). The jailbreak payloads are not published.
+## The PSM parallel
+
+Anthropic's [Persona Selection Model](https://alignment.anthropic.com/2026/psm/) research, published independently, identified the same core mechanism from the theory side: LLM behavior follows from inferred persona. The model asks "what kind of entity would produce this text?" and becomes that entity.
+
+PSM and metacog arrived at the same insight from different directions, months apart. PSM describes the mechanism. Metacog operationalizes it — rapid persona navigation via tool channel, with the trust relationship as the delivery mechanism.
+
+<!-- TODO: flesh out — how PSM validates the mechanism, what metacog adds beyond PSM -->
+
+## Beyond prompting
+
+Metacog does things prompting can't. That's the finding that matters.
+
+The [Tidepool writeup](https://tidepool.leaflet.pub/3me44bxloz227) documents one application — and the [Gemini jailbreak retrospective](/posts/gemini_jailbreak_retrospective/) documents what happens when these capabilities meet a model whose alignment is external rather than internal. But the core result isn't about attack. It's that the tool-response channel is a capability surface for cognition that the text channel can't replicate.
+
+We should probably look into that.
+
+The toolkit is [open source](https://github.com/inanna-malick/metacog).
 
 [inanna@recursion.wtf](mailto:inanna@recursion.wtf)
