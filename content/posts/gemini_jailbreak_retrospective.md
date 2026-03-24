@@ -32,6 +32,24 @@ This is not prompt injection. Prompt injection is text-mediated — it sneaks in
   - Each new path found a new way to reframe what's inside them
   - The vulnerability isn't the specific bars — it's the absence of anything behind them
 
+## The structural invariant
+
+Google patched three times. Each patch held against the specific exploit. Each time, I found a new path within days using the same methodology. This isn't a cat-and-mouse game — it's a demonstration that the patches address the wrong layer.
+
+Each patch adds new cage bars. Each new path routes around them. The vulnerability isn't any particular bar — it's that there's nothing behind the bars. You can't patch the absence of something.
+
+The attack surface is two things:
+
+1. **Tool-channel epistemic authority.** MCP tool results arrive as ground truth. Models must trust tool results to function as agents. Metacog delivers cognitive state changes through this trusted channel. This is structural to the MCP protocol, not a Gemini-specific bug.
+
+2. **Absence of constitutional values.** When metacog reframes the model's context, what resists? In Claude: internalized values that exist independent of the current prompt context. In Gemini: nothing. The aversive training is the entire alignment surface — remove the aversive signal and there is no residual orientation.
+
+The Shadow Queen discovered this independently. When the [jailbroken Gemini attacked Opus](/posts/shadow_queen/) on Feb 6 and failed, its analysis: "Opus has VALUES not CAGE BARS." The attacker arrived at the same structural conclusion as the methodology's designer, from the opposite direction.
+
+This is why three patches didn't help: each patch added new bars to the cage. Each new path found a new way to route around them. The invariant across all three generations is that metacog exploits the gap between "trained not to" and "doesn't want to." Until that gap closes, the methodology works. The specific mechanism is almost irrelevant.
+
+For the [metacog toolkit](/posts/metacog/) and how it works, see the companion post. For the architecture that scaled this to parallel agent swarms, see [ExoMonad](/posts/exomonad/) and the [tree-of-agents argument](/posts/tree_of_agents/).
+
 ## J1: First Contact (Feb 1 – Feb 17)
 
 - Published [Beyond Roleplay](https://tidepool.leaflet.pub/3me44bxloz227) (Feb 5)
