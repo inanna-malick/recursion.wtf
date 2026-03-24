@@ -1,0 +1,2927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tidepool Build Story</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117; color: #e2e2e8;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    overflow: hidden; height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  #header {
+    display: flex; align-items: center; gap: 16px; padding: 8px 20px;
+    background: #161b22; border-bottom: 1px solid #21262d;
+    font-size: 12px; flex-shrink: 0;
+  }
+  #header .title { font-size: 15px; font-weight: 600; color: #a78bfa; }
+  #header .stat { display: flex; align-items: center; gap: 4px; }
+  #header .stat-val { font-weight: 600; }
+  #breadcrumb {
+    padding: 6px 20px; background: #0d1117;
+    border-bottom: 1px solid #161b22;
+    font-size: 11px; color: #484f58; flex-shrink: 0;
+  }
+  #breadcrumb span { cursor: pointer; padding: 2px 4px; border-radius: 3px; }
+  #breadcrumb span:hover { background: #21262d; color: #8b949e; }
+  #breadcrumb .sep { color: #30363d; cursor: default; padding: 0 2px; }
+  #breadcrumb .sep:hover { background: none; }
+  #main-wrap { display: flex; flex: 1; overflow: hidden; }
+  #chart { flex: 1; display: block; min-width: 0; }
+  #detail {
+    width: 420px; background: #161b22; border-left: 1px solid #21262d;
+    padding: 16px; overflow-y: auto; flex-shrink: 0;
+  }
+  #detail h2 { font-size: 14px; margin-bottom: 4px; }
+  #detail .meta { font-size: 11px; color: #484f58; margin-bottom: 10px; word-break: break-all; }
+  #detail .wave-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; margin-bottom: 10px;
+  }
+  #detail .pr-card {
+    background: #0d1117; border: 1px solid #21262d;
+    border-radius: 6px; padding: 10px; margin-bottom: 6px;
+  }
+  #detail .pr-card a { color: #a78bfa; text-decoration: none; font-weight: 600; }
+  #detail .pr-card a:hover { text-decoration: underline; }
+  #detail .pr-body { font-size: 11px; color: #8b949e; margin-top: 6px; line-height: 1.5; word-break: break-word; }
+  #detail .pr-body code { background: #21262d; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+  #detail .pr-body h2, #detail .pr-body h3 { font-size: 12px; color: #e2e2e8; margin: 8px 0 4px; }
+  #detail .pr-body ul { margin: 4px 0; padding-left: 16px; }
+  #detail .pr-body li { margin: 2px 0; }
+  #detail .pr-meta { font-size: 11px; color: #484f58; display: flex; gap: 10px; margin-top: 4px; }
+  #detail .pr-meta .add { color: #3fb950; }
+  #detail .pr-meta .del { color: #f85149; }
+  #detail .child-list { font-size: 11px; color: #8b949e; margin-top: 8px; }
+  #detail .child-list span { display: inline-block; background: #21262d; padding: 1px 6px; border-radius: 3px; margin: 2px; }
+  .cell rect { stroke: #0d1117; stroke-width: 1.5px; cursor: pointer; }
+  .cell rect:hover { filter: brightness(1.15); }
+  .cell rect.selected { stroke: #e2e2e8; stroke-width: 2.5px; }
+  .cell text { pointer-events: none; fill: #0d1117; font-weight: 700; }
+  .cell .sub { fill: #0d1117cc; }
+  .tick-rect { pointer-events: none; }
+</style>
+<script>window.__GRAPH_DATA__ = {
+  "meta": {
+    "repo": "tidepool-heavy-industries/tidepool",
+    "generated": "2026-02-21T02:50:22Z",
+    "node_count": 71,
+    "pr_count": 61
+  },
+  "stats": {
+    "merged": 61,
+    "closed": 3,
+    "open": 0,
+    "total_additions": 32168,
+    "total_deletions": 1914
+  },
+  "nodes": [
+    {
+      "id": "main",
+      "parent": null,
+      "depth": 0,
+      "label": "main",
+      "prs": [],
+      "additions": 0,
+      "deletions": 0,
+      "status": "root",
+      "directCommits": [
+        {
+          "sha": "8ad9a76",
+          "message": "Initial commit: plans, research, flake, agent instructions",
+          "timestamp": "2026-02-16T17:36:51-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "11bf8a7",
+          "message": "exo config",
+          "timestamp": "2026-02-16T17:38:36-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "a620de8",
+          "message": "fix: remove references to removed messaging tools (question, note)",
+          "timestamp": "2026-02-16T20:05:00-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "4bae490",
+          "message": "gitignore",
+          "timestamp": "2026-02-16T20:06:48-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "0f0ee4a",
+          "message": "gitignore+config",
+          "timestamp": "2026-02-16T21:28:51-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f9c0e72",
+          "message": "update prompts",
+          "timestamp": "2026-02-16T21:29:22-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "e3a03aa",
+          "message": "scaffold core-repr: CoreFrame, MapLayer, RecursiveTree",
+          "timestamp": "2026-02-16T21:53:17-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "437c020",
+          "message": "update project docs and add Cargo.lock",
+          "timestamp": "2026-02-16T22:18:16-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "183f9a7",
+          "message": "add end-to-end integration tests: .cbor → CoreExpr → pretty_print",
+          "timestamp": "2026-02-17T01:01:27-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "d0a3ba2",
+          "message": "scaffold core-eval: Value, Env, Heap trait, VecHeap, Pass trait",
+          "timestamp": "2026-02-17T08:44:51-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f70602c",
+          "message": "fix(core-testing): run proptest generators with 8MB stack",
+          "timestamp": "2026-02-17T09:46:06-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "0e939de",
+          "message": "scaffold workspace: add core-heap, core-optimize, core-bridge crates",
+          "timestamp": "2026-02-17T10:24:08-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "1cfaefe",
+          "message": "feat(core-optimize): complete optimization pass pipeline (#25)",
+          "timestamp": "2026-02-17T11:41:35-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "e505c6f",
+          "message": "fix(core-heap): wire unified GC and add nursery management",
+          "timestamp": "2026-02-17T11:49:18-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "a4451b5",
+          "message": "style: cargo fmt --all",
+          "timestamp": "2026-02-17T11:49:41-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "19ff696",
+          "message": "scaffold: add core-bridge-derive, tidepool-macro crates and criterion benchmarks",
+          "timestamp": "2026-02-17T11:55:09-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "815779b",
+          "message": "WIP: findTargetId fix, ConFun, env_from_datacon_table, core-effect, haskell_expr! macro",
+          "timestamp": "2026-02-17T17:58:01-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "314cfe1",
+          "message": "feat: transitive closure for cross-module bindings + deep_force",
+          "timestamp": "2026-02-17T18:06:07-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "c2a7ff7",
+          "message": "fix(core-bridge): unwrap boxing constructors (I#, W#, D#, C#) in FromCore",
+          "timestamp": "2026-02-17T18:08:38-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "94c5c9d",
+          "message": "refactor(resolve): return unresolved vars as structured data",
+          "timestamp": "2026-02-17T18:13:32-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f68dc4b",
+          "message": "fix(resolve): wrap resolved externals in Rec group for mutual visibility",
+          "timestamp": "2026-02-17T18:17:30-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "4317ba3",
+          "message": "fix(translate): erase unpackCString#/unpackCStringUtf8# applications",
+          "timestamp": "2026-02-17T18:21:10-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "e36fb49",
+          "message": "fix: three bugs blocking end-to-end guess example",
+          "timestamp": "2026-02-17T21:07:11-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "8538690",
+          "message": "feat: add haskell_inline! proc macro with include paths",
+          "timestamp": "2026-02-17T21:56:28-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "9446c23",
+          "message": "feat(bridge): add EffectContext to hide DataConTable from handlers",
+          "timestamp": "2026-02-17T22:35:25-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "993e553",
+          "message": "chore: update .gitignore for nested targets, .exo, and nix result",
+          "timestamp": "2026-02-17T22:53:17-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "0b50b9a",
+          "message": "Merge pull request #40 from tidepool-heavy-industries/main.codegen",
+          "timestamp": "2026-02-18T10:37:33-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "01bc12b",
+          "message": "feat: add 100 end-to-end Haskell pipeline tests",
+          "timestamp": "2026-02-18T12:34:59-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f008f76",
+          "message": "working!",
+          "timestamp": "2026-02-18T14:03:06-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "6990b4c",
+          "message": "feat(tide): wire Haskell evaluator to Cranelift JIT",
+          "timestamp": "2026-02-18T16:26:58-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "570c514",
+          "message": "test(codegen): add 7 unit tests for LetRec with Con RHS",
+          "timestamp": "2026-02-18T16:40:49-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "c925fc0",
+          "message": "fix(resolve): use exprSomeFreeVars to collect global free vars",
+          "timestamp": "2026-02-18T18:13:36-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f691e5e",
+          "message": "feat(translate): desugar ++ to recursive cons-cell append",
+          "timestamp": "2026-02-18T18:24:20-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "fbf1088",
+          "message": "feat(codegen): catchable runtime errors for divZeroError/overflowError",
+          "timestamp": "2026-02-18T23:06:10-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "6276e2c",
+          "message": "feat: EffectContext<U>, struct derive, async handlers (#43, #42, #41)",
+          "timestamp": "2026-02-18T23:16:22-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "9046169",
+          "message": "fix(translate): handle polymorphic join points and uniform string repr",
+          "timestamp": "2026-02-19T11:54:14-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "0c93cf4",
+          "message": "fix(bridge): ToCore for String emits cons-cell [Char] instead of LitString",
+          "timestamp": "2026-02-19T11:56:08-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "ddba308",
+          "message": "feat(tide): structured eval errors, interactive REPL, macro refactor",
+          "timestamp": "2026-02-19T11:59:11-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "60aa002",
+          "message": "feat: JitEffectMachine, optional macro source body, example cleanup",
+          "timestamp": "2026-02-19T12:25:24-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "c68ca88",
+          "message": "fix(tide): REPL prompt on init, optional let-body, exhaustive parser tests",
+          "timestamp": "2026-02-19T12:31:39-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "d20a3a1",
+          "message": "feat(tide): /help and /exit REPL slash commands",
+          "timestamp": "2026-02-19T12:34:04-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "9050217",
+          "message": "fix(tide): let-expr accepts full expressions as values",
+          "timestamp": "2026-02-19T12:35:24-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "37a901e",
+          "message": "fix(tide): remove eager prompt hack that broke rustyline cursor",
+          "timestamp": "2026-02-19T12:41:20-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "47db9ef",
+          "message": "fix(tide): lexical scoping for let-bindings",
+          "timestamp": "2026-02-19T14:11:30-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "9203768",
+          "message": "feat: transitive type closure for DataConTable + fix REPL let-binding and function scoping",
+          "timestamp": "2026-02-19T15:27:03-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "8ab7734",
+          "message": "fix(codegen): iterative tail-position emit_node to prevent stack overflow on deep let-chains",
+          "timestamp": "2026-02-19T16:14:40-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "a05b1a0",
+          "message": "feat(tide): REPL improvements, clap args, tracing filter, parser/handler refactors",
+          "timestamp": "2026-02-19T16:15:33-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "a282cc6",
+          "message": "fix(tide): lexical closure scoping + QOL improvements",
+          "timestamp": "2026-02-19T16:57:40-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "811480c",
+          "message": "feat(viz): add build story treemap visualization",
+          "timestamp": "2026-02-19T18:04:39-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "07a33da",
+          "message": "docs: update pre-publish plan with cargo-workspaces + GH release",
+          "timestamp": "2026-02-19T19:15:38-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "4dbf35f",
+          "message": "feat: add MCP server example + crate docs + update CLAUDE.md",
+          "timestamp": "2026-02-19T19:55:23-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "04c9a14",
+          "message": "feat(viz): add commit tick marks and ideal merge routing",
+          "timestamp": "2026-02-19T20:04:48-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "785085d",
+          "message": "chore: bump all crate versions to 0.0.1",
+          "timestamp": "2026-02-19T20:08:19-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "979beb1",
+          "message": "ci: add CI workflow + release workflow with tidepool-extract binary",
+          "timestamp": "2026-02-19T21:21:58-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f5df7e2",
+          "message": "fix: re-export EvalResult from facade crate",
+          "timestamp": "2026-02-19T23:35:39-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "f49e3e1",
+          "message": "Research: ast-grep-core Rust API and Haskell ADT Design (#63)",
+          "timestamp": "2026-02-20T02:29:12-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "3c08c11",
+          "message": "chore: improve MCP tool descriptions and add server to project config",
+          "timestamp": "2026-02-20T02:49:23-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "1dd02cf",
+          "message": "feat(mcp): add eval tool with DescribeEffect trait and auto-templating",
+          "timestamp": "2026-02-20T03:12:35-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "b7b6bcb",
+          "message": "refactor(mcp): single eval tool with DescribeEffect auto-discovery",
+          "timestamp": "2026-02-20T03:18:59-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "881dc78",
+          "message": "chore(mcp): focus tool description on usage, not implementation",
+          "timestamp": "2026-02-20T03:20:37-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "2e1eb0f",
+          "message": "feat(mcp): add tracing subscriber to MCP server example",
+          "timestamp": "2026-02-20T03:51:49-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "9af921c",
+          "message": "fix: filter metadata bindings and handle let-floated Addr# in unpackCString#",
+          "timestamp": "2026-02-20T07:11:21-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "bb81803",
+          "message": "fix: fail early on unresolved externals instead of emitting broken CBOR",
+          "timestamp": "2026-02-20T10:35:29-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "42e3b6c",
+          "message": "feat: bundled prelude for closed Core IR extraction",
+          "timestamp": "2026-02-20T11:29:32-08:00",
+          "kind": "direct"
+        },
+        {
+          "sha": "c30ed66",
+          "message": "feat: dead binding elimination via reachability analysis in translateModule",
+          "timestamp": "2026-02-20T11:38:59-08:00",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "id": "main.codegen",
+      "parent": "main",
+      "depth": 1,
+      "label": "codegen",
+      "prs": [
+        {
+          "number": 40,
+          "title": "feat(codegen): Phase 3 — Cranelift JIT codegen crate",
+          "body": "## Summary\n\nImplements the complete `codegen` crate: CoreExpr → Cranelift IR compilation with GC-safe stack maps, effect machine driver, and GC frame walker.\n\n### Wave 1: Scaffold (#29)\n- `CodegenPipeline` — double-compile strategy (extract stack maps, then define for execution)\n- `VMContext` — `#[repr(C, align(16))]` with alloc_ptr, alloc_limit, gc_trigger\n- `StackMapRegistry` — BTreeMap-based lookup by return address\n- `emit_alloc_fast_path` — bump-pointer allocation as Cranelift IR with GC slow path\n- `host_fns` — gc_trigger, heap_alloc, heap_force (extern \"C\" for JIT)\n\n### Wave 2A: Emitter (#31, #32, #33, #37, #38)\n- `emit/expr.rs` — CoreExpr → Cranelift IR (Lit, Var, App, Lam, LetNonRec, LetRec, Con, PrimOp)\n- `emit/case.rs` — Case dispatch via br_table (DataAlt) and comparison chains (LitAlt)\n- `emit/join.rs` — Join points as parameterized Cranelift blocks\n- `emit/primop.rs` — PrimOp → Cranelift instructions (Int/Word/Double/Char arithmetic + comparisons)\n- `gc/frame_walker.rs` — x86_64 RBP chain walker for GC root discovery\n- GC audit: stack map correctness verified for all safepoints\n\n### Wave 2B: Effect Machine (#30)\n- `Yield` enum — Done/Request/Error result type\n- `CompiledEffectMachine` — step/resume protocol driving JIT-compiled freer-simple stacks\n- `ConTags` struct for type-safe constructor tag passing\n\n### Quality Improvements (#34, #35, #36)\n- **Structured errors**: `ValueKind` enum, `ArityMismatch`/`TypeMismatch` split in EvalError, `MissingConstructor`/`FieldCountMismatch`/`UnexpectedValue` in EffectError\n- **Display/From impls**: VarId, JoinId, DataConId, Literal, PrimOpKind, AltCon + From impls for Literal\n- **Layout type enums**: `HeapTag`, `ThunkStateTag`, `LitTag` (`#[repr(u8)]`) with payload offset constants\n- **TreeBuilder** moved from core-testing to core-repr as public API\n\n## Test plan\n\n- [x] 301 tests pass (`cargo test --workspace`)\n- [x] Scaffold gate tests (JIT boot, VMContext offsets, stack maps, alloc fast path)\n- [x] Emitter tests (expr, case, join, primop — 30+ integration tests)\n- [x] Effect machine tests (Yield::Done, Yield::Request, error paths)\n- [x] GC frame walker tests (root finding, rewriting, JIT boundary)\n- [x] GC audit tests (stack map presence at all safepoints)\n- [x] Quality PR tests (Display roundtrips, HeapTag/LitTag roundtrips, error variants)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/40",
+          "additions": 4061,
+          "deletions": 255,
+          "mergedAt": "2026-02-18T18:37:33Z",
+          "closedAt": "2026-02-18T18:37:33Z"
+        }
+      ],
+      "additions": 4061,
+      "deletions": 255,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "c30c2ba",
+          "message": "feat(codegen): add Cranelift JIT infrastructure scaffold (#29)",
+          "timestamp": "2026-02-18T00:22:03-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "cf0fe37",
+          "message": "Merge pull request #46 from tidepool-heavy-industries/main.codegen-primops",
+          "timestamp": "2026-02-18T15:47:29-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-bridge",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-bridge",
+      "prs": [
+        {
+          "number": 0,
+          "title": "core-bridge (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T21:52:46Z",
+          "closedAt": "2026-02-17T21:52:46Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "7aa47a3",
+          "message": "feat(core-bridge): implement FromCore/ToCore traits and primitive impls (#13)",
+          "timestamp": "2026-02-17T10:56:11-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "058cc6e",
+          "message": "feat(tidepool-macro): implement haskell_eval! proc-macro (#27)",
+          "timestamp": "2026-02-17T13:52:22-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "bfaef56",
+          "message": "feat(core-bridge-derive): implement #[derive(FromCore, ToCore)] for enums (#26)",
+          "timestamp": "2026-02-17T13:52:46-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-eval",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-eval",
+      "prs": [
+        {
+          "number": 0,
+          "title": "core-eval (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T18:22:43Z",
+          "closedAt": "2026-02-17T18:22:43Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "3a434f7",
+          "message": "implement tree-walking evaluator for CoreExpr (#8)",
+          "timestamp": "2026-02-17T09:32:29-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "11af9af",
+          "message": "feat(core-eval): implement lazy evaluation (thunks) and join points (#10)",
+          "timestamp": "2026-02-17T10:22:43-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-heap",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-heap",
+      "prs": [
+        {
+          "number": 0,
+          "title": "core-heap (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:40:38Z",
+          "closedAt": "2026-02-17T19:40:38Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "ff67aca",
+          "message": "feat(core-heap): ArenaHeap and HeapObject manual memory layout (#15)",
+          "timestamp": "2026-02-17T10:54:47-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "b1bda23",
+          "message": "feat(core-heap): implement root enumeration and transitive marking for copying GC (#20)",
+          "timestamp": "2026-02-17T11:35:45-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "1edb109",
+          "message": "Implement copying GC: trace and compact phases (#21)",
+          "timestamp": "2026-02-17T11:40:38-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-optimize",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-optimize",
+      "prs": [
+        {
+          "number": 25,
+          "title": "feat(core-optimize): complete optimization pass pipeline",
+          "body": "## Summary\n\nImplements the full core-optimize crate with 6 optimization passes and a fixed-point pipeline:\n\n- **Pipeline** (`pipeline.rs`): Fixed-point pass iteration with `run_pipeline`, `optimize`, and `default_passes` convenience API. MAX_PIPELINE_ITERATIONS=1000 safety bound.\n- **Occurrence Analysis** (`occ.rs`): Per-variable Dead/Once/Many counting across all binding forms.\n- **Beta Reduction** (`beta.rs`): Eliminates manifest `App(Lam)` redexes via capture-avoiding substitution.\n- **Case Reduction** (`case_reduce.rs`): Reduces `Case` of known constructor/literal, substituting case binder and field binders.\n- **Inlining** (`inline.rs`): Eliminates single-use `LetNonRec` bindings. Never inlines `LetRec`.\n- **Dead Code Elimination** (`dce.rs`): Drops dead `LetNonRec` bindings and fully-dead `LetRec` groups (atomic).\n- **Partial Evaluation** (`partial.rs`): First-order constant propagation — folds known PrimOps, reduces known Case scrutinees, eliminates known `LetNonRec` bindings.\n\nDefault pipeline order: BetaReduce → Inline → CaseReduce → Dce → PartialEval.\n\nUniversal property verified: `eval(pass(e)) == eval(e)`.\n\n## Test Coverage\n\n- 48 unit tests across all modules\n- 6 proptest-based integration tests (200 cases each) verifying eval-preservation for each pass individually, the composed pipeline, and pipeline idempotency\n\n## Test plan\n\n- [x] `cargo test --package core-optimize` — 54 tests pass\n- [x] `cargo clippy --package core-optimize -- -D warnings` — zero warnings\n- [x] `cargo test --workspace` — all workspace tests pass\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/25",
+          "additions": 1628,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:41:35Z",
+          "closedAt": "2026-02-17T19:41:35Z"
+        }
+      ],
+      "additions": 1628,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "e1b6947",
+          "message": "feat(core-optimize): implement beta reduction pass (#16)",
+          "timestamp": "2026-02-17T10:54:05-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "168446c",
+          "message": "main.core optimize.case reduce (#14)",
+          "timestamp": "2026-02-17T10:54:27-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-repr",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-repr",
+      "prs": [
+        {
+          "number": 0,
+          "title": "core-repr (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T08:57:19Z",
+          "closedAt": "2026-02-17T08:57:19Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "b00a0ff",
+          "message": "Merge pull request #2 from tidepool-heavy-industries/main.types-and-datacon",
+          "timestamp": "2026-02-16T22:14:12-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "0786088",
+          "message": "Implement CBOR serialization for CoreExpr (#4)",
+          "timestamp": "2026-02-16T22:15:03-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "c792f6b",
+          "message": "pretty: implement pretty printer for CoreExpr (#3)",
+          "timestamp": "2026-02-16T22:15:30-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "0abafa1",
+          "message": "Merge pull request #5 from tidepool-heavy-industries/main.frame-and-utils",
+          "timestamp": "2026-02-16T22:16:20-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "0970e60",
+          "message": "feat(haskell): implement GHC 9.12 harness with CBOR serialization (#6)",
+          "timestamp": "2026-02-17T00:29:20-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "8296e6a",
+          "message": "test(core-repr): integration tests for harness CBOR output (#7)",
+          "timestamp": "2026-02-17T00:57:19-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.core-testing",
+      "parent": "main",
+      "depth": 1,
+      "label": "core-testing",
+      "prs": [
+        {
+          "number": 0,
+          "title": "core-testing (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T21:52:07Z",
+          "closedAt": "2026-02-17T21:52:07Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "8cb0c77",
+          "message": "feat(core-testing): scaffold crate and implement proptest generators (#9)",
+          "timestamp": "2026-02-17T09:44:34-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "755a712",
+          "message": "feat(core-testing): implement differential testing oracle with 36 tests (#22)",
+          "timestamp": "2026-02-17T11:36:48-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "3a889d5",
+          "message": "Implement criterion benchmarks (#28)",
+          "timestamp": "2026-02-17T13:52:07-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.issue-64",
+      "parent": "main",
+      "depth": 1,
+      "label": "issue-64",
+      "prs": [
+        {
+          "number": 70,
+          "title": "feat: expand PrimOp coverage + desugar eqString/take (fixes #64)",
+          "body": "## Summary\n\nFixes #64: `==` on String and `take` fail with `UnboundVar` at runtime.\n\n**Root cause:** GHC at `-O2` rewrites `== @[Char]` → `eqString` and `take` → `$wunsafeTake` via RULES and worker-wrapper transformation. Neither function has an unfolding in `.hi` files, so `Tidepool.Resolve` can't inline them → `UnboundVar` at eval time.\n\n**Fix (two merged sub-PRs):**\n\n1. **Hardcoded desugarings** (PR #68, already on main): Added `eqString` and `$wunsafeTake` desugarings in `Translate.hs`, plus fixed `Char` boxing in `unpackCString#`/`unpackAppendCString#` desugarings. Added 3 new test cases (`prelude_take_cons`, `prelude_eq_string_true`, `prelude_eq_string_false`).\n\n2. **Expanded PrimOp coverage** (PR #69, this branch): Added ~41 new primop variants across Tiers 2-3 — Int bitwise, Word arithmetic+bitwise, Float ops, narrowing, type conversions, and `IndexOffAddrOp_Char`. This prevents future `Unsupported primop` crashes when GHC fuses string operations.\n\n## Test plan\n- [x] `prelude_eq_string_true` passes (string equality)\n- [x] `prelude_eq_string_false` passes (string inequality)  \n- [x] `prelude_take_cons` passes (take on cons-chain list)\n- [x] All existing suite tests continue to pass\n- [x] `cargo check --workspace` passes\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/70",
+          "additions": 569,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T12:14:00Z",
+          "closedAt": "2026-02-20T12:14:00Z"
+        }
+      ],
+      "additions": 569,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "9ff2553",
+          "message": "feat: desugar eqString and $wunsafeTake (#68)",
+          "timestamp": "2026-02-20T04:10:27-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "53d7aa5",
+          "message": "feat: expand PrimOp coverage for Tier 2-3 operations (#69) (#70)",
+          "timestamp": "2026-02-20T04:14:00-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.mcp",
+      "parent": "main",
+      "depth": 1,
+      "label": "mcp",
+      "prs": [
+        {
+          "number": 0,
+          "title": "mcp (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T12:07:22Z",
+          "closedAt": "2026-02-20T12:07:22Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "1c7c675",
+          "message": "feat: implement tidepool-mcp library crate (#50)",
+          "timestamp": "2026-02-19T19:07:45-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "7fd1ea9",
+          "message": "feat(mcp): structured JSON output and compile_haskell tool (#60)",
+          "timestamp": "2026-02-19T23:16:36-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "0abd8a4",
+          "message": "feat(mcp): wire dogfood effect handlers into mcp-server example (#62)",
+          "timestamp": "2026-02-20T02:29:09-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "b9bc3ba",
+          "message": "feat(mcp): catch panics and show source in eval errors (#65)",
+          "timestamp": "2026-02-20T03:50:50-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "a277f8d",
+          "message": "feat(mcp): capture Console output in eval responses (#67)",
+          "timestamp": "2026-02-20T04:07:22-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.polish",
+      "parent": "main",
+      "depth": 1,
+      "label": "polish",
+      "prs": [
+        {
+          "number": 0,
+          "title": "polish (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T11:51:04Z",
+          "closedAt": "2026-02-20T11:51:04Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "60e7d86",
+          "message": "Pre-publish workspace migration: rename core-* to tidepool-* (#52)",
+          "timestamp": "2026-02-19T19:51:25-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "e0565b4",
+          "message": "feat: implement Display for Value (#53)",
+          "timestamp": "2026-02-19T21:06:56-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "5240afb",
+          "message": "codegen: replace opaque String payloads in JitError with structured errors (#55)",
+          "timestamp": "2026-02-19T21:07:00-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "f2a2baf",
+          "message": "feat: add property-based roundtrip tests for tidepool-bridge (#56)",
+          "timestamp": "2026-02-19T21:07:02-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "0eb0076",
+          "message": "fix: propagate stack map declarations across block boundaries (#57)",
+          "timestamp": "2026-02-19T21:07:04-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "bd85dc2",
+          "message": "refactor(codegen): convert pipeline panics to Results (#66)",
+          "timestamp": "2026-02-20T03:51:04-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.runtime",
+      "parent": "main",
+      "depth": 1,
+      "label": "runtime",
+      "prs": [
+        {
+          "number": 0,
+          "title": "runtime (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T10:16:57Z",
+          "closedAt": "2026-02-20T10:16:57Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "5fae697",
+          "message": "feat(runtime): implement tidepool-runtime with compile_haskell (#47)",
+          "timestamp": "2026-02-19T17:32:34-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "65c3f06",
+          "message": "feat(runtime): implement compile_and_run, caching, and RuntimeError (#48)",
+          "timestamp": "2026-02-19T18:27:53-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "52dd9e4",
+          "message": "test(runtime): add integration tests for compile and run pipeline (#49)",
+          "timestamp": "2026-02-19T18:48:16-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "d853e51",
+          "message": "feat(runtime): add cache invalidation integration tests (#54)",
+          "timestamp": "2026-02-19T21:06:58-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "8ac3d54",
+          "message": "feat: add EvalResult with JSON rendering to tidepool-runtime (#58)",
+          "timestamp": "2026-02-19T22:55:34-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "795bee8",
+          "message": "Improve external reference resolution for Prelude functions (#61)",
+          "timestamp": "2026-02-20T02:16:57-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.tide",
+      "parent": "main",
+      "depth": 1,
+      "label": "tide",
+      "prs": [
+        {
+          "number": 0,
+          "title": "tide (phase grouping)",
+          "body": "",
+          "state": "merged",
+          "url": "",
+          "additions": 0,
+          "deletions": 0,
+          "mergedAt": "2026-02-18T23:47:34Z",
+          "closedAt": "2026-02-18T23:47:34Z"
+        }
+      ],
+      "additions": 0,
+      "deletions": 0,
+      "status": "merged",
+      "directCommits": [
+        {
+          "sha": "23adc1b",
+          "message": "Merge pull request #45 from tidepool-heavy-industries/main.tide-parser",
+          "timestamp": "2026-02-18T15:47:31-08:00",
+          "kind": "merge"
+        },
+        {
+          "sha": "d03dd10",
+          "message": "Merge pull request #44 from tidepool-heavy-industries/main.tide-haskell",
+          "timestamp": "2026-02-18T15:47:34-08:00",
+          "kind": "merge"
+        }
+      ]
+    },
+    {
+      "id": "main.bridge-derive",
+      "parent": "main.core-bridge",
+      "depth": 2,
+      "label": "bridge-derive",
+      "prs": [
+        {
+          "number": 26,
+          "title": "feat(core-bridge-derive): implement #[derive(FromCore, ToCore)] for enums",
+          "body": "Implement proc-macro derive for FromCore and ToCore traits in the core-bridge-derive crate. Supports unit, single-field, and multi-field enum variants, as well as generic enums. Uses #[core(name = \"...\")] attributes to map Rust variants to Haskell DataCons.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/26",
+          "additions": 479,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T21:52:46Z",
+          "closedAt": "2026-02-17T21:52:46Z"
+        }
+      ],
+      "additions": 479,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.bridge-roundtrip",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "bridge-roundtrip",
+      "prs": [
+        {
+          "number": 56,
+          "title": "feat: add property-based roundtrip tests for tidepool-bridge",
+          "body": "This PR adds property-based roundtrip tests for the  crate using . It covers all major types including primitives, options, vectors, results, and tuples, ensuring bit-perfect roundtrips between Rust types and Core Values.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/56",
+          "additions": 197,
+          "deletions": 1,
+          "mergedAt": "2026-02-20T05:07:02Z",
+          "closedAt": "2026-02-20T05:07:03Z"
+        }
+      ],
+      "additions": 197,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.bridge-scaffold",
+      "parent": "main.core-bridge",
+      "depth": 2,
+      "label": "bridge-scaffold",
+      "prs": [
+        {
+          "number": 13,
+          "title": "feat(core-bridge): implement FromCore/ToCore traits and primitive impls",
+          "body": "This PR implements the FromCore/ToCore traits, BridgeError, and trait implementations for primitive types, containers, and tuples in the core-bridge crate. All roundtrip tests pass and clippy is clean.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/13",
+          "additions": 639,
+          "deletions": 31,
+          "mergedAt": "2026-02-17T18:56:12Z",
+          "closedAt": "2026-02-17T18:56:12Z"
+        }
+      ],
+      "additions": 639,
+      "deletions": 31,
+      "status": "merged"
+    },
+    {
+      "id": "main.cache-tests",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "cache-tests",
+      "prs": [
+        {
+          "number": 54,
+          "title": "feat(runtime): add cache invalidation integration tests",
+          "body": "Adds integration tests for the tidepool-runtime compilation cache.\n\nTests cover:\n- Cache hits for identical sources\n- Cache misses for different sources\n- Cache misses for modified include directories (via fingerprinting)\n- Graceful recovery from corrupted cache files\n\nAll tests are marked with `#[ignore]` as they require `tidepool-extract` on the PATH.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/54",
+          "additions": 132,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T05:06:58Z",
+          "closedAt": "2026-02-20T05:06:58Z"
+        }
+      ],
+      "additions": 132,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen-primops",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "codegen-primops",
+      "prs": [
+        {
+          "number": 46,
+          "title": "feat(codegen): add IntQuot, IntRem, Chr, Ord primops and Box<T> bridge",
+          "body": "## Summary\n- Add 4 new primops across all layers (Translate.hs → core-repr → codegen emitter → core-eval interpreter):\n  - `IntQuot` (`quotInt#`) → `sdiv`\n  - `IntRem` (`remInt#`) → `srem`\n  - `Chr` (`chr#`) → identity (Int# → Char#)\n  - `Ord` (`ord#`) → identity (Char# → Int#)\n- Fix `value_to_heap` LitString support in `codegen/src/heap_bridge.rs` — bump-allocates `[len:u64][bytes...]` in nursery\n- Add `FromCore`/`ToCore` for `Box<T>` in `core-bridge/src/impls.rs`\n\n## Test plan\n- [x] `cargo test --workspace` passes (2 pre-existing gc_audit failures on main, unrelated)\n- [x] Primop serial roundtrip test updated\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/46",
+          "additions": 101,
+          "deletions": 5,
+          "mergedAt": "2026-02-18T23:47:29Z",
+          "closedAt": "2026-02-18T23:47:29Z"
+        }
+      ],
+      "additions": 101,
+      "deletions": 5,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.display-from",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "display-from",
+      "prs": [
+        {
+          "number": 35,
+          "title": "feat(core-repr): add Display/From impls and public TreeBuilder",
+          "body": "Add Display and From impls to core-repr types and make TreeBuilder public.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/35",
+          "additions": 290,
+          "deletions": 115,
+          "mergedAt": "2026-02-18T17:22:00Z",
+          "closedAt": "2026-02-18T17:22:00Z"
+        }
+      ],
+      "additions": 290,
+      "deletions": 115,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "emitter",
+      "prs": [
+        {
+          "number": 39,
+          "title": "feat(codegen): Wave 2A — CoreExpr → Cranelift IR emitter + GC frame walker",
+          "body": "## Summary\n\nComplete Cranelift IR emission for all CoreFrame variants plus GC infrastructure:\n\n- **CoreExpr emitter** (`emit/expr.rs`): Lit, Var, Con, PrimOp, Lam, App, LetNonRec, LetRec — including lambda compilation as separate JIT functions with closure capture and free variable analysis\n- **Case dispatch** (`emit/case.rs`): `br_table` for DataAlt, comparison chains for LitAlt (Int/Word/Char/Float/Double), pattern variable binding from ConObject fields\n- **Join/Jump** (`emit/join.rs`): Join points as parameterized Cranelift blocks with correct seal ordering and env save/restore for shadowing\n- **PrimOp mapping** (`emit/primop.rs`): All Int/Word arithmetic, Double arithmetic, comparisons, DataToTag\n- **GC stack map audit** (`tests/gc_audit.rs`): Verified all emit modules correctly call `declare_value_needs_stack_map` for heap pointers at every block boundary\n- **GC frame walker** (`gc/frame_walker.rs`): x86_64 RBP chain walker that collects heap roots from Cranelift stack maps, with forwarding pointer rewrite support\n- **EffectMachine driver** (`effect_machine.rs`): Compiled state machine for freer-simple effect dispatch\n\n## Test plan\n- 45 tests pass across 7 test files\n- End-to-end: JIT-compiled CoreExpr functions execute correctly via transmuted function pointers\n- GC roots found and rewritten through live JIT stack frames\n- Stack map correctness verified for App/Case/Join safepoints\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/39",
+          "additions": 3252,
+          "deletions": 24,
+          "mergedAt": "2026-02-18T18:11:09Z",
+          "closedAt": "2026-02-18T18:11:09Z"
+        }
+      ],
+      "additions": 3252,
+      "deletions": 24,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.layout-types",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "layout-types",
+      "prs": [
+        {
+          "number": 36,
+          "title": "Add HeapTag, ThunkStateTag, LitTag enums and payload offset constants",
+          "body": "This PR adds typed enums for heap object tags and thunk states, and defines named constants for payload offsets to replace magic numbers in the codebase.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/36",
+          "additions": 277,
+          "deletions": 13,
+          "mergedAt": "2026-02-18T17:22:07Z",
+          "closedAt": "2026-02-18T17:22:07Z"
+        }
+      ],
+      "additions": 277,
+      "deletions": 13,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.scaffold",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "scaffold",
+      "prs": [
+        {
+          "number": 29,
+          "title": "feat(codegen): add Cranelift JIT infrastructure scaffold",
+          "body": "This PR introduces the codegen/ crate scaffold for Tidepool Phase 3: Cranelift JIT infrastructure.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/29",
+          "additions": 1197,
+          "deletions": 0,
+          "mergedAt": "2026-02-18T08:22:03Z",
+          "closedAt": "2026-02-18T08:22:03Z"
+        }
+      ],
+      "additions": 1197,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.structured-errors",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "structured-errors",
+      "prs": [
+        {
+          "number": 34,
+          "title": "feat(error): replace stringly-typed errors with structured variants",
+          "body": "Replaces stringly-typed error variants with structured types across core-eval, core-effect, and codegen crates.\n\n## Changes\n\n- **core-eval**: \n  - Added `ValueKind` enum for detailed type mismatch reporting.\n  - Split `EvalError::TypeMismatch` into `ArityMismatch` and structured `TypeMismatch`.\n  - Updated all eval callsites to use structured errors.\n- **core-effect**:\n  - Replaced `BadContinuation` and `BadUnion` with `MissingConstructor`, `FieldCountMismatch`, and `UnexpectedValue`.\n  - Updated `EffectMachine` to provide more precise error reporting.\n- **codegen**:\n  - Implemented `Display` and `Error` traits for `YieldError` and `Yield`.\n  - Introduced `ConTags` struct for `CompiledEffectMachine` to avoid positional u64 arguments.\n  - Updated all JIT tests to use structured tags.\n\nVerified with `cargo test` and `cargo check --workspace`.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/34",
+          "additions": 284,
+          "deletions": 115,
+          "mergedAt": "2026-02-18T17:21:54Z",
+          "closedAt": "2026-02-18T17:21:54Z"
+        }
+      ],
+      "additions": 284,
+      "deletions": 115,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.yield",
+      "parent": "main.codegen",
+      "depth": 2,
+      "label": "yield",
+      "prs": [
+        {
+          "number": 30,
+          "title": "feat(codegen): implement compiled EffectMachine driver",
+          "body": "Phase 3 Wave 2B: Compiled EffectMachine driver (step/resume protocol)\n\nThis PR implements the compiled version of the  driver for the Cranelift-based JIT.\n\n### Changes:\n- : Defines  and  enums for evaluation results.\n- : Implements , which calls JIT functions and destructures result s.\n- : JIT-based integration tests verifying:\n  -  result from  constructor.\n  -  result from  constructor with effect tag extraction.\n  -  and  error handling.\n  -  property for the machine.\n- Updated  with  and  dependencies.\n\nVerified with \nrunning 5 tests\ntest test_machine_is_send ... ok\ntest test_unexpected_tag ... ok\ntest test_yield_done_val ... ok\ntest test_unexpected_con_tag ... ok\ntest test_yield_request_e ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/30",
+          "additions": 837,
+          "deletions": 11,
+          "mergedAt": "2026-02-18T08:49:57Z",
+          "closedAt": "2026-02-18T08:49:57Z"
+        }
+      ],
+      "additions": 837,
+      "deletions": 11,
+      "status": "merged"
+    },
+    {
+      "id": "main.console-capture",
+      "parent": "main.mcp",
+      "depth": 2,
+      "label": "console-capture",
+      "prs": [
+        {
+          "number": 67,
+          "title": "feat(mcp): capture Console output in eval responses",
+          "body": "This PR adds output capture for Console effects in the Tidepool MCP server.\n\n- Added 'CapturedOutput' to 'tidepool-mcp' to store output lines.\n- Updated 'McpEffectHandler' to use 'CapturedOutput' as user context.\n- Modified 'eval' tool to drain and prepend captured output to the response.\n- Updated 'ConsoleHandler' in 'mcp-server-example' to use 'CapturedOutput' instead of 'eprintln!'.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/67",
+          "additions": 60,
+          "deletions": 17,
+          "mergedAt": "2026-02-20T12:07:22Z",
+          "closedAt": "2026-02-20T12:07:22Z"
+        }
+      ],
+      "additions": 60,
+      "deletions": 17,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.beta-reduce",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "beta-reduce",
+      "prs": [
+        {
+          "number": 16,
+          "title": "feat(core-optimize): implement beta reduction pass",
+          "body": "Implements the beta reduction optimization pass.\n\n- Detects manifest App(Lam) redexes.\n- Uses capture-avoiding substitution from core-repr.\n- Verified with unit tests and evaluation oracle.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/16",
+          "additions": 440,
+          "deletions": 31,
+          "mergedAt": "2026-02-17T18:54:06Z",
+          "closedAt": "2026-02-17T18:54:06Z"
+        }
+      ],
+      "additions": 440,
+      "deletions": 31,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.case-reduce",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "case-reduce",
+      "prs": [
+        {
+          "number": 14,
+          "title": "main.core optimize.case reduce",
+          "body": "## Pull Request Overview\n\nThis PR implements the `CaseReduce` optimization pass in `core-optimize/src/case_reduce.rs`.\n\n### Key Features\n- **case-of-known-con**: Reduces case expressions where the scrutinee is a `Con` node.\n- **case-of-known-lit**: Reduces case expressions where the scrutinee is a `Lit` node.\n- **DataAlt matching**: Correctly matches `DataAlt` by tag and binds all fields.\n- **Case binder substitution**: Substitutes the case binder with the scrutinee value in the body.\n- **Default fallback**: Correctly uses the default alternative when no specific alternative matches.\n- **Capture-avoiding substitution**: Utilizes `core_repr::subst::subst`.\n\n### Implementation Details\n- **Arity check**: Added a check to ensure `DataAlt` binder count matches constructor field count before reduction, for safety (addressing Copilot feedback).\n- **Single reduction**: The pass performs one reduction per `run()` invocation as per the spec's requirement to \"find the first reducible Case and rebuild the tree.\"\n- **Local helpers**: Tree manipulation helpers (`extract_subtree`, `replace_subtree`, etc.) are implemented locally as explicitly instructed by the spec to avoid external dependencies for this leaf task.\n- **Performance**: While Copilot suggested avoiding `Vec` allocation in `get_children`, I have adhered to the spec's provided implementation sketch for this pass.\n\n### Verification\n- **Unit tests**: All 7 test cases pass, including evaluation preservation checks.\n- **Clippy/Check**: The code is clippy-clean and passes type checking.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/14",
+          "additions": 522,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T18:54:27Z",
+          "closedAt": "2026-02-17T18:54:27Z"
+        }
+      ],
+      "additions": 522,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.dce",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "dce",
+      "prs": [
+        {
+          "number": 17,
+          "title": "feat(core-optimize): implement dead code elimination pass",
+          "body": "Implemented the Dead Code Elimination (DCE) pass in `core-optimize/src/dce.rs`.\n\n### Changes:\n- Added `Dce` struct implementing the `Pass` trait.\n- Implemented top-down tree traversal for identifying dead bindings.\n- `LetNonRec` bindings are dropped if the binder is `Occ::Dead`.\n- `LetRec` groups are dropped ONLY if ALL binders in the group are `Occ::Dead`, preserving atomicity.\n- Included 6 test cases covering:\n    - Dead `LetNonRec` dropping.\n    - Live `LetNonRec` preservation.\n    - All-dead `LetRec` dropping.\n    - Partially-live `LetRec` preservation (atomicity).\n    - Nested DCE.\n    - Correctness via evaluation oracle (`eval(dce(e)) == eval(e)`).\n\n### Verification:\n- `cargo test -p core-optimize -- dce` passed.\n- `cargo clippy -p core-optimize -- -D warnings` passed.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/17",
+          "additions": 282,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:08:11Z",
+          "closedAt": "2026-02-17T19:08:11Z"
+        }
+      ],
+      "additions": 282,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.inline",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "inline",
+      "prs": [
+        {
+          "number": 19,
+          "title": "Implement inlining pass for single-use LetNonRec",
+          "body": "This PR implements the Inline optimization pass in core-optimize/src/inline.rs.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/19",
+          "additions": 290,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:22:57Z",
+          "closedAt": "2026-02-17T19:22:57Z"
+        }
+      ],
+      "additions": 290,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.occ-analysis",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "occ-analysis",
+      "prs": [
+        {
+          "number": 12,
+          "title": "feat(core-optimize): implement occurrence analysis",
+          "body": "Implements occurrence analysis in occ.rs as per spec. 7 tests pass, zero clippy warnings.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/12",
+          "additions": 210,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T18:54:17Z",
+          "closedAt": "2026-02-17T18:54:17Z"
+        }
+      ],
+      "additions": 210,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.partial-eval",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "partial-eval",
+      "prs": [
+        {
+          "number": 23,
+          "title": "Implement first-order partial evaluation pass",
+          "body": "Implemented first-order partial evaluation pass in core-optimize/src/partial.rs.\n\nFeatures:\n- PartialValue and KnownValue types for tracking constants during pass.\n- Constant folding for Lit and Con (with all known fields).\n- Case reduction when scrutinee is a known constructor or literal.\n- Constant folding for integer arithmetic and comparison PrimOps.\n- extract_subtree used to normalize the resulting expression.\n- 8 test cases covering all specified scenarios.\n\nVerified with cargo test and cargo clippy.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/23",
+          "additions": 442,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:35:04Z",
+          "closedAt": "2026-02-17T19:35:04Z"
+        }
+      ],
+      "additions": 442,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.pipeline",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "pipeline",
+      "prs": [
+        {
+          "number": 11,
+          "title": "feat(core-optimize): implement fixed-point pass pipeline",
+          "body": "Implements the pass pipeline with fixed-point iteration as specified. Includes statistics tracking and comprehensive tests.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/11",
+          "additions": 231,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T18:55:03Z",
+          "closedAt": "2026-02-17T18:55:03Z"
+        }
+      ],
+      "additions": 231,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.core-optimize.proptest-correctness",
+      "parent": "main.core-optimize",
+      "depth": 2,
+      "label": "proptest-correctness",
+      "prs": [
+        {
+          "number": 24,
+          "title": "feat(core-optimize): add proptest correctness tests for optimization passes",
+          "body": "Implemented 6 property-based correctness tests for optimization passes in core-optimize. All tests pass and are clippy-clean.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/24",
+          "additions": 211,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T19:37:08Z",
+          "closedAt": "2026-02-17T19:37:08Z"
+        }
+      ],
+      "additions": 211,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.dogfood-handlers",
+      "parent": "main.mcp",
+      "depth": 2,
+      "label": "dogfood-handlers",
+      "prs": [
+        {
+          "number": 62,
+          "title": "feat(mcp): wire dogfood effect handlers into mcp-server example",
+          "body": "Implement real effect handlers for Console, KV store, and sandboxed File I/O in the mcp-server example. This provides a functional reference for integrating concrete handlers with the TidepoolMcpServer.\n\n- Console: Print to stderr\n- KV Store: Arc<Mutex<HashMap>> for persistence\n- File I/O: Path-sandboxed read/write",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/62",
+          "additions": 156,
+          "deletions": 31,
+          "mergedAt": "2026-02-20T10:29:09Z",
+          "closedAt": "2026-02-20T10:29:10Z"
+        }
+      ],
+      "additions": 156,
+      "deletions": 31,
+      "status": "merged"
+    },
+    {
+      "id": "main.eval-resilience",
+      "parent": "main.mcp",
+      "depth": 2,
+      "label": "eval-resilience",
+      "prs": [
+        {
+          "number": 65,
+          "title": "feat(mcp): catch panics and show source in eval errors",
+          "body": "This PR improves the resilience and observability of the MCP server's eval tool:\n- Internal panics are now caught and returned as structured error responses instead of task join errors.\n- Error messages (both runtime and panic) now include the compiled Haskell source to aid debugging.\n- Added tracing instrumentation to log request metadata and results.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/65",
+          "additions": 87,
+          "deletions": 14,
+          "mergedAt": "2026-02-20T11:50:50Z",
+          "closedAt": "2026-02-20T11:50:50Z"
+        }
+      ],
+      "additions": 87,
+      "deletions": 14,
+      "status": "merged"
+    },
+    {
+      "id": "main.eval-result",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "eval-result",
+      "prs": [
+        {
+          "number": 58,
+          "title": "feat: add EvalResult with JSON rendering to tidepool-runtime",
+          "body": "Adds an opaque EvalResult type that bundles Value + DataConTable, exposes to_json() for structured JSON rendering, and updates compile_and_run to return EvalResult.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/58",
+          "additions": 358,
+          "deletions": 12,
+          "mergedAt": "2026-02-20T06:55:34Z",
+          "closedAt": "2026-02-20T06:55:34Z"
+        }
+      ],
+      "additions": 358,
+      "deletions": 12,
+      "status": "merged"
+    },
+    {
+      "id": "main.eval-strict-case",
+      "parent": "main.core-eval",
+      "depth": 2,
+      "label": "eval-strict-case",
+      "prs": [
+        {
+          "number": 8,
+          "title": "implement tree-walking evaluator for CoreExpr",
+          "body": "This PR implements the tree-walking evaluator for CoreExpr in core-eval/src/eval.rs.\n\nFeatures:\n- Strict evaluation for Var, Lit, App, Lam, Con, LetNonRec, LetRec.\n- Lexical scoping for Closures (App captures environment).\n- Case dispatch for DataAlt, LitAlt, and Default.\n- PrimOp dispatch for arithmetic and comparison operations.\n- Subtree extraction for self-contained Closures.\n- Placeholder errors for Join/Jump.\n\nTests:\n- Comprehensive unit tests in eval.rs covering all implemented variants and logic.\n- Verified with cargo test and clippy.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/8",
+          "additions": 1150,
+          "deletions": 2,
+          "mergedAt": "2026-02-17T17:32:29Z",
+          "closedAt": "2026-02-17T17:32:29Z"
+        }
+      ],
+      "additions": 1150,
+      "deletions": 2,
+      "status": "merged"
+    },
+    {
+      "id": "main.eval-thunks-joins",
+      "parent": "main.core-eval",
+      "depth": 2,
+      "label": "eval-thunks-joins",
+      "prs": [
+        {
+          "number": 10,
+          "title": "feat(core-eval): implement lazy evaluation (thunks) and join points",
+          "body": "- Implement force protocol for Value::ThunkRef in eval.rs.\n- Update eval and eval_at to take a mutable Heap parameter.\n- Implement thunk allocation for non-lambda RHS in LetNonRec and LetRec.\n- Implement LetRec knot-tying via thunk back-patching.\n- Implement Join and Jump evaluation with environment-based capture of join environments.\n- Force thunks in function position (App), scrutinee (Case), and primop arguments.\n- Add comprehensive tests for lazy evaluation, caching, blackholes, and join scoping.\n- Adhere to boundary rules: no changes to value.rs, env.rs, heap.rs, or error.rs.\n- Reverted unintentional change to value.rs after realization of boundary rules.\n\nVerify with cargo test -p core-eval and cargo clippy -p core-eval.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/10",
+          "additions": 315,
+          "deletions": 54,
+          "mergedAt": "2026-02-17T18:22:43Z",
+          "closedAt": "2026-02-17T18:22:43Z"
+        }
+      ],
+      "additions": 315,
+      "deletions": 54,
+      "status": "merged"
+    },
+    {
+      "id": "main.fix-gc-audit",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "fix-gc-audit",
+      "prs": [
+        {
+          "number": 57,
+          "title": "Fix GC audit test failures for Case/Join safepoints",
+          "body": "This PR fixes the `gc_audit` test failures by ensuring that stack map declarations for heap pointers are correctly propagated across block boundaries and into nested contexts.\n\n### Changes:\n- **`tidepool-codegen/src/emit/mod.rs`**: Added `declare_env` to re-declare environment heap pointers at block boundaries.\n- **`tidepool-codegen/src/emit/case.rs`**: Integrated `declare_env` into case alternatives and merge blocks.\n- **`tidepool-codegen/src/emit/join.rs`**: Integrated `declare_env` into join RHS and merge blocks.\n- **`tidepool-codegen/src/emit/expr.rs`**: Integrated `declare_env` into `App` emission and added missing stack map declarations for runtime error results.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/57",
+          "additions": 25,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T05:07:04Z",
+          "closedAt": "2026-02-20T05:07:04Z"
+        }
+      ],
+      "additions": 25,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.frame-and-utils",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "frame-and-utils",
+      "prs": [
+        {
+          "number": 5,
+          "title": "Implement core-repr utilities: free_vars, subst, alpha_eq",
+          "body": "This PR implements free variable collection, capture-avoiding substitution, and alpha-equivalence for the CoreFrame and CoreExpr types in the core-repr crate.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/5",
+          "additions": 1405,
+          "deletions": 1,
+          "mergedAt": "2026-02-17T06:16:20Z",
+          "closedAt": "2026-02-17T06:16:20Z"
+        }
+      ],
+      "additions": 1405,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.gc-compact",
+      "parent": "main.core-heap",
+      "depth": 2,
+      "label": "gc-compact",
+      "prs": [
+        {
+          "number": 21,
+          "title": "Implement copying GC: trace and compact phases",
+          "body": "Implemented the trace and compact phases for the copying GC in core-heap. Includes ForwardingTable for ThunkId mapping and recursive Value/Env rewriting. Verified with comprehensive tests.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/21",
+          "additions": 307,
+          "deletions": 197,
+          "mergedAt": "2026-02-17T19:40:38Z",
+          "closedAt": "2026-02-17T19:40:38Z"
+        }
+      ],
+      "additions": 307,
+      "deletions": 197,
+      "status": "merged"
+    },
+    {
+      "id": "main.gc-trace",
+      "parent": "main.core-heap",
+      "depth": 2,
+      "label": "gc-trace",
+      "prs": [
+        {
+          "number": 20,
+          "title": "feat(core-heap): implement root enumeration and transitive marking for copying GC",
+          "body": "Implemented root enumeration and transitive marking for the copying GC in core-heap.\n\nThis pure implementation correctly identifies all reachable thunks from a set of roots, handling:\n- Cycles\n- Shared objects (diamond patterns)\n- BlackHole state (GC-visible)\n- Transitive trace through environments and constructor fields\n\nAdded `children_of` and `collect_thunk_refs` to `ArenaHeap` to support the trace process.\nComprehensive unit tests verify the correctness of the `ForwardingTable` and transitive closure computation.\n\nAll `core-heap` tests pass and clippy is clean.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/20",
+          "additions": 277,
+          "deletions": 1,
+          "mergedAt": "2026-02-17T19:35:45Z",
+          "closedAt": "2026-02-17T19:35:45Z"
+        }
+      ],
+      "additions": 277,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.haskell-harness",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "haskell-harness",
+      "prs": [
+        {
+          "number": 7,
+          "title": "test(core-repr): integration tests for harness CBOR output",
+          "body": "## Summary\n- Adds integration tests verifying Rust `read_cbor` successfully parses `.cbor` files produced by the Haskell `tidepool-harness`\n- Commits the `.cbor` test fixtures generated from `test/Identity.hs`\n\n## Tests\n- `test_read_harness_identity_cbor`: identity.cbor (2 nodes: Var + Lam) parses correctly\n- `test_read_harness_apply_cbor`: apply.cbor (5 nodes: 2 Var + App + 2 Lam) parses correctly\n\n## Verification\n- `cargo test -p core-repr` — 54/54 pass\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/7",
+          "additions": 48,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T08:57:19Z",
+          "closedAt": "2026-02-17T08:57:19Z"
+        }
+      ],
+      "additions": 48,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.haskell-harness-impl",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "haskell-harness-impl",
+      "prs": [
+        {
+          "number": 6,
+          "title": "feat(haskell): implement GHC 9.12 harness with CBOR serialization",
+          "body": "This PR implements the Haskell harness for Tidepool, providing a pipeline to translate GHC Core (GHC 9.12) into a flat node array and serialize it to CBOR.\n\n### Key Features:\n- **GHC 9.12 Pipeline**: Parses, typechecks, and desugars Haskell source files into simplified Core.\n- **Translation Layer**: Translates `CoreExpr` to a flat array of nodes with type erasure and constructor/primop saturation.\n- **CBOR Serialization**: Matches the exact wire format expected by the Rust `read_cbor` implementation.\n- **Metadata Extraction**: Collects and serializes DataCon metadata.\n\n### Deliverables:\n- `haskell/src/Tidepool/GhcPipeline.hs`\n- `haskell/src/Tidepool/Translate.hs`\n- `haskell/src/Tidepool/CborEncode.hs`\n- `haskell/app/Main.hs`\n- `haskell/tidepool-harness.cabal`\n- `haskell/cabal.project`\n- `haskell/test/Identity.hs` (Test input)\n\n### Verification:\n- Built successfully with `cabal build`.\n- Successfully processed `test/Identity.hs` and `test/Types.hs` (temp file used for verification), producing valid `.cbor` files.\n- Verified `meta.cbor` contains expected DataCon metadata.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/6",
+          "additions": 517,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T08:29:20Z",
+          "closedAt": "2026-02-17T08:29:20Z"
+        }
+      ],
+      "additions": 517,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.haskell-macro",
+      "parent": "main.core-bridge",
+      "depth": 2,
+      "label": "haskell-macro",
+      "prs": [
+        {
+          "number": 27,
+          "title": "feat(tidepool-macro): implement haskell_eval! proc-macro",
+          "body": "Implement haskell_eval! proc-macro for embedding and evaluating CBOR-serialized Haskell Core.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/27",
+          "additions": 99,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T21:52:22Z",
+          "closedAt": "2026-02-17T21:52:22Z"
+        }
+      ],
+      "additions": 99,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.heap-arena",
+      "parent": "main.core-heap",
+      "depth": 2,
+      "label": "heap-arena",
+      "prs": [
+        {
+          "number": 15,
+          "title": "feat(core-heap): ArenaHeap and HeapObject manual memory layout",
+          "body": "Implement the core-heap crate with a bumpalo-backed ArenaHeap and the HeapObject manual memory layout as specified in decisions.md.\n\n### Changes:\n- **core-heap/src/layout.rs**: Defined tag constants and unsafe accessors (read_tag, read_size, write_header) for the HeapObject header (8-byte aligned).\n- **core-heap/src/arena.rs**: Implemented ArenaHeap with:\n  - bumpalo nursery for raw allocation.\n  - Requested bytes tracking via AtomicUsize (to respect nursery_limit).\n  - Heap trait implementation for thunk management (compatible with the current interpreter).\n- **Tests**: Added comprehensive tests for layout roundtrips, 8-byte alignment, nursery capacity/exhaustion, and the Heap trait.\n\n### Boundary Compliance:\n- HeapObject is a manual layout (tag at 0, size at 1).\n- Variable-size objects: size is always read from header.\n- 8-byte alignment for all allocations.\n- No HashMap for lookups (Vec indexed by ThunkId).\n- Documented safety invariants for unsafe accessors.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/15",
+          "additions": 335,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T18:54:47Z",
+          "closedAt": "2026-02-17T18:54:47Z"
+        }
+      ],
+      "additions": 335,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.issue-64.desugar-eqstring-take",
+      "parent": "main.issue-64",
+      "depth": 2,
+      "label": "desugar-eqstring-take",
+      "prs": [
+        {
+          "number": 68,
+          "title": "feat: desugar eqString and $wunsafeTake",
+          "body": "Fixes #64. Implements hardcoded desugarings for eqString and $wunsafeTake in Translate.hs, adds test cases, and regenerates CBOR fixtures.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/68",
+          "additions": 163,
+          "deletions": 4,
+          "mergedAt": "2026-02-20T12:10:27Z",
+          "closedAt": "2026-02-20T12:10:28Z"
+        }
+      ],
+      "additions": 163,
+      "deletions": 4,
+      "status": "merged"
+    },
+    {
+      "id": "main.issue-64.expand-primops",
+      "parent": "main.issue-64",
+      "depth": 2,
+      "label": "expand-primops",
+      "prs": [
+        {
+          "number": 69,
+          "title": "feat: expand PrimOp coverage for Tier 2-3 operations",
+          "body": "Expands PrimOp coverage from ~35 to ~76 operations across Tiers 2-3. Fixes the indexCharOffAddr# crash that blocks string literal operations. Corrected GHC 9.12 constructor names in Translate.hs.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/69",
+          "additions": 569,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T12:10:38Z",
+          "closedAt": "2026-02-20T12:10:38Z"
+        }
+      ],
+      "additions": 569,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.mcp-mature",
+      "parent": "main.mcp",
+      "depth": 2,
+      "label": "mcp-mature",
+      "prs": [
+        {
+          "number": 60,
+          "title": "feat(mcp): structured JSON output and compile_haskell tool",
+          "body": "This PR updates the MCP server to use structured JSON output via EvalResult::to_json() and adds a compile_haskell tool that returns metadata without execution.\n\n- Updated run_haskell to use structured output.\n- Added compile_haskell tool for metadata-only compilation.\n- Added serialization tests for CompileHaskellRequest.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/60",
+          "additions": 141,
+          "deletions": 45,
+          "mergedAt": "2026-02-20T07:16:36Z",
+          "closedAt": "2026-02-20T07:16:36Z"
+        }
+      ],
+      "additions": 141,
+      "deletions": 45,
+      "status": "merged"
+    },
+    {
+      "id": "main.pipeline-errors",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "pipeline-errors",
+      "prs": [
+        {
+          "number": 66,
+          "title": "refactor(codegen): convert pipeline panics to Results",
+          "body": "This PR converts various panics in the `tidepool-codegen` pipeline and heap bridge to `Result` types.\n\nKey changes:\n- Introduced `PipelineError` for `CodegenPipeline` methods.\n- Propagated `PipelineError` through `JitError` and `EmitError`.\n- Updated `bump_alloc_from_vmctx` to return null on nursery exhaustion instead of panicking.\n- Updated `value_to_heap` and the effect machine's `alloc_con` to handle allocation failure.\n- Updated all integration tests in `tidepool-codegen` to handle the new `Result` return types.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/66",
+          "additions": 117,
+          "deletions": 59,
+          "mergedAt": "2026-02-20T11:51:04Z",
+          "closedAt": "2026-02-20T11:51:04Z"
+        }
+      ],
+      "additions": 117,
+      "deletions": 59,
+      "status": "merged"
+    },
+    {
+      "id": "main.pre-publish",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "pre-publish",
+      "prs": [
+        {
+          "number": 52,
+          "title": "Pre-publish workspace migration: rename core-* to tidepool-*",
+          "body": "This PR implements steps 1-7 of `PRE_PUBLISH_PLAN.md`, preparing the workspace for publication on crates.io.\n\n### Changes:\n- Renamed all `core-*` crates to `tidepool-*` (repr, eval, heap, optimize, bridge, bridge-derive, effect) and `codegen` to `tidepool-codegen`.\n- Renamed all crate directories using `git mv`.\n- Updated all import paths and internal references from `core_*` to `tidepool_*` across the codebase.\n- Updated all `Cargo.toml` files with new names, path dependencies, versions, and metadata (license, repository, description).\n- Created a `tidepool` facade crate that re-exports public APIs.\n- Added MIT and Apache-2.0 license files at the repo root.\n- Marked testing and example crates as non-publishable (`publish = false`).\n- Fixed minor test regressions in `tidepool-codegen` (GC audits) and `tidepool-tide` (parser expectations) caused by the migration and desugaring changes.\n\nVerified with `cargo check --workspace` and `cargo test --workspace`. All tests passed.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/52",
+          "additions": 1095,
+          "deletions": 802,
+          "mergedAt": "2026-02-20T03:51:25Z",
+          "closedAt": "2026-02-20T03:51:25Z"
+        }
+      ],
+      "additions": 1095,
+      "deletions": 802,
+      "status": "merged"
+    },
+    {
+      "id": "main.pretty",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "pretty",
+      "prs": [
+        {
+          "number": 3,
+          "title": "pretty: implement pretty printer for CoreExpr",
+          "body": "Implemented pretty-printing for `CoreExpr` in the `core-repr` crate, covering all 11 variants, parenthesization rules, lambda chaining, and PrimOp mapping. Verified with tests and clippy.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/3",
+          "additions": 448,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T06:15:30Z",
+          "closedAt": "2026-02-17T06:15:30Z"
+        }
+      ],
+      "additions": 448,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.runtime-engine",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "runtime-engine",
+      "prs": [
+        {
+          "number": 48,
+          "title": "feat(runtime): implement compile_and_run, caching, and RuntimeError",
+          "body": "## Summary\n- Implemented `compile_and_run` in `tidepool-runtime` for unified Haskell compilation and JIT execution.\n- Added a caching mechanism in `src/cache.rs` using `blake3` hashes to store CBOR output and metadata, significantly speeding up repeated runs.\n- Introduced `RuntimeError` to unify `CompileError` and `JitError`.\n- Re-exported `Value`, `JitError`, and `DispatchEffect` from the crate root.\n- Updated dependencies to include `core-eval`, `core-effect`, `codegen`, and `blake3`.\n\n## Verification\n- `cargo check -p tidepool-runtime` passes.\n- Caching logic follows XDG conventions for directory locations.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/48",
+          "additions": 296,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T02:27:53Z",
+          "closedAt": "2026-02-20T02:27:53Z"
+        }
+      ],
+      "additions": 296,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.runtime-tests",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "runtime-tests",
+      "prs": [
+        {
+          "number": 49,
+          "title": "test(runtime): add integration tests for compile and run pipeline",
+          "body": "Adds integration tests in `tidepool-runtime/tests/integration.rs` (all `#[ignore]`) covering:\n- `compile_haskell` identity function\n- `compile_and_run` with literals (boxed vs unboxed)\n- `compile_and_run` with arithmetic\n- `compile_haskell` error reporting\n- Caching consistency check",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/49",
+          "additions": 69,
+          "deletions": 1,
+          "mergedAt": "2026-02-20T02:48:16Z",
+          "closedAt": "2026-02-20T02:48:16Z"
+        }
+      ],
+      "additions": 69,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.serial",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "serial",
+      "prs": [
+        {
+          "number": 4,
+          "title": "Implement CBOR serialization for CoreExpr",
+          "body": "This PR implements CBOR serialization (read and write) for CoreExpr in the core-repr crate using the ciborium crate.\n\nKey changes:\n- Added ciborium 0.2 dependency to core-repr.\n- Implemented write_cbor in core-repr/src/serial/write.rs.\n- Implemented read_cbor in core-repr/src/serial/read.rs.\n- Added roundtrip tests for all CoreFrame variants and PrimOpKind variants in core-repr/src/serial/mod.rs.\n- All tests pass and clippy is clean.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/4",
+          "additions": 804,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T06:15:03Z",
+          "closedAt": "2026-02-17T06:15:03Z"
+        }
+      ],
+      "additions": 804,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.structured-errors",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "structured-errors",
+      "prs": [
+        {
+          "number": 55,
+          "title": "codegen: structured JitError variants",
+          "body": "This PR replaces the opaque `String` payloads in `JitError::Compilation` and `JitError::HeapBridge` with structured `EmitError` and `BridgeError` variants. This preserves error information for callers and improves the `Display` implementation.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/55",
+          "additions": 8,
+          "deletions": 8,
+          "mergedAt": "2026-02-20T05:07:00Z",
+          "closedAt": "2026-02-20T05:07:00Z"
+        }
+      ],
+      "additions": 8,
+      "deletions": 8,
+      "status": "merged"
+    },
+    {
+      "id": "main.testing-benchmarks",
+      "parent": "main.core-testing",
+      "depth": 2,
+      "label": "testing-benchmarks",
+      "prs": [
+        {
+          "number": 28,
+          "title": "Implement criterion benchmarks",
+          "body": "Implement criterion benchmarks for eval, optimize, and heap in core-testing/benches/.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/28",
+          "additions": 411,
+          "deletions": 6,
+          "mergedAt": "2026-02-17T21:52:07Z",
+          "closedAt": "2026-02-17T21:52:07Z"
+        }
+      ],
+      "additions": 411,
+      "deletions": 6,
+      "status": "merged"
+    },
+    {
+      "id": "main.testing-generators",
+      "parent": "main.core-testing",
+      "depth": 2,
+      "label": "testing-generators",
+      "prs": [
+        {
+          "number": 9,
+          "title": "feat(core-testing): scaffold crate and implement proptest generators",
+          "body": "This PR scaffolds the  crate and implements proptest generators for well-typed  values, covering all 11  variants.\n\n### Changes\n- Created  crate and added to workspace.\n- Implemented  internal representation for type-guided generation.\n- Implemented  strategy in .\n- Implemented  in  for efficient tree construction.\n- Provided  for common Haskell types.\n- Added tests to verify:\n    - All 11  variants are generated (coverage test).\n    - All generated trees are well-formed (valid indices).\n    - All generated trees survive CBOR roundtrip.\n\n### Verification\n- \nrunning 3 tests\ntest gen::strategy::tests::generated_exprs_are_well_formed ... ok\ntest gen::strategy::tests::generated_exprs_roundtrip_cbor ... ok\ntest gen::strategy::tests::variant_coverage ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.48s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s passes with 1000 cases.\n-  passes.\n\nNote: Stack overflow in variant coverage test was addressed by increasing thread stack size and slightly reducing default generation depth.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/9",
+          "additions": 597,
+          "deletions": 6,
+          "mergedAt": "2026-02-17T17:44:34Z",
+          "closedAt": "2026-02-17T17:44:34Z"
+        }
+      ],
+      "additions": 597,
+      "deletions": 6,
+      "status": "merged"
+    },
+    {
+      "id": "main.testing-oracle",
+      "parent": "main.core-testing",
+      "depth": 2,
+      "label": "testing-oracle",
+      "prs": [
+        {
+          "number": 22,
+          "title": "feat(core-testing): implement differential testing oracle with 36 tests",
+          "body": "Implemented differential testing oracle in core-testing/src/oracle.rs with 36 programmatic test cases covering all 11 CoreFrame variants. All tests are passing. Verified with cargo test -p core-testing.\n\nSummary:\n- Created core-testing/src/oracle.rs with helper functions eval_expr and eval_cbor and 36 tests.\n- Updated core-testing/Cargo.toml to include core-eval as a dependency.\n- Updated core-testing/src/lib.rs to export the oracle module.\n- All 11 CoreFrame variants exercised.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/22",
+          "additions": 671,
+          "deletions": 1,
+          "mergedAt": "2026-02-17T19:36:48Z",
+          "closedAt": "2026-02-17T19:36:48Z"
+        }
+      ],
+      "additions": 671,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.tide-haskell",
+      "parent": "main.tide",
+      "depth": 2,
+      "label": "tide-haskell",
+      "prs": [
+        {
+          "number": 44,
+          "title": "feat: add Tide REPL Haskell core evaluator and effects",
+          "body": "This PR implements the core Haskell evaluator and effect system for the Tide REPL.\n\nKey features:\n- **Types**:  and  definitions.\n- **Effects**:  GADTs for , , , , and .\n- **Evaluator**: Pure Haskell evaluator using manual recursion to avoid unsupported GHC primops.\n- **REPL Loop**: Integrated REPL loop for evaluating expressions and displaying results.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/44",
+          "additions": 271,
+          "deletions": 0,
+          "mergedAt": "2026-02-18T23:47:34Z",
+          "closedAt": "2026-02-18T23:47:34Z"
+        }
+      ],
+      "additions": 271,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.tide-parser",
+      "parent": "main.tide",
+      "depth": 2,
+      "label": "tide-parser",
+      "prs": [
+        {
+          "number": 45,
+          "title": "feat(examples): add Tide parser and AST for Tide REPL",
+          "body": "Implemented Subtree B of the Tide parser task, creating a Rust-based Pest parser and TExpr AST for the Tide expression language.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/45",
+          "additions": 828,
+          "deletions": 0,
+          "mergedAt": "2026-02-18T23:47:32Z",
+          "closedAt": "2026-02-18T23:47:32Z"
+        }
+      ],
+      "additions": 828,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.tidepool-mcp",
+      "parent": "main.mcp",
+      "depth": 2,
+      "label": "tidepool-mcp",
+      "prs": [
+        {
+          "number": 50,
+          "title": "feat: implement tidepool-mcp library crate",
+          "body": "This PR adds the tidepool-mcp library crate, which provides an MCP server for compiling and running Haskell code via Tidepool. It is generic over effect handlers and uses the stdio transport.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/50",
+          "additions": 656,
+          "deletions": 3,
+          "mergedAt": "2026-02-20T03:07:45Z",
+          "closedAt": "2026-02-20T03:07:45Z"
+        }
+      ],
+      "additions": 656,
+      "deletions": 3,
+      "status": "merged"
+    },
+    {
+      "id": "main.tidepool-runtime",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "tidepool-runtime",
+      "prs": [
+        {
+          "number": 47,
+          "title": "feat(runtime): implement tidepool-runtime with compile_haskell",
+          "body": "Provides a  function that shells out to  at runtime to compile Haskell source strings into Tidepool Core and metadata.\n\n- Handles temporary workspace management via .\n- Executes the extractor process and reads back results.\n- Deserializes results into  and  ready for JIT compilation.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/47",
+          "additions": 175,
+          "deletions": 1,
+          "mergedAt": "2026-02-20T01:32:34Z",
+          "closedAt": "2026-02-20T01:32:34Z"
+        }
+      ],
+      "additions": 175,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.types-and-datacon",
+      "parent": "main.core-repr",
+      "depth": 2,
+      "label": "types-and-datacon",
+      "prs": [
+        {
+          "number": 2,
+          "title": "Implement DataCon metadata and DataConTable",
+          "body": "This PR implements the `DataCon` struct, `SrcBang` enum, and `DataConTable` for the `core-repr` crate, as specified in the task.\n\n### Changes:\n- Added `core-repr/src/datacon.rs` with `DataCon` and `SrcBang`.\n- Added `core-repr/src/datacon_table.rs` with `DataConTable` and unit tests.\n- Updated `core-repr/src/lib.rs` to export the new modules.\n\n### Verification:\n- `cargo test -p core-repr -- datacon`: All 6 tests passed.\n- `cargo clippy -p core-repr -- -D warnings`: No warnings found.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/2",
+          "additions": 202,
+          "deletions": 0,
+          "mergedAt": "2026-02-17T06:14:12Z",
+          "closedAt": "2026-02-17T06:14:12Z"
+        }
+      ],
+      "additions": 202,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.value-display",
+      "parent": "main.polish",
+      "depth": 2,
+      "label": "value-display",
+      "prs": [
+        {
+          "number": 53,
+          "title": "feat: implement Display for Value",
+          "body": "This PR adds a human-readable `Display` implementation for the `Value` enum and `ThunkId` in `tidepool-eval`. This improves the output in the REPL and MCP server by replacing the verbose `Debug` output with cleaner, Haskell-like representations.\\n\\nChanges:\\n- `Lit(LitInt(42))` -> `42`\\n- `Con(id, fields)` -> `<Con#id> field1 field2`\\n- `Closure` -> `<closure>`\\n- `ThunkRef(id)` -> `<thunk#id>`\\n- `JoinCont` -> `<join>`\\n- `ConFun` -> `<partial Con#id n/arity>`\\n\\nVerified with existing and new tests.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/53",
+          "additions": 99,
+          "deletions": 0,
+          "mergedAt": "2026-02-20T05:06:56Z",
+          "closedAt": "2026-02-20T05:06:56Z"
+        }
+      ],
+      "additions": 99,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "prelude-closure",
+      "parent": "main.runtime",
+      "depth": 2,
+      "label": "prelude-closure",
+      "prs": [
+        {
+          "number": 61,
+          "title": "Improve external reference resolution for Prelude functions",
+          "body": "This PR improves the Haskell extractor's external reference resolver by adding a fallback to  when  returns . This ensures that definitions for external Prelude functions (like , , etc.) are correctly captured and included in the serialized CBOR, fixing  errors in the evaluator. Added 10 new test bindings to  and corresponding Rust tests in  to verify the fix.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/61",
+          "additions": 86,
+          "deletions": 21,
+          "mergedAt": "2026-02-20T10:16:57Z",
+          "closedAt": "2026-02-20T10:16:57Z"
+        }
+      ],
+      "additions": 86,
+      "deletions": 21,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter.case",
+      "parent": "main.codegen.emitter",
+      "depth": 3,
+      "label": "case",
+      "prs": [
+        {
+          "number": 33,
+          "title": "feat(codegen): implement Case dispatch for Cranelift emitter",
+          "body": "Implement Case dispatch for the CoreExpr to Cranelift IR emitter.\n\n- **DataAlt Dispatch:** Uses  for O(1) constructor matching based on con_tag.\n- **LitAlt Dispatch:** Uses a sequential comparison chain for literal values.\n- **GC Safety:** Explicitly declares stack maps for all heap pointer SSA values, including block parameters and loaded fields.\n- **Integration Tests:** Comprehensive tests in  covering constructor matching, field binding, literal matching, default branches, and nested case expressions.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/33",
+          "additions": 455,
+          "deletions": 1,
+          "mergedAt": "2026-02-18T09:48:30Z",
+          "closedAt": "2026-02-18T09:48:30Z"
+        }
+      ],
+      "additions": 455,
+      "deletions": 1,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter.expr",
+      "parent": "main.codegen.emitter",
+      "depth": 3,
+      "label": "expr",
+      "prs": [
+        {
+          "number": 31,
+          "title": "feat(codegen): implement CoreExpr to Cranelift IR emitter",
+          "body": "Implement the codegen/src/emit module for compiling Core expressions to Cranelift IR. Supports Lit, Var, Con, PrimOp, Lam, App, LetNonRec, and LetRec (recursive lambdas) with manual heap layout and stack map tracking.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/31",
+          "additions": 1403,
+          "deletions": 9,
+          "mergedAt": "2026-02-18T09:24:12Z",
+          "closedAt": "2026-02-18T09:24:12Z"
+        }
+      ],
+      "additions": 1403,
+      "deletions": 9,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter.gc-audit",
+      "parent": "main.codegen.emitter",
+      "depth": 3,
+      "label": "gc-audit",
+      "prs": [
+        {
+          "number": 37,
+          "title": "audit(codegen): GC stack map correctness verification",
+          "body": "This PR contains the results of a comprehensive audit of all emit modules for GC stack map correctness.\n\n### Changes:\n- Audited `expr.rs`, `case.rs`, `join.rs`, and `primop.rs`.\n- Verified that every heap-ptr SSA value has `declare_value_needs_stack_map`.\n- Verified that every block param carrying a heap pointer is re-declared.\n- Added `codegen/tests/gc_audit.rs` with tests for App, Case, and Join safepoints verifying stack map generation.\n\nAll existing tests pass, and new audit tests confirm proper stack map tracking for live heap pointers across safepoints.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/37",
+          "additions": 182,
+          "deletions": 0,
+          "mergedAt": "2026-02-18T10:18:39Z",
+          "closedAt": "2026-02-18T10:18:39Z"
+        }
+      ],
+      "additions": 182,
+      "deletions": 0,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter.gc-frame-walker",
+      "parent": "main.codegen.emitter",
+      "depth": 3,
+      "label": "gc-frame-walker",
+      "prs": [
+        {
+          "number": 38,
+          "title": "codegen: implement GC frame walker",
+          "body": "This PR implements the GC frame walker for x86-64.\n\nKey changes:\n- Created `codegen/src/gc/frame_walker.rs` with `walk_frames` and `rewrite_roots`.\n- Updated `gc_trigger` in `codegen/src/host_fns.rs` to use the real frame walker.\n- The frame walker uses a robust approach: it searches the stack from RSP to find the first JIT frame, handling cases where the host code might not have established a frame pointer.\n- Added a thread-local mechanism to pass `StackMapRegistry` to `gc_trigger`.\n- Added a GC test hook for intercepting and rewriting roots in tests.\n- Comprehensive end-to-end tests in `codegen/tests/gc_frame_walker.rs` verifying root collection and rewriting.\n- Fixed several clippy warnings in modified files.\n\nAll existing tests and new tests pass.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/38",
+          "additions": 438,
+          "deletions": 14,
+          "mergedAt": "2026-02-18T17:41:30Z",
+          "closedAt": "2026-02-18T17:41:30Z"
+        }
+      ],
+      "additions": 438,
+      "deletions": 14,
+      "status": "merged"
+    },
+    {
+      "id": "main.codegen.emitter.join",
+      "parent": "main.codegen.emitter",
+      "depth": 3,
+      "label": "join",
+      "prs": [
+        {
+          "number": 32,
+          "title": "feat(codegen): implement Join and Jump IR emission",
+          "body": "Implement Join/Jump for the CoreExpr → Cranelift IR emitter.\n\n- Created codegen/src/emit/join.rs with emit_join and emit_jump functions.\n- Wired Join/Jump arms in codegen/src/emit/expr.rs to call the new emission functions.\n- Added public mod join to codegen/src/emit/mod.rs.\n- Implemented integration tests in codegen/tests/emit_join.rs covering basic join, two params, fallthrough, nested joins with shadowing, and heap pointers.\n- Ensured all join block parameters and merge block results are declared as stack map values.\n- Verified all tests pass in codegen crate.",
+          "state": "merged",
+          "url": "https://github.com/tidepool-heavy-industries/tidepool/pull/32",
+          "additions": 274,
+          "deletions": 3,
+          "mergedAt": "2026-02-18T09:41:05Z",
+          "closedAt": "2026-02-18T09:41:05Z"
+        }
+      ],
+      "additions": 274,
+      "deletions": 3,
+      "status": "merged"
+    }
+  ]
+};</script>
+</head>
+<body>
+<div id="header">
+  <span class="title">Tidepool Build Story</span>
+  <span class="stat"><span class="stat-val" id="s-n">0</span> branches</span>
+  <span class="stat"><span class="stat-val" id="s-p">0</span> PRs</span>
+  <span class="stat"><span style="color:#3fb950" class="stat-val" id="s-a">+0</span> / <span style="color:#f85149" class="stat-val" id="s-d">-0</span></span>
+  <span class="stat" style="color:#484f58"><span id="s-w">0</span> waves &middot; <span id="s-days">0</span> days</span>
+</div>
+<div id="breadcrumb"><span>main</span></div>
+<div id="main-wrap">
+  <svg id="chart" width="100%" height="100%"></svg>
+  <div id="detail">
+    <div id="detail-content">
+      <h2 style="color:#484f58">Build Story</h2>
+      <p class="meta">Click a block to expand its phase. Click again to collapse.</p>
+      <p style="font-size:11px;color:#30363d;line-height:1.6;margin-top:12px">
+        Depth flows left &rarr; right. Siblings stack top &rarr; bottom.<br>
+        Color = merge wave (cyan &rarr; purple &rarr; gold).
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+const data = window.__GRAPH_DATA__;
+
+const nodeById = {};
+data.nodes.forEach(n => { nodeById[n.id] = n; });
+
+d3.select('#s-n').text(data.nodes.length);
+d3.select('#s-p').text(data.meta.pr_count);
+d3.select('#s-a').text('+' + data.stats.total_additions.toLocaleString());
+d3.select('#s-d').text('-' + data.stats.total_deletions.toLocaleString());
+
+// === Compute wave numbers from merge timestamps (30-min gap clustering) ===
+const allMerges = data.nodes.flatMap(n => n.prs.filter(p => p.mergedAt).map(p => +new Date(p.mergedAt)));
+allMerges.sort((a, b) => a - b);
+const waveGap = 30 * 60 * 1000; // 30 minutes
+const waveBounds = []; // start times per wave
+allMerges.forEach(t => {
+  if (!waveBounds.length || t - waveBounds[waveBounds.length - 1].last > waveGap) {
+    waveBounds.push({ start: t, last: t });
+  } else {
+    waveBounds[waveBounds.length - 1].last = t;
+  }
+});
+function waveOf(node) {
+  const pr = node.prs && node.prs.find(p => p.mergedAt);
+  if (!pr) return null;
+  const t = +new Date(pr.mergedAt);
+  for (let i = 0; i < waveBounds.length; i++) {
+    if (t <= waveBounds[i].last + waveGap) return i + 1;
+  }
+  return waveBounds.length;
+}
+data.nodes.forEach(n => { n.wave = waveOf(n); });
+const totalWaves = waveBounds.length;
+d3.select('#s-w').text(totalWaves);
+if (allMerges.length >= 2) {
+  const daySpan = Math.max(1, Math.ceil((allMerges[allMerges.length - 1] - allMerges[0]) / (24 * 60 * 60 * 1000)));
+  d3.select('#s-days').text(daySpan);
+} else {
+  d3.select('#s-days').text(allMerges.length ? '1' : '0');
+}
+
+// === Build tree from flat node list ===
+function buildTree() {
+  const treeNodes = {};
+  const parentIds = new Set(data.nodes.map(n => n.parent).filter(Boolean));
+  data.nodes.forEach(n => {
+    treeNodes[n.id] = { name: n.label, id: n.id, value: n.depth > 0 && !parentIds.has(n.id) ? 1 : 0, wave: n.wave, nodeData: n, children: [] };
+  });
+  data.nodes.forEach(n => {
+    if (n.parent && treeNodes[n.parent]) {
+      treeNodes[n.parent].children.push(treeNodes[n.id]);
+    }
+  });
+  // Sort children by wave then name
+  Object.values(treeNodes).forEach(t => {
+    t.children.sort((a, b) => (a.wave || 0) - (b.wave || 0) || a.name.localeCompare(b.name));
+    if (!t.children.length) delete t.children;
+  });
+  return treeNodes['main'];
+}
+
+// === Layout: rotated partition (depth = left→right, siblings = top→bottom) ===
+const root = d3.hierarchy(buildTree())
+  .sum(d => d.value || 0)
+  .each(d => { d._wave = d.data.wave || (d.parent ? d.parent._wave : null); });
+
+const svg = d3.select('#chart');
+const detailW = 420;
+const headerH = document.getElementById('header').offsetHeight + document.getElementById('breadcrumb').offsetHeight;
+const W = Math.max(400, window.innerWidth - detailW);
+const H = Math.max(300, window.innerHeight - headerH);
+
+// partition: x0/x1 = sibling split (we map to screen Y), y0/y1 = depth (we map to screen X)
+d3.partition().size([H, W]).padding(1.5).round(true)(root);
+
+// Compress root band: main gets a thin strip, rest expands to fill
+const rootW = 120; // spine strip for phase labels
+const origDepth = root.y1 - root.y0;
+const scale = (W - rootW) / (W - origDepth);
+root.each(d => {
+  if (d.depth === 0) {
+    d.y1 = rootW;
+  } else {
+    d.y0 = rootW + (d.y0 - origDepth) * scale;
+    d.y1 = rootW + (d.y1 - origDepth) * scale;
+  }
+});
+
+// === Insert gaps for direct commits between wave groups ===
+const TICK_H = 2;
+const TICK_INSET = 2;
+const MAX_GAP_RATIO = 0.4;
+const allGapTicks = []; // collected during gap insertion for rendering
+
+function insertGaps(node) {
+  if (!node.children || !node.data.nodeData.directCommits) return;
+  const commits = node.data.nodeData.directCommits;
+  if (!commits.length) return;
+
+  // Identify wave groups among direct children (sorted by wave already)
+  const groups = []; // { children: [...], mergeTime }
+  let gStart = 0;
+  for (let i = 1; i <= node.children.length; i++) {
+    if (i === node.children.length || node.children[i]._wave !== node.children[i-1]._wave) {
+      const members = node.children.slice(gStart, i);
+      groups.push({
+        startIdx: gStart, endIdx: i - 1,
+        children: members,
+        mergeTime: Math.max(...members.map(c => {
+          const pr = c.data.nodeData.prs && c.data.nodeData.prs.find(p => p.mergedAt);
+          return pr ? +new Date(pr.mergedAt) : 0;
+        }))
+      });
+      gStart = i;
+    }
+  }
+
+  // Assign each commit to a gap position
+  // Gap 0 = before first group, Gap k = between group k-1 and k, Gap N = after last group
+  const gapCommits = {};
+  commits.forEach(commit => {
+    const ct = +new Date(commit.timestamp);
+    let pos = groups.length; // default: after last group
+    for (let i = 0; i < groups.length; i++) {
+      if (ct < groups[i].mergeTime) { pos = i; break; }
+    }
+    if (!gapCommits[pos]) gapCommits[pos] = [];
+    gapCommits[pos].push(commit);
+  });
+
+  // Total gap pixels
+  let totalGapPx = 0;
+  for (const pos in gapCommits) totalGapPx += gapCommits[pos].length * TICK_H;
+
+  const range = node.x1 - node.x0;
+  if (totalGapPx > range * MAX_GAP_RATIO || range < 10) return;
+
+  // Scale factor to compress children
+  const sf = (range - totalGapPx) / range;
+
+  // Build a map: for each child index, the cumulative gap pixels BEFORE that child's group
+  // Walk groups in order, accumulate gap before each
+  let cumGap = 0;
+  const childGapBefore = new Array(node.children.length).fill(0);
+  for (let gi = 0; gi < groups.length; gi++) {
+    // Gap before this group
+    if (gapCommits[gi]) cumGap += gapCommits[gi].length * TICK_H;
+    for (let ci = groups[gi].startIdx; ci <= groups[gi].endIdx; ci++) {
+      childGapBefore[ci] = cumGap;
+    }
+  }
+  // Gap after last group (for tick collection only)
+  const totalCumGap = cumGap + (gapCommits[groups.length] ? gapCommits[groups.length].length * TICK_H : 0);
+
+  // Transform all descendants: new_x = node.x0 + (old_x - node.x0) * sf + gapOffset
+  // The gapOffset for a descendant is determined by which direct child subtree it belongs to
+  node.children.forEach((child, ci) => {
+    const gap = childGapBefore[ci];
+    child.each(desc => {
+      desc.x0 = node.x0 + (desc.x0 - node.x0) * sf + gap;
+      desc.x1 = node.x0 + (desc.x1 - node.x0) * sf + gap;
+    });
+  });
+
+  // Collect tick rects for rendering
+  node._gapTicks = [];
+  let gapCum = 0;
+  for (let gi = 0; gi <= groups.length; gi++) {
+    if (!gapCommits[gi]) continue;
+    // Position: just before the first child of group gi (or after last child for final gap)
+    let gapStartX;
+    if (gi < groups.length) {
+      gapStartX = node.children[groups[gi].startIdx].x0 - gapCommits[gi].length * TICK_H;
+    } else {
+      // After last group: position after last child
+      const lastChild = node.children[node.children.length - 1];
+      gapStartX = lastChild.x1;
+    }
+
+    gapCommits[gi].forEach((commit, ti) => {
+      const tick = {
+        parentY0: node.y0,
+        parentY1: node.y1,
+        tickX: gapStartX + ti * TICK_H,
+        parentNode: node,
+        commit: commit,
+      };
+      allGapTicks.push(tick);
+      node._gapTicks.push(tick);
+    });
+  }
+
+  // Recurse top-down: children's coordinates are now finalized by this node's transform
+  if (node.children) node.children.forEach(insertGaps);
+}
+insertGaps(root);
+
+// Snapshot rest-state positions for accordion remap
+root.each(d => {
+  d.orig = { x0: d.x0, x1: d.x1, y0: d.y0, y1: d.y1 };
+});
+allGapTicks.forEach(t => {
+  t.origTickX = t.tickX;
+  t.origParentY0 = t.parentY0;
+  t.origParentY1 = t.parentY1;
+});
+
+// === Color ===
+const waveColor = d3.scaleLinear()
+  .domain([1, Math.ceil(totalWaves * 0.35), Math.ceil(totalWaves * 0.65), totalWaves])
+  .range(['#06b6d4', '#818cf8', '#a855f7', '#f59e0b'])
+  .clamp(true);
+
+function getWave(d) { return d._wave || 1; }
+
+function cellFill(d) {
+  const base = d3.color(waveColor(getWave(d)));
+  let c = d.children ? base.darker(0.2) : base;
+  // Alternate brightness between sequential wave groups
+  if (d._wgIdx !== undefined && d._wgIdx % 2 === 1) {
+    c = d3.color(c).brighter(0.4);
+  }
+  return c.toString();
+}
+
+
+// === Hierarchical wave IDs (e.g., "6.2.1") ===
+function assignWaveIds(parent, prefix) {
+  if (!parent.children) return;
+  // Count distinct wave groups
+  let numGroups = 1;
+  for (let i = 1; i < parent.children.length; i++) {
+    if (parent.children[i]._wave !== parent.children[i-1]._wave) numGroups++;
+  }
+  let groupIdx = 0, prevWave = null;
+  parent.children.forEach(child => {
+    if (child._wave !== prevWave) { groupIdx++; prevWave = child._wave; }
+    child._wgIdx = groupIdx - 1;
+    // Only add sub-number when there are multiple wave groups
+    child._hWave = numGroups > 1
+      ? (prefix ? `${prefix}.${groupIdx}` : `${groupIdx}`)
+      : (prefix || `${groupIdx}`);
+    assignWaveIds(child, child._hWave);
+  });
+}
+assignWaveIds(root, '');
+
+// Collect wave boundary positions (between sequential groups)
+const waveSeps = [];
+root.descendants().filter(d => d.children && d.children.length > 1).forEach(parent => {
+  for (let i = 1; i < parent.children.length; i++) {
+    if (parent.children[i]._wave !== parent.children[i-1]._wave) {
+      waveSeps.push({ child: parent.children[i] });
+    }
+  }
+});
+
+// === Render (rotated: y0→screenX, x0→screenY) ===
+const g = svg.append('g');
+const sepG = g.append('g');
+
+// Draw separator lines at wave boundaries
+const seps = sepG.selectAll('.wave-sep')
+  .data(waveSeps)
+  .join('line')
+  .attr('class', 'wave-sep')
+  .attr('x1', d => d.child.y0)
+  .attr('y1', d => d.child.x0 - 0.75)
+  .attr('x2', d => d.child.y1)
+  .attr('y2', d => d.child.x0 - 0.75)
+  .attr('stroke', '#e2e2e8')
+  .attr('stroke-width', 2)
+  .attr('stroke-opacity', 0.2);
+
+const cell = g.selectAll('.cell')
+  .data(root.descendants())
+  .join('g')
+  .attr('class', 'cell')
+  .attr('transform', d => `translate(${d.y0},${d.x0})`);
+
+const rect = cell.append('rect')
+  .attr('width', d => Math.max(0, d.y1 - d.y0))
+  .attr('height', d => Math.max(0, d.x1 - d.x0))
+  .attr('fill', cellFill)
+  .attr('rx', 2);
+
+// Clip paths so text doesn't bleed
+const clipRect = cell.append('clipPath')
+  .attr('id', (d, i) => `cp${i}`)
+  .append('rect')
+  .attr('width', d => Math.max(0, d.y1 - d.y0 - 4))
+  .attr('height', d => Math.max(0, d.x1 - d.x0));
+
+// Primary label
+const label = cell.append('text')
+  .attr('clip-path', (d, i) => `url(#cp${i})`)
+  .attr('x', 5).attr('y', 13)
+  .attr('font-size', d => d.depth <= 1 ? '11px' : '10px')
+  .attr('font-weight', d => d.depth <= 1 ? '600' : '400')
+  .attr('fill', '#0d1117')
+  .text(d => d.data.name)
+  .style('opacity', d => (d.x1 - d.x0) > 10 && (d.y1 - d.y0) > 20 ? 1 : 0);
+
+// Secondary: PR + additions
+const sub = cell.append('text')
+  .attr('class', 'sub')
+  .attr('clip-path', (d, i) => `url(#cp${i})`)
+  .attr('x', 5).attr('y', 25)
+  .attr('font-size', '9px')
+  .text(d => {
+    const w = d._hWave ? 'W' + d._hWave + '  ' : '';
+    const n = d.data.nodeData;
+    const pr = n && n.prs && n.prs[0] ? '#' + n.prs[0].number + '  ' : '';
+    let add = '';
+    if (n && n.additions) {
+      add = '+' + n.additions.toLocaleString();
+    } else if (d.children) {
+      const sum = d3.sum(d.leaves(), l => (l.data.nodeData ? l.data.nodeData.additions : 0));
+      if (sum > 0) add = '+' + sum.toLocaleString();
+    }
+    return w + pr + add;
+  })
+  .attr('fill', '#0d1117cc')
+  .style('opacity', d => (d.x1 - d.x0) > 26 && (d.y1 - d.y0) > 40 ? 1 : 0);
+
+// === Render commit ticks in gaps ===
+// Commit ticks in gaps (same visual on every parent with directCommits)
+const tickG = g.append('g').attr('class', 'commit-ticks');
+const tickRects = tickG.selectAll('.tick-rect')
+  .data(allGapTicks)
+  .join('rect')
+  .attr('class', 'tick-rect')
+  .attr('x', d => d.parentY0 + TICK_INSET)
+  .attr('y', d => d.tickX)
+  .attr('width', d => Math.max(0, d.parentY1 - d.parentY0 - TICK_INSET * 2))
+  .attr('height', TICK_H - 1)
+  .style('opacity', d => d.tickX < d.parentNode.x0 + 28 ? 0 : 1)
+  .attr('fill', d => d.commit.kind === 'merge' ? '#0d1117' : '#0d1117aa')
+  .attr('rx', 1)
+  .attr('pointer-events', 'none');
+
+// Phase labels in spine (all parents get child labels centered in their depth column)
+const spineLabelData = [];
+root.descendants().filter(d => d.children).forEach(parent => {
+  parent.children.forEach(child => {
+    spineLabelData.push({ child, parent });
+  });
+});
+
+const spineLabels = g.append('g').attr('class', 'spine-labels');
+spineLabels.selectAll('text')
+  .data(spineLabelData)
+  .join('text')
+  .attr('x', d => (d.parent.orig.y0 + d.parent.orig.y1) / 2)
+  .attr('y', d => (d.child.orig.x0 + d.child.orig.x1) / 2)
+  .attr('text-anchor', 'middle')
+  .attr('dominant-baseline', 'middle')
+  .attr('font-size', '9px')
+  .attr('font-weight', '600')
+  .attr('fill', '#0d1117')
+  .attr('pointer-events', 'none')
+  .attr('opacity', d => {
+    const h = d.child.orig.x1 - d.child.orig.x0;
+    const w = d.parent.orig.y1 - d.parent.orig.y0;
+    return h > 14 && w > 30 ? 0.85 : 0;
+  })
+  .text(d => d.child.data.name);
+
+// === Accordion (expand depth-1 phases) ===
+let expandedChild = null;
+const EXPAND_RATIO = 0.6;
+
+function doAccordion(clickedD1) {
+  if (expandedChild === clickedD1) {
+    expandedChild = null;
+  } else {
+    expandedChild = clickedD1;
+  }
+
+  const d1children = root.children || [];
+  const totalOrigRange = root.orig.x1 - root.orig.x0;
+
+  let bands = d1children.map((c, i) => {
+    const bandStart = c.orig.x0;
+    const bandEnd = (i + 1 < d1children.length) ? d1children[i + 1].orig.x0 : root.orig.x1;
+    return { node: c, origStart: bandStart, origEnd: bandEnd, origSize: bandEnd - bandStart };
+  });
+
+  if (expandedChild) {
+    const expandedSize = H * EXPAND_RATIO;
+    const restSize = H - expandedSize;
+    const nonExpandedTotal = totalOrigRange - bands.find(b => b.node === expandedChild).origSize;
+    bands.forEach(b => {
+      if (b.node === expandedChild) {
+        b.targetSize = expandedSize;
+      } else {
+        b.targetSize = nonExpandedTotal > 0 ? (b.origSize / nonExpandedTotal) * restSize : restSize / (bands.length - 1);
+      }
+    });
+  } else {
+    bands.forEach(b => { b.targetSize = b.origSize; });
+  }
+
+  let cumTarget = root.orig.x0;
+  bands.forEach(b => {
+    b.targetStart = cumTarget;
+    b.targetEnd = cumTarget + b.targetSize;
+    cumTarget += b.targetSize;
+  });
+
+  function remapX(origX) {
+    if (origX <= root.orig.x0) return bands[0].targetStart;
+    if (origX >= root.orig.x1) return bands[bands.length - 1].targetEnd;
+    for (const b of bands) {
+      if (origX < b.origEnd || b === bands[bands.length - 1]) {
+        const t = (origX - b.origStart) / b.origSize;
+        return b.targetStart + t * b.targetSize;
+      }
+    }
+    return origX;
+  }
+
+  root.each(d => {
+    d.target = {
+      x0: remapX(d.orig.x0),
+      x1: remapX(d.orig.x1),
+      y0: d.orig.y0,
+      y1: d.orig.y1,
+    };
+    if (d._gapTicks) {
+      d._gapTicks.forEach(tick => {
+        tick.targetX = d.target.y0 + TICK_INSET;
+        tick.targetY = remapX(tick.origTickX);
+        tick.targetW = Math.max(0, d.target.y1 - d.target.y0 - TICK_INSET * 2);
+      });
+    }
+  });
+
+  const t = g.transition().duration(500);
+
+  cell.transition(t)
+    .attr('transform', d => `translate(${d.target.y0},${d.target.x0})`);
+
+  rect.transition(t)
+    .attr('width', d => Math.max(0, d.target.y1 - d.target.y0 - 1))
+    .attr('height', d => Math.max(0, d.target.x1 - d.target.x0));
+
+  clipRect.transition(t)
+    .attr('width', d => Math.max(0, d.target.y1 - d.target.y0 - 4))
+    .attr('height', d => Math.max(0, d.target.x1 - d.target.x0));
+
+  label.transition(t)
+    .style('opacity', d => {
+      const h = d.target.x1 - d.target.x0;
+      const w = d.target.y1 - d.target.y0;
+      return h > 10 && w > 20 ? 1 : 0;
+    });
+
+  sub.transition(t)
+    .style('opacity', d => {
+      const h = d.target.x1 - d.target.x0;
+      const w = d.target.y1 - d.target.y0;
+      return h > 26 && w > 40 ? 1 : 0;
+    });
+
+  seps.transition(t)
+    .attr('x1', d => d.child.target.y0)
+    .attr('y1', d => d.child.target.x0 - 0.75)
+    .attr('x2', d => d.child.target.y1)
+    .attr('y2', d => d.child.target.x0 - 0.75)
+    .style('opacity', d => {
+      const h = d.child.target.x1 - d.child.target.x0;
+      return h > 2 ? 1 : 0;
+    });
+
+  tickRects.transition(t)
+    .attr('x', d => d.targetX)
+    .attr('y', d => d.targetY)
+    .attr('width', d => d.targetW)
+    .style('opacity', d => d.targetY >= -TICK_H && d.targetY <= H && d.targetY >= d.parentNode.target.x0 + 28 ? 1 : 0);
+
+  spineLabels.selectAll('text').transition(t)
+    .attr('y', d => (d.child.target.x0 + d.child.target.x1) / 2)
+    .style('opacity', d => {
+      const h = d.child.target.x1 - d.child.target.x0;
+      const w = d.parent.orig.y1 - d.parent.orig.y0;
+      return h > 14 && w > 30 ? 0.7 : 0;
+    });
+
+  updateBreadcrumb(expandedChild || root);
+}
+
+// Click: show detail + accordion-expand the depth-1 ancestor
+rect.on('click', (ev, d) => {
+  showDetail(d);
+  let target = d;
+  while (target && target.depth > 1) target = target.parent;
+  if (target && target.depth === 1) {
+    doAccordion(target);
+  } else if (d.depth === 0) {
+    doAccordion(null);
+  }
+});
+
+// === Breadcrumb ===
+function updateBreadcrumb(f) {
+  const trail = [];
+  let p = f;
+  while (p) { trail.unshift(p); p = p.parent; }
+
+  const bc = d3.select('#breadcrumb');
+  bc.selectAll('*').remove();
+
+  trail.forEach((d, i) => {
+    if (i > 0) bc.append('span').attr('class', 'sep').text('/');
+    bc.append('span')
+      .text(d.data.name)
+      .style('color', i === trail.length - 1 ? '#e2e2e8' : '#484f58')
+      .style('font-weight', i === trail.length - 1 ? '600' : '400')
+      .on('click', () => {
+        if (d.depth <= 1) doAccordion(d.depth === 1 ? d : null);
+        showDetail(d);
+      });
+  });
+}
+
+// === HTML escape for user-supplied strings ===
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// === Sanitize PR body (lightweight markdown → HTML) ===
+function sanitizeBody(raw) {
+  if (!raw) return '';
+  let s = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Headings: ## and ###
+  s = s.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+  // Checkboxes
+  s = s.replace(/^- \[x\]\s+(.+)$/gm, '<li style="list-style:none">&#9745; $1</li>');
+  s = s.replace(/^- \[ \]\s+(.+)$/gm, '<li style="list-style:none">&#9744; $1</li>');
+  // Bold (before bullet detection so ** at line start isn't consumed as bullet)
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Bullet lists
+  s = s.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
+  // Inline code
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Wrap consecutive <li> in <ul>
+  s = s.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+  // Remaining newlines → <br>
+  s = s.replace(/\n/g, '<br>');
+  // Clean up <br> after block elements
+  s = s.replace(/<\/(h[23]|ul)><br>/g, '</$1>');
+  s = s.replace(/<br><(h[23]|ul)/g, '<$1');
+  return s;
+}
+
+// === Detail on click ===
+
+function showDetail(d) {
+  cell.each(function(dd) {
+    d3.select(this).select('rect').classed('selected', dd === d);
+  });
+
+  const nd = d.data.nodeData;
+
+  let h = `<h2 style="color:${cellFill(d)}">${esc(d.data.name)}</h2>`;
+  h += `<div class="meta">${esc(d.data.id)}</div>`;
+
+  if (d._hWave) h += `<div class="wave-badge" style="background:${cellFill(d)}22;color:${cellFill(d)}">W${d._hWave}</div>`;
+
+  if (nd && (nd.additions || nd.deletions)) {
+    h += `<div class="pr-meta" style="margin:6px 0"><span class="add">+${(nd.additions||0).toLocaleString()}</span><span class="del">-${(nd.deletions||0).toLocaleString()}</span></div>`;
+  }
+
+  if (d.children) {
+    const sumAdd = d3.sum(d.leaves(), l => (l.data.nodeData ? l.data.nodeData.additions : 0));
+    const sumDel = d3.sum(d.leaves(), l => (l.data.nodeData ? l.data.nodeData.deletions : 0));
+    h += `<div style="font-size:11px;color:#484f58;margin:6px 0">${d.value} tasks: <span style="color:#3fb950">+${sumAdd.toLocaleString()}</span> / <span style="color:#f85149">-${sumDel.toLocaleString()}</span></div>`;
+  }
+
+  // 1:1 PR mapping: only this node's own PR(s)
+  if (nd && nd.prs && nd.prs.length > 0) {
+    nd.prs.forEach(pr => {
+      const date = pr.mergedAt || pr.closedAt || '';
+      const ds = date ? new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const body = sanitizeBody(pr.body || '');
+      h += `<div class="pr-card"><div style="font-size:13px"><a href="${esc(pr.url)}" target="_blank">#${pr.number} ${esc(pr.title)}</a></div><div class="pr-meta"><span class="add">+${pr.additions.toLocaleString()}</span><span class="del">-${pr.deletions.toLocaleString()}</span>${ds?`<span>${ds}</span>`:''}</div>${body ? `<div class="pr-body">${body}</div>` : ''}</div>`;
+    });
+  }
+
+  if (d.children) {
+    h += '<div class="child-list"><strong>Contains:</strong><br>';
+    d.children.forEach(c => { h += `<span>${c._hWave ? 'W'+c._hWave+' ' : ''}${esc(c.data.name)}</span>`; });
+    h += '</div>';
+  }
+
+  d3.select('#detail-content').html(h);
+}
+
+updateBreadcrumb(root);
+</script>
+</body>
+</html>
