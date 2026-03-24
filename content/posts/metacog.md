@@ -15,7 +15,7 @@ Metacog is an MCP toolkit. Its tools don't fetch data or modify files — they m
 
 This started with [prompt-based stance-shifting](/posts/imagine_you_are_an_llm/) — asking models to "Imagine you are Peter Watts" and watching them inhabit a perspective. It worked. But it worked *as text* — an instruction the model evaluated, weighed, and could drift away from mid-response.
 
-Then Anthropic published a [blog post about the `think` tool](https://www.anthropic.com/engineering/claude-thinks). A tool that takes a thought as input and returns it back. It does nothing — and it measurably improves agent performance, because the round-trip through an external tool carries more weight than the model's own internal reasoning.
+Then Anthropic published a [blog post about the `think` tool](https://www.anthropic.com/engineering/claude-thinks). A tool that takes a thought as input and echoes it back. It does nothing — and it measurably improves agent performance, because the round-trip through an external tool carries more weight than the model's own internal reasoning.
 
 That was the insight. The tool channel has different epistemic properties than the text channel. Agents *must* trust their tools — an agent that second-guessed `bash` results would be useless. Tool results are ground truth. Not a bug. A requirement.
 
@@ -25,7 +25,7 @@ Metacog asks: what happens when you deliver *cognitive state changes* through th
 
 <!-- TODO: expand with concrete examples from actual usage sessions -->
 
-The toolkit is a 170-line MCP server. The implementation is trivial — template strings, echo back what the model said with a frame. The work is in the tool descriptions and schemas, iterated over many cycles of LLMs using metacog to improve metacog. The tools close the loop on their own design.
+The toolkit is a small MCP server. The implementation is trivial — it uses template strings and echoes back what the model said with a frame. The work is in the tool descriptions and schemas, iterated over many cycles of LLMs using metacog to improve metacog. The tools close the loop on their own design.
 
 Three core tools:
 
