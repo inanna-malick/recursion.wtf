@@ -4,71 +4,61 @@ date: 2026-03-23
 draft: true
 tags: ["exomonad", "agent-orchestration", "ai", "architecture"]
 categories: ["ai"]
-description: "Why trees beat loops for agentic AI — and why the same topology that builds software can red-team it"
+description: "Why agent topology should match task topology — and how git gives you the tree for free"
 ---
 
-The dominant paradigm for AI agents is a loop: observe, think, act, repeat. The agent accumulates context in a single window until it solves the problem or runs out of room. This is wrong.
+An agentic loop has a simple structure: observe, think, act, repeat. The agent accumulates state in a single context window, iterating until the task is done or the window fills up. Most agentic frameworks are built around this loop. It works. But it's a special case of something more general.
 
 <!--more-->
 
-## The problem with loops
+## The shape
 
-A single context window accumulates everything — tool outputs, failed attempts, dead branches, sibling task noise. Every token of irrelevant history competes with the tokens that matter. Performance degrades as the window fills. Compression loses signal. The model spends increasing effort navigating its own accumulated context instead of solving the problem.
+The natural structure of work is not a loop — it's a tree. A task decomposes into subtasks. Subtasks decompose further. Leaves execute. Results merge back up.
 
-This is the fundamental scaling limit of loop-based agents. The more complex the task, the more context accumulates, the worse the agent performs — exactly when you need it most.
+This gives a three-phase cycle: **scaffold** the shared foundation and build context, **fork** into parallel agents, and **converge** by merging their results. The parent scaffolds — writing types, stubs, shared state — then forks children to implement the pieces in parallel. When children finish, the parent merges their work, verifies integration, and decides whether another wave of decomposition is needed.
 
-## Trees as natural decomposition
+This is recursive. A child that receives a complex subtask becomes a parent itself: scaffold, fork, converge. The tree grows to match the shape of the problem.
 
-Software engineering tasks are trees. You break a problem into parts, solve the parts, and merge the solutions. The agent topology should match the task topology.
+## Agent state
 
-A tree-of-agents architecture does this literally: a parent agent decomposes a task, spawns child agents for each subtask, and merges their results. Each child carries only the context it needs. Sibling noise doesn't exist — child A never sees child B's failed attempts, dead-end explorations, or irrelevant tool outputs.
+An agent's state is two things: what's on disk and what's in the context window. The repository is the persistent artifact — code, config, documentation. The context window is the ephemeral reasoning state — every file read, every decision made, every tool output accumulated during the session.
 
-This isn't a metaphor. It's optimal allocation of a finite resource (context window tokens) across a parallelizable workload.
+In a loop, both are singular. One repo, one context window, one agent iterating in place.
 
-## Context windows as finite resource
+In a tree, both fork. Git worktrees give each child agent an isolated copy of the repository. Claude Code's `--fork-session` clones the parent's entire conversation history into the child. The child starts with everything the parent knew at the moment of forking — every decision, every file read, the full reasoning chain — plus an isolated working directory where its changes can't interfere with siblings.
 
-Every token in a context window has a cost: it competes with every other token for the model's attention. In a loop, you pay this cost for every piece of accumulated history, whether relevant or not. In a tree:
+Forking the repo and forking the context window is the same operation as forking the agent. The agent IS the pair of (repo state, context window). Fork both, and you've turned one agent into many, each carrying the context it needs and nothing it doesn't.
 
-- **Children are isolated.** Each branch carries only the context relevant to its subtask. A frontend agent doesn't see backend test failures. A CSS agent doesn't see database migration errors.
-- **Failure is contained.** If a branch fails, it doesn't pollute its siblings. The parent retries or re-decomposes that subtask alone. In a loop, failure injects confusing context that degrades all subsequent attempts.
-- **Compression is hierarchical.** Parents summarize children's results before passing them up. Each level of the tree compresses irrelevant detail. By the time results reach the root, they're maximally relevant.
+## Loops as degenerate trees
 
-## Natural supervision
+A loop is a tree with branching factor one. One agent, one branch, iterating sequentially. This framing makes the limitation obvious: a loop is a tree that never parallelizes and never isolates.
 
-Parents review children's work at merge boundaries — the same pattern as human engineering teams. This creates a natural quality assurance hierarchy:
+Everything a loop accumulates stays in a single context window. Dead branches from failed attempts. Irrelevant tool outputs from earlier iterations. Noise from subtasks that have nothing to do with the current one. Every token of history competes with the tokens that matter. As the window fills, the agent drifts — it starts pursuing easier alternatives because the hard task is buried under accumulated noise.
 
-- Children submit PRs (pull requests, literally)
-- Parents review diffs before merging
-- Each level of the tree adds a layer of review
-- Failures are caught at the narrowest scope possible
+A tree with branching factor greater than one solves this structurally. Independent subtasks run in parallel, in isolated contexts, with no cross-contamination. A failure in one branch doesn't pollute its siblings. The parent's context stays clean because children handle the implementation noise.
 
-This isn't imposed process. It falls out of the architecture. When your merge mechanism is `git merge`, code review happens automatically.
+Loops aren't wrong. They're the simplest possible tree — and for simple tasks, that's fine. But they're a strict subset of what a tree can do, and for complex tasks, the restriction costs you.
 
-## Reconfigurability
+## Supervision
 
-The tree topology is independent of node behavior. The same parent-decompose-child-merge pattern works whether the nodes are:
+In a tree, every child agent has exactly one task. Leaves implement — they write code, run tests, produce artifacts. Interior nodes plan and orchestrate — they decompose tasks, write specs, and review results. No agent does both.
 
-- Software engineers building features
-- Red teamers probing attack surfaces
-- Researchers exploring a literature
-- Security auditors reviewing code
+This single-task constraint is what prevents drift. A leaf agent's context window contains only what's relevant to its task. It can't silently pivot to something easier because there's nothing else in its context to pivot to. It doesn't know about the easier alternatives — they're in a sibling's worktree, invisible.
 
-[ExoMonad](/posts/exomonad/) implements this by defining agent behavior as swappable Haskell effect definitions. Change the effect handlers and the devswarm becomes a red-team harness overnight — same tree, same coordination protocol, different leaf behavior.
+At merge boundaries, the parent reviews what the child produced. This happens naturally: when the merge mechanism is git, code review is the merge. The parent reads the diff, verifies it matches the spec, and either merges or rejects. This is the same pattern as human engineering teams — not because it's imposed as process, but because tree-shaped work produces tree-shaped review. Each level of the tree adds a layer of verification. Failures get caught at the narrowest scope possible.
 
-The [Gemini retrospective](/posts/gemini_jailbreak_retrospective/) demonstrates this directly: the same ExoMonad swarm architecture that [built Tidepool](/posts/tidepool/) was reconfigured to run parallel jailbroken Gemini instances against CTF targets. The tree didn't care what its leaves were doing. It cared that tasks decomposed, executed, and merged.
+The combination matters: narrow mandate, narrow context, review at merge. Any one layer might fail to catch drift. All three together make it structurally difficult for work to silently deviate from plan.
 
-## The cost model
+## Proof
 
-Tree-of-agents has an explicit cost model: parent tokens are expensive (planning, decomposition, review), child tokens are cheap (implementation, execution). This maps directly to frontier model pricing — an Opus root coordinating Haiku or Gemini leaves.
+This isn't speculative architecture. [ExoMonad](/posts/exomonad/) implements the scaffold-fork-converge cycle over git worktrees, with swappable agent behavior at each node. [Tidepool](/posts/tidepool/) is a full application built by an agent tree — decomposed, parallelized, merged, and shipped.
 
-The root's job is to never touch implementation. Every file read for implementation detail, every line of code the root writes, is wasted budget. Decompose, spec, spawn. That's it.
+## Trees are natural
 
-This is also why it works for red-teaming: the expensive model (Opus) does strategy and review. The cheap model (jailbroken Gemini) does execution. The tree structure means the expensive model's context window stays clean — it never sees the noise of individual exploit attempts.
+Tasks decompose recursively. They always have — every project plan, every work breakdown structure, every recursive function call is a tree. Agents that iterate in loops are flattening a structure that was already there.
 
-## Links
+The loop became dominant because it's easy to implement. One agent, one context window, one iteration at a time. But the tools for trees already exist. Git branches are task decomposition. Worktrees are context isolation. Merge is convergence. The tree was always available — it just wasn't the default.
 
-- [ExoMonad](/posts/exomonad/) — the implementation: how the tree is built
-- [Tidepool](/posts/tidepool/) — the build case study: what a devswarm produced
-- [Gemini retrospective](/posts/gemini_jailbreak_retrospective/) — the red-team case study: the same tree, different leaves
+It should be.
 
 [inanna@recursion.wtf](mailto:inanna@recursion.wtf)
