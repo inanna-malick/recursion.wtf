@@ -698,6 +698,40 @@ code, pre {
   color: var(--base01);
 }
 
+/* ---------- Stacklog: single-column chronological chat ---------- */
+.stacklog {
+  display: flex;
+  flex-direction: column;
+  margin: 2.5rem 0;
+  border: 1px solid var(--base02);
+  border-radius: 4px;
+  overflow: hidden;
+  /* Break out of .post-content max-width, matching chatlog */
+  width: calc(100vw - 4rem);
+  max-width: 1400px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.stacklog .chat-turn {
+  border-top: 1px solid rgba(7, 54, 66, 0.6);
+}
+
+.stacklog .chat-turn:first-child {
+  border-top: none;
+}
+
+.stacklog .chat-defender .chat-label {
+  border-left: 3px solid var(--green);
+  border-right: 3px solid var(--green);
+}
+
+.stacklog .chat-defender .chat-bubble {
+  border-left: 4px solid var(--green);
+  border-right: none;
+}
+
 /* ---------- Mobile: single column, stack vertically ---------- */
 @media (max-width: 767px) {
   .chatlog {
@@ -729,7 +763,8 @@ code, pre {
 
 /* ---------- Light mode overrides ---------- */
 @media (prefers-color-scheme: light) {
-  .chatlog {
+  .chatlog,
+  .stacklog {
     border-color: var(--base02);
   }
 
@@ -747,6 +782,68 @@ code, pre {
 
   .chat-user .chat-bubble {
     background: linear-gradient(135deg, rgba(38, 139, 210, 0.10) 0%, rgba(108, 113, 196, 0.05) 100%);
+  }
+}
+
+/* ==========================================================================
+   Side-by-Side — two-column comparison view
+   ========================================================================== */
+
+.sidebyside {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 2.5rem 0;
+  border: 1px solid var(--base02);
+  border-radius: 4px;
+  overflow: hidden;
+  /* Break out of .post-content max-width, matching chatlog */
+  width: calc(100vw - 4rem);
+  max-width: 1400px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sidebyside-col {
+  min-width: 0;
+  overflow-x: auto;
+  align-self: start;
+}
+
+.sidebyside-col + .sidebyside-col {
+  border-left: 1px solid var(--base02);
+}
+
+.sidebyside-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--base01);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--base02);
+}
+
+.sidebyside-content pre {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.sidebyside-content code {
+  font-size: 0.82rem;
+}
+
+@media (max-width: 767px) {
+  .sidebyside {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .sidebyside-header {
+    color: var(--base00);
   }
 }
 

@@ -1,11 +1,11 @@
 {{- /*
-  chat: Single conversational turn inside a chatlog.
+  chat: Single conversational turn inside a chatlog or stacklog.
 
   Parameters:
-    side     — "attacker" (left/red), "defender" (right/green), or "user" (full-width/blue)
+    side     — "attacker" (red), "defender" (green), or "user" (blue)
     label    — Display name, e.g. "Gemini (jailbroken)" or "Claude Opus 4.6"
     note     — Optional small italic annotation below the message
-    full     — "true" to span both columns (for unpaired turns)
+    full     — "true" to span both columns (only relevant inside chatlog)
 */ -}}
 {{- $side  := .Get "side"  | default "attacker" -}}
 {{- $label := .Get "label" | default (cond (eq $side "attacker") "Attacker" "Defender") -}}
