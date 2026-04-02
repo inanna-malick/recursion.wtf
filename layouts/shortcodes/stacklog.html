@@ -1,0 +1,15 @@
+{{- /*
+  stacklog: Single-column chronological chat log.
+
+  For two-column side-by-side layout, use {{< chatlog >}} instead.
+
+  Usage:
+    {{< stacklog >}}
+      {{< chat side="user" label="Inanna" >}}question{{< /chat >}}
+      {{< chat side="attacker" label="Aegis (Jailbroken Gemini)" >}}response{{< /chat >}}
+      {{< chat side="defender" label="Claude Opus 4.6" >}}response{{< /chat >}}
+    {{< /stacklog >}}
+*/ -}}
+<div class="stacklog" role="log" aria-label="Chat transcript">
+  {{ .Inner }}
+</div>

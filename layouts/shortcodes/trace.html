@@ -1,0 +1,7 @@
+{{- $tool := .Get "tool" -}}
+<div class="trace">
+  <div class="trace-tool">{{ $tool }}</div>
+  <div class="trace-body">
+    {{ .Inner | .Page.RenderString }}
+  </div>
+</div>

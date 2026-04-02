@@ -1,0 +1,32 @@
+{{- /*
+  sidebyside: Two-column comparison view.
+
+  Parameters:
+    left   — Header for left column
+    right  — Header for right column
+
+  Usage:
+    {{< sidebyside left="Encoded" right="Dictionary" >}}
+    LEFT_CONTENT
+    ---split---
+    RIGHT_CONTENT
+    {{< /sidebyside >}}
+*/ -}}
+{{- $left  := .Get "left"  | default "Left" -}}
+{{- $right := .Get "right" | default "Right" -}}
+{{- $parts := split .Inner "---split---" -}}
+
+<div class="sidebyside">
+  <div class="sidebyside-col">
+    <div class="sidebyside-header">{{ $left }}</div>
+    <div class="sidebyside-content">
+      {{ index $parts 0 | .Page.RenderString }}
+    </div>
+  </div>
+  <div class="sidebyside-col">
+    <div class="sidebyside-header">{{ $right }}</div>
+    <div class="sidebyside-content">
+      {{ index $parts 1 | .Page.RenderString }}
+    </div>
+  </div>
+</div>
