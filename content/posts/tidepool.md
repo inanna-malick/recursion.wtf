@@ -2,6 +2,7 @@
 title: "Tidepool"
 date: 2026-03-12
 draft: false
+pinned: true
 tags: ["tidepool", "haskell", "rust", "cranelift", "jit", "llm"]
 categories: ["projects"]
 description: "A lazily evaluated Haskell-in-Rust runtime with native interop, built by an ExoMonad agent swarm"
